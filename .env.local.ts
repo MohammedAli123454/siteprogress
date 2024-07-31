@@ -1,0 +1,1 @@
+DATABASE_URL=postgresql://azcsmohdali1:f1NauxJ0RikY@ep-morning-snowflake-15132543.ap-southeast-1.aws.neon.tech/MOC?sslmode=require
