@@ -28,7 +28,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-import { TrendingUp } from "lucide-react";
+import { Bold, TrendingUp } from "lucide-react";
 
 type DataType = {
   "SIZE (INCHES)": number;
@@ -242,14 +242,14 @@ export default function TotalJointsByMOC() {
                         position="insideLeft"
                         offset={8}
                         className="fill-[--color-label]"
-                        fontSize={12}
+                        fontSize={14}
                       />
                       <LabelList
                         dataKey="value"
                         position="right"
                         offset={8}
-                        className="fill-foreground"
-                        fontSize={12}
+                        className="fill-foreground font-bold"
+                        fontSize={14}
                       />
                     </Bar>
                   </BarChart>
