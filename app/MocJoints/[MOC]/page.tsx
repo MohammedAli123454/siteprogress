@@ -27,8 +27,6 @@ export default function MOCJoints() {
     const params =useParams();
     const MOC =params.MOC;
 
-  console.log(MOC);
-
   return (
     <div className="p-4">
       {MOC ? <JointSummaryTable data={jsonData} moc={MOC as string} /> : <p>Loading...</p>}

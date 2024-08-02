@@ -37,7 +37,7 @@ export default function MocDetail() {
         const mocName = mocRecords[0]?.['MOC NAME'] || '';
 
         return (
-          <Card key={index} className="transition-transform transform hover:scale-105 hover:shadow-md">
+          <Card key={index} className="transition-transform transform hover:border-blue-500 hover:scale-105 hover:shadow-md">
             <CardHeader className="flex justify-between items-center p-4">
               <div className="flex-1">
                 <CardTitle>{moc}</CardTitle>

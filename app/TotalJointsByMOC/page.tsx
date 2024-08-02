@@ -1,5 +1,6 @@
-import React from 'react';
-import data from '@/app/data.json';
+"use client";
+import React, { useState } from "react";
+import data from "@/app/data.json";
 import {
   Table,
   TableBody,
@@ -8,10 +9,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import {
   Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
+
+import { Button } from "@/components/ui/button";
+
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+
+import { TrendingUp } from "lucide-react";
 
 type DataType = {
   "SIZE (INCHES)": number;
@@ -31,7 +48,11 @@ type MOCSummary = {
   MOC: string;
   MOC_NAME: string;
   TOTAL_JOINTS: number;
+  SHOP_JOINTS: number;
+  FIELD_JOINTS: number;
   TOTAL_INCH_DIA: number;
+  SHOP_INCH_DIA: number;
+  FIELD_INCH_DIA: number;
 };
 
 const jsonData = data as unknown as DataType[];
@@ -39,17 +60,25 @@ const jsonData = data as unknown as DataType[];
 const calculateMOCSummary = (data: DataType[]): MOCSummary[] => {
   const summary: { [key: string]: MOCSummary } = {};
 
-  data.forEach(item => {
+  data.forEach((item) => {
     if (!summary[item.MOC]) {
       summary[item.MOC] = {
         MOC: item.MOC,
         MOC_NAME: item["MOC NAME"],
         TOTAL_JOINTS: 0,
-        TOTAL_INCH_DIA: 0
+        SHOP_JOINTS: 0,
+        FIELD_JOINTS: 0,
+        TOTAL_INCH_DIA: 0,
+        SHOP_INCH_DIA: 0,
+        FIELD_INCH_DIA: 0,
       };
     }
-    summary[item.MOC].TOTAL_JOINTS += item['TOTAL JOINTS'];
-    summary[item.MOC].TOTAL_INCH_DIA += item['TOTAL INCH DIA'];
+    summary[item.MOC].TOTAL_JOINTS += item["TOTAL JOINTS"];
+    summary[item.MOC].SHOP_JOINTS += item["SHOP JOINTS"];
+    summary[item.MOC].FIELD_JOINTS += item["FIELD JOINTS"];
+    summary[item.MOC].TOTAL_INCH_DIA += item["TOTAL INCH DIA"];
+    summary[item.MOC].SHOP_INCH_DIA += item["SHOP INCH DIA"];
+    summary[item.MOC].FIELD_INCH_DIA += item["FIELD INCH DIA"];
   });
 
   return Object.values(summary);
@@ -59,40 +88,238 @@ const mocSummaryData = calculateMOCSummary(jsonData);
 
 // Calculate grand totals
 const grandTotalJoints = mocSummaryData.reduce((acc, item) => acc + item.TOTAL_JOINTS, 0);
+const grandTotalShopJoints = mocSummaryData.reduce((acc, item) => acc + item.SHOP_JOINTS, 0);
+const grandTotalFieldJoints = mocSummaryData.reduce((acc, item) => acc + item.FIELD_JOINTS, 0);
 const grandTotalInchDia = mocSummaryData.reduce((acc, item) => acc + item.TOTAL_INCH_DIA, 0);
+const grandTotalShopInchDia = mocSummaryData.reduce((acc, item) => acc + item.SHOP_INCH_DIA, 0);
+const grandTotalFieldInchDia = mocSummaryData.reduce((acc, item) => acc + item.FIELD_INCH_DIA, 0);
+
+const jointsChartData = [
+  { metric: "Shop Joints", value: grandTotalShopJoints },
+  { metric: "Field Joints", value: grandTotalFieldJoints },
+  { metric: "Total Joints", value: grandTotalJoints },
+];
+
+const inchDiaChartData = [
+  { metric: "Shop Inch Dia", value: grandTotalShopInchDia },
+  { metric: "Field Inch Dia", value: grandTotalFieldInchDia },
+  { metric: "Total Inch Dia", value: grandTotalInchDia },
+];
+
+const chartConfig = {
+  value: {
+    label: "value",
+    color: "hsl(var(--chart-2))",
+  },
+  label: {
+    color: "hsl(var(--background))",
+  },
+} satisfies ChartConfig;
 
 export default function TotalJointsByMOC() {
+  const [showTable, setShowTable] = useState<"joints" | "inchDia" | "chart">("joints");
+
   return (
     <Card className="p-4">
-      <Table className="table-fixed">
-        <TableHeader>
-          <TableRow className="flex sticky top-0 bg-gray-200">
-            <TableCell className="font-bold w-16 p-1.5">Sr. No</TableCell>
-            <TableCell className="font-bold w-32 p-1.5">MOC</TableCell>
-            <TableCell className="font-bold flex-1 p-1.5 pr-2">MOC NAME</TableCell>
-            <TableCell className="font-bold w-32 p-1.5 pl-2">Total Joints</TableCell>
-            <TableCell className="font-bold w-32 p-1.5">Total Inch Dia</TableCell>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {mocSummaryData.map((moc, index) => (
-            <TableRow key={moc.MOC} className={`flex ${index % 2 === 0 ? "bg-gray-100" : ""}`}>
-              <TableCell className="w-16 p-1.5">{index + 1}</TableCell>
-              <TableCell className="w-32 p-1.5">{moc.MOC}</TableCell>
-              <TableCell className="flex-1 p-1.5 pr-2">{moc.MOC_NAME}</TableCell>
-              <TableCell className="w-32 p-1.5 pl-2">{moc.TOTAL_JOINTS}</TableCell>
-              <TableCell className="w-32 p-1.5">{moc.TOTAL_INCH_DIA}</TableCell>
+      <div className="flex space-x-4 mb-4">
+        <Button onClick={() => setShowTable("joints")}>View Joints Detail</Button>
+        <Button onClick={() => setShowTable("inchDia")}>View Inch Dia Detail</Button>
+        <Button onClick={() => setShowTable("chart")}>View Chart</Button>
+      </div>
+
+      {showTable === "joints" && (
+        <Table className="table-fixed">
+          <TableHeader>
+            <TableRow className="flex sticky top-0 bg-gray-200">
+              <TableCell className="font-bold w-16 p-1.5">Sr. No</TableCell>
+              <TableCell className="font-bold w-32 p-1.5">MOC</TableCell>
+              <TableCell className="font-bold flex-1 p-1.5 pr-2">MOC NAME</TableCell>
+              <TableCell className="font-bold w-32 p-1.5 pl-2">Shop Joints</TableCell>
+              <TableCell className="font-bold w-32 p-1.5">Field Joints</TableCell>
+              <TableCell className="font-bold w-32 p-1.5">Total Joints</TableCell>
             </TableRow>
-          ))}
-          <TableRow className="flex bg-gray-200 font-bold">
-            <TableCell className="w-16 p-1.5">Grand Total</TableCell>
-            <TableCell className="w-32 p-1.5"></TableCell>
-            <TableCell className="flex-1 p-1.5 pr-2"></TableCell>
-            <TableCell className="w-32 p-1.5 pl-2">{grandTotalJoints}</TableCell>
-            <TableCell className="w-32 p-1.5">{grandTotalInchDia}</TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {mocSummaryData.map((moc, index) => (
+              <TableRow key={moc.MOC} className={`flex ${index % 2 === 0 ? "bg-gray-100" : ""}`}>
+                <TableCell className="w-16 p-1.5">{index + 1}</TableCell>
+                <TableCell className="w-32 p-1.5">{moc.MOC}</TableCell>
+                <TableCell className="flex-1 p-1.5 pr-2">{moc.MOC_NAME}</TableCell>
+                <TableCell className="w-32 p-1.5 pl-2">{moc.SHOP_JOINTS}</TableCell>
+                <TableCell className="w-32 p-1.5">{moc.FIELD_JOINTS}</TableCell>
+                <TableCell className="w-32 p-1.5">{moc.TOTAL_JOINTS}</TableCell>
+              </TableRow>
+            ))}
+            <TableRow className="flex bg-gray-200 font-bold">
+              <TableCell className="w-16 p-1.5">Grand Total</TableCell>
+              <TableCell className="w-32 p-1.5"></TableCell>
+              <TableCell className="flex-1 p-1.5 pr-2"></TableCell>
+              <TableCell className="w-32 p-1.5 pl-2">{grandTotalShopJoints}</TableCell>
+              <TableCell className="w-32 p-1.5">{grandTotalFieldJoints}</TableCell>
+              <TableCell className="w-32 p-1.5">{grandTotalJoints}</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      )}
+
+      {showTable === "inchDia" && (
+        <Table className="table-fixed">
+          <TableHeader>
+            <TableRow className="flex sticky top-0 bg-gray-200">
+              <TableCell className="font-bold w-16 p-1.5">Sr. No</TableCell>
+              <TableCell className="font-bold w-32 p-1.5">MOC</TableCell>
+              <TableCell className="font-bold flex-1 p-1.5 pr-2">MOC NAME</TableCell>
+              <TableCell className="font-bold w-32 p-1.5 pl-2">Shop Inch Dia</TableCell>
+              <TableCell className="font-bold w-32 p-1.5">Field Inch Dia</TableCell>
+              <TableCell className="font-bold w-32 p-1.5">Total Inch Dia</TableCell>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {mocSummaryData.map((moc, index) => (
+              <TableRow key={moc.MOC} className={`flex ${index % 2 === 0 ? "bg-gray-100" : ""}`}>
+                <TableCell className="w-16 p-1.5">{index + 1}</TableCell>
+                <TableCell className="w-32 p-1.5">{moc.MOC}</TableCell>
+                <TableCell className="flex-1 p-1.5 pr-2">{moc.MOC_NAME}</TableCell>
+                <TableCell className="w-32 p-1.5 pl-2">{moc.SHOP_INCH_DIA}</TableCell>
+                <TableCell className="w-32 p-1.5">{moc.FIELD_INCH_DIA}</TableCell>
+                <TableCell className="w-32 p-1.5">{moc.TOTAL_INCH_DIA}</TableCell>
+              </TableRow>
+            ))}
+            <TableRow className="flex bg-gray-200 font-bold">
+              <TableCell className="w-16 p-1.5">Grand Total</TableCell>
+              <TableCell className="w-32 p-1.5"></TableCell>
+              <TableCell className="flex-1 p-1.5 pr-2"></TableCell>
+              <TableCell className="w-32 p-1.5 pl-2">{grandTotalShopInchDia}</TableCell>
+              <TableCell className="w-32 p-1.5">{grandTotalFieldInchDia}</TableCell>
+              <TableCell className="w-32 p-1.5">{grandTotalInchDia}</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      )}
+
+      {showTable === "chart" && (
+        <div className="flex flex-col md:flex-row md:space-x-4">
+          
+          <div className="md:w-1/2">
+            <Card className="p-4 mb-4 md:mb-0">
+              <CardHeader>
+                <CardTitle>Overall Joints Chart</CardTitle>
+                <CardDescription>Bar chart representation of Total Joints</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig}>
+                  <BarChart
+                    accessibilityLayer
+                    data={jointsChartData}
+                    layout="vertical"
+                    margin={{
+                      right: 16,
+                    }}
+                  >
+                    <CartesianGrid horizontal={false} />
+                    <YAxis
+                      dataKey="metric"
+                      type="category"
+                      tickLine={false}
+                      tickMargin={10}
+                      axisLine={false}
+                      tickFormatter={(value) => value.slice(0, 3)}
+                      hide
+                    />
+                    <XAxis dataKey="value" type="number" hide />
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent indicator="line" />}
+                    />
+                    <Bar
+                      dataKey="value"
+                      layout="vertical"
+                      fill="var(--color-value)"
+                      radius={4}
+                    >
+                      <LabelList
+                        dataKey="metric"
+                        position="insideLeft"
+                        offset={8}
+                        className="fill-[--color-label]"
+                        fontSize={12}
+                      />
+                      <LabelList
+                        dataKey="value"
+                        position="right"
+                        offset={8}
+                        className="fill-foreground"
+                        fontSize={12}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="md:w-1/2">
+            <Card className="p-4">
+              <CardHeader>
+                <CardTitle>Overall Inch Dia Chart</CardTitle>
+                <CardDescription>Bar chart representation of Total Inch Dia</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig}>
+                  <BarChart
+                    accessibilityLayer
+                    data={inchDiaChartData}
+                    layout="vertical"
+                    margin={{
+                      right: 16,
+                    }}
+                  >
+                    <CartesianGrid horizontal={false} />
+                    <YAxis
+                      dataKey="metric"
+                      type="category"
+                      tickLine={false}
+                      tickMargin={10}
+                      axisLine={false}
+                      tickFormatter={(value) => value.slice(0, 3)}
+                      hide
+                    />
+                    <XAxis dataKey="value" type="number" hide />
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent indicator="line" />}
+                    />
+                    <Bar
+                      dataKey="value"
+                      layout="vertical"
+                      fill="var(--color-value)"
+                      radius={4}
+                    >
+                      <LabelList
+                        dataKey="metric"
+                        position="insideLeft"
+                        offset={8}
+                        className="fill-[--color-label]"
+                        fontSize={12}
+                      />
+                      <LabelList
+                        dataKey="value"
+                        position="right"
+                        offset={8}
+                        className="fill-foreground"
+                        fontSize={12}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+        </div>
+      )}
     </Card>
   );
 }
+
+
