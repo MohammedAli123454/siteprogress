@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/chart";
 
 import { Bold, TrendingUp } from "lucide-react";
+import MocTable from "@/components/MocTable";
 
 type DataType = {
   "SIZE (INCHES)": number;
@@ -119,6 +120,63 @@ const chartConfig = {
 export default function TotalJointsByMOC() {
   const [showTable, setShowTable] = useState<"joints" | "inchDia" | "chart">("joints");
 
+  const headersJoints = [
+    { label: "Sr. No", className: "font-bold w-16 p-1.5" },
+    { label: "MOC", className: "font-bold w-32 p-1.5" },
+    { label: "MOC NAME", className: "font-bold flex-1 p-1.5 pr-2" },
+    { label: "Shop Joints", className: "font-bold w-32 p-1.5 pl-2" },
+    { label: "Field Joints", className: "font-bold w-32 p-1.5" },
+    { label: "Total Joints", className: "font-bold w-32 p-1.5" },
+  ];
+  
+  const headersInchDia = [
+    { label: "Sr. No", className: "font-bold w-16 p-1.5" },
+    { label: "MOC", className: "font-bold w-32 p-1.5" },
+    { label: "MOC NAME", className: "font-bold flex-1 p-1.5 pr-2" },
+    { label: "Shop Inch Dia", className: "font-bold w-32 p-1.5 pl-2" },
+    { label: "Field Inch Dia", className: "font-bold w-32 p-1.5" },
+    { label: "Total Inch Dia", className: "font-bold w-32 p-1.5" },
+  ];
+  const jointTableColumns = (item: MOCSummary, index: number) => [
+    <TableCell key={`index-${index}`} className="w-16 p-1.5">{index + 1}</TableCell>,
+    <TableCell key={`moc-${index}`} className="w-32 p-1.5">{item.MOC}</TableCell>,
+    <TableCell key={`mocName-${index}`} className="flex-1 p-1.5 pr-2">{item.MOC_NAME}</TableCell>,
+    <TableCell key={`shopJoints-${index}`} className="w-32 p-1.5 pl-2">{item.SHOP_JOINTS}</TableCell>,
+    <TableCell key={`fieldJoints-${index}`} className="w-32 p-1.5">{item.FIELD_JOINTS}</TableCell>,
+    <TableCell key={`totalJoints-${index}`} className="w-32 p-1.5">{item.TOTAL_JOINTS}</TableCell>,
+  ];
+
+  const inchDiaTableColumns = (item: MOCSummary, index: number) => [
+    <TableCell key={`index-${index}`} className="w-16 p-1.5">{index + 1}</TableCell>,
+    <TableCell key={`moc-${index}`} className="w-32 p-1.5">{item.MOC}</TableCell>,
+    <TableCell key={`mocName-${index}`} className="flex-1 p-1.5 pr-2">{item.MOC_NAME}</TableCell>,
+    <TableCell key={`shopInchDia-${index}`} className="w-32 p-1.5 pl-2">{item.SHOP_INCH_DIA}</TableCell>,
+    <TableCell key={`fieldInchDia-${index}`} className="w-32 p-1.5">{item.FIELD_INCH_DIA}</TableCell>,
+    <TableCell key={`totalInchDia-${index}`} className="w-32 p-1.5">{item.TOTAL_INCH_DIA}</TableCell>,
+  ];
+
+  const grandTotalsJoints = [
+    { label: "Grand Total", className: "w-16 p-1.5" },
+    { label: "", className: "w-32 p-1.5" },
+    { label: "", className: "flex-1 p-1.5 pr-2" },
+    { label: grandTotalShopJoints, className: "w-32 p-1.5 pl-2" },
+    { label: grandTotalFieldJoints, className: "w-32 p-1.5" },
+    { label: grandTotalJoints, className: "w-32 p-1.5" },
+  ];
+
+  const grandTotalsInchDia = [
+    { label: "Grand Total", className: "w-16 p-1.5" },
+    { label: "", className: "w-32 p-1.5" },
+    { label: "", className: "flex-1 p-1.5 pr-2" },
+    { label: grandTotalShopInchDia, className: "w-32 p-1.5 pl-2" },
+    { label: grandTotalFieldInchDia, className: "w-32 p-1.5" },
+    { label: grandTotalInchDia, className: "w-32 p-1.5" },
+  ];
+  
+
+
+  
+
   return (
     <Card className="p-4">
       <div className="flex space-x-4 mb-4">
@@ -128,74 +186,22 @@ export default function TotalJointsByMOC() {
       </div>
 
       {showTable === "joints" && (
-        <Table className="table-fixed">
-          <TableHeader>
-            <TableRow className="flex sticky top-0 bg-gray-200">
-              <TableCell className="font-bold w-16 p-1.5">Sr. No</TableCell>
-              <TableCell className="font-bold w-32 p-1.5">MOC</TableCell>
-              <TableCell className="font-bold flex-1 p-1.5 pr-2">MOC NAME</TableCell>
-              <TableCell className="font-bold w-32 p-1.5 pl-2">Shop Joints</TableCell>
-              <TableCell className="font-bold w-32 p-1.5">Field Joints</TableCell>
-              <TableCell className="font-bold w-32 p-1.5">Total Joints</TableCell>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mocSummaryData.map((moc, index) => (
-              <TableRow key={moc.MOC} className={`flex ${index % 2 === 0 ? "bg-gray-100" : ""}`}>
-                <TableCell className="w-16 p-1.5">{index + 1}</TableCell>
-                <TableCell className="w-32 p-1.5">{moc.MOC}</TableCell>
-                <TableCell className="flex-1 p-1.5 pr-2">{moc.MOC_NAME}</TableCell>
-                <TableCell className="w-32 p-1.5 pl-2">{moc.SHOP_JOINTS}</TableCell>
-                <TableCell className="w-32 p-1.5">{moc.FIELD_JOINTS}</TableCell>
-                <TableCell className="w-32 p-1.5">{moc.TOTAL_JOINTS}</TableCell>
-              </TableRow>
-            ))}
-            <TableRow className="flex bg-gray-200 font-bold">
-              <TableCell className="w-16 p-1.5">Grand Total</TableCell>
-              <TableCell className="w-32 p-1.5"></TableCell>
-              <TableCell className="flex-1 p-1.5 pr-2"></TableCell>
-              <TableCell className="w-32 p-1.5 pl-2">{grandTotalShopJoints}</TableCell>
-              <TableCell className="w-32 p-1.5">{grandTotalFieldJoints}</TableCell>
-              <TableCell className="w-32 p-1.5">{grandTotalJoints}</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      )}
+       <MocTable
+       data={mocSummaryData}
+       headers={headersJoints}
+       columns={jointTableColumns}
+       grandTotals={grandTotalsJoints}
+     />
+   )}
 
       {showTable === "inchDia" && (
-        <Table className="table-fixed">
-          <TableHeader>
-            <TableRow className="flex sticky top-0 bg-gray-200">
-              <TableCell className="font-bold w-16 p-1.5">Sr. No</TableCell>
-              <TableCell className="font-bold w-32 p-1.5">MOC</TableCell>
-              <TableCell className="font-bold flex-1 p-1.5 pr-2">MOC NAME</TableCell>
-              <TableCell className="font-bold w-32 p-1.5 pl-2">Shop Inch Dia</TableCell>
-              <TableCell className="font-bold w-32 p-1.5">Field Inch Dia</TableCell>
-              <TableCell className="font-bold w-32 p-1.5">Total Inch Dia</TableCell>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mocSummaryData.map((moc, index) => (
-              <TableRow key={moc.MOC} className={`flex ${index % 2 === 0 ? "bg-gray-100" : ""}`}>
-                <TableCell className="w-16 p-1.5">{index + 1}</TableCell>
-                <TableCell className="w-32 p-1.5">{moc.MOC}</TableCell>
-                <TableCell className="flex-1 p-1.5 pr-2">{moc.MOC_NAME}</TableCell>
-                <TableCell className="w-32 p-1.5 pl-2">{moc.SHOP_INCH_DIA}</TableCell>
-                <TableCell className="w-32 p-1.5">{moc.FIELD_INCH_DIA}</TableCell>
-                <TableCell className="w-32 p-1.5">{moc.TOTAL_INCH_DIA}</TableCell>
-              </TableRow>
-            ))}
-            <TableRow className="flex bg-gray-200 font-bold">
-              <TableCell className="w-16 p-1.5">Grand Total</TableCell>
-              <TableCell className="w-32 p-1.5"></TableCell>
-              <TableCell className="flex-1 p-1.5 pr-2"></TableCell>
-              <TableCell className="w-32 p-1.5 pl-2">{grandTotalShopInchDia}</TableCell>
-              <TableCell className="w-32 p-1.5">{grandTotalFieldInchDia}</TableCell>
-              <TableCell className="w-32 p-1.5">{grandTotalInchDia}</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      )}
+        <MocTable
+        data={mocSummaryData}
+        headers={headersInchDia}
+        columns={inchDiaTableColumns}
+        grandTotals={grandTotalsInchDia}
+      />
+    )}
 
       {showTable === "chart" && (
         <div className="flex flex-col md:flex-row md:space-x-4">
@@ -321,5 +327,8 @@ export default function TotalJointsByMOC() {
     </Card>
   );
 }
+
+
+
 
 
