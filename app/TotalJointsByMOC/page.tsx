@@ -30,6 +30,7 @@ import {
 
 import { Bold, TrendingUp } from "lucide-react";
 import MocTable from "@/components/MocTable";
+import ChartComponent from "@/components/BarChartComponent";
 
 type DataType = {
   "SIZE (INCHES)": number;
@@ -120,7 +121,7 @@ const chartConfig = {
 export default function TotalJointsByMOC() {
   const [showTable, setShowTable] = useState<"joints" | "inchDia" | "chart">("joints");
 
-  const headersJoints = [
+  const tableHeadersJoints = [
     { label: "Sr. No", className: "font-bold w-16 p-1.5" },
     { label: "MOC", className: "font-bold w-32 p-1.5" },
     { label: "MOC NAME", className: "font-bold flex-1 p-1.5 pr-2" },
@@ -129,7 +130,7 @@ export default function TotalJointsByMOC() {
     { label: "Total Joints", className: "font-bold w-32 p-1.5" },
   ];
   
-  const headersInchDia = [
+  const TableHeadersInchDia = [
     { label: "Sr. No", className: "font-bold w-16 p-1.5" },
     { label: "MOC", className: "font-bold w-32 p-1.5" },
     { label: "MOC NAME", className: "font-bold flex-1 p-1.5 pr-2" },
@@ -137,7 +138,7 @@ export default function TotalJointsByMOC() {
     { label: "Field Inch Dia", className: "font-bold w-32 p-1.5" },
     { label: "Total Inch Dia", className: "font-bold w-32 p-1.5" },
   ];
-  const jointTableColumns = (item: MOCSummary, index: number) => [
+  const tableBodyJoints = (item: MOCSummary, index: number) => [
     <TableCell key={`index-${index}`} className="w-16 p-1.5">{index + 1}</TableCell>,
     <TableCell key={`moc-${index}`} className="w-32 p-1.5">{item.MOC}</TableCell>,
     <TableCell key={`mocName-${index}`} className="flex-1 p-1.5 pr-2">{item.MOC_NAME}</TableCell>,
@@ -146,7 +147,7 @@ export default function TotalJointsByMOC() {
     <TableCell key={`totalJoints-${index}`} className="w-32 p-1.5">{item.TOTAL_JOINTS}</TableCell>,
   ];
 
-  const inchDiaTableColumns = (item: MOCSummary, index: number) => [
+  const tableBodyInchDia = (item: MOCSummary, index: number) => [
     <TableCell key={`index-${index}`} className="w-16 p-1.5">{index + 1}</TableCell>,
     <TableCell key={`moc-${index}`} className="w-32 p-1.5">{item.MOC}</TableCell>,
     <TableCell key={`mocName-${index}`} className="flex-1 p-1.5 pr-2">{item.MOC_NAME}</TableCell>,
@@ -188,147 +189,41 @@ export default function TotalJointsByMOC() {
       {showTable === "joints" && (
        <MocTable
        data={mocSummaryData}
-       headers={headersJoints}
-       columns={jointTableColumns}
+       headers={tableHeadersJoints}
+       columns={tableBodyJoints}
        grandTotals={grandTotalsJoints}
+       title="Joints Detail By Each MOC"
      />
    )}
 
       {showTable === "inchDia" && (
         <MocTable
         data={mocSummaryData}
-        headers={headersInchDia}
-        columns={inchDiaTableColumns}
+        headers={TableHeadersInchDia}
+        columns={tableBodyInchDia}
         grandTotals={grandTotalsInchDia}
+        title="Inch Dia Detail By Each MOC"
       />
     )}
 
       {showTable === "chart" && (
-        <div className="flex flex-col md:flex-row md:space-x-4">
-          
-          <div className="md:w-1/2">
-            <Card className="p-4 mb-4 md:mb-0">
-              <CardHeader>
-                <CardTitle>Overall Joints Chart</CardTitle>
-                <CardDescription>Bar chart representation of Total Joints</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer config={chartConfig}>
-                  <BarChart
-                    accessibilityLayer
-                    data={jointsChartData}
-                    layout="vertical"
-                    margin={{
-                      right: 16,
-                    }}
-                  >
-                    <CartesianGrid horizontal={false} />
-                    <YAxis
-                      dataKey="metric"
-                      type="category"
-                      tickLine={false}
-                      tickMargin={10}
-                      axisLine={false}
-                      tickFormatter={(value) => value.slice(0, 3)}
-                      hide
-                    />
-                    <XAxis dataKey="value" type="number" hide />
-                    <ChartTooltip
-                      cursor={false}
-                      content={<ChartTooltipContent indicator="line" />}
-                    />
-                    <Bar
-                      dataKey="value"
-                      layout="vertical"
-                      fill="var(--color-value)"
-                      radius={4}
-                    >
-                      <LabelList
-                        dataKey="metric"
-                        position="insideLeft"
-                        offset={8}
-                        className="fill-[--color-label]"
-                        fontSize={14}
-                      />
-                      <LabelList
-                        dataKey="value"
-                        position="right"
-                        offset={8}
-                        className="fill-foreground font-bold"
-                        fontSize={14}
-                      />
-                    </Bar>
-                  </BarChart>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="md:w-1/2">
-            <Card className="p-4">
-              <CardHeader>
-                <CardTitle>Overall Inch Dia Chart</CardTitle>
-                <CardDescription>Bar chart representation of Total Inch Dia</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer config={chartConfig}>
-                  <BarChart
-                    accessibilityLayer
-                    data={inchDiaChartData}
-                    layout="vertical"
-                    margin={{
-                      right: 16,
-                    }}
-                  >
-                    <CartesianGrid horizontal={false} />
-                    <YAxis
-                      dataKey="metric"
-                      type="category"
-                      tickLine={false}
-                      tickMargin={10}
-                      axisLine={false}
-                      tickFormatter={(value) => value.slice(0, 3)}
-                      hide
-                    />
-                    <XAxis dataKey="value" type="number" hide />
-                    <ChartTooltip
-                      cursor={false}
-                      content={<ChartTooltipContent indicator="line" />}
-                    />
-                    <Bar
-                      dataKey="value"
-                      layout="vertical"
-                      fill="var(--color-value)"
-                      radius={4}
-                    >
-                      <LabelList
-                        dataKey="metric"
-                        position="insideLeft"
-                        offset={8}
-                        className="fill-[--color-label]"
-                        fontSize={12}
-                      />
-                      <LabelList
-                        dataKey="value"
-                        position="right"
-                        offset={8}
-                        className="fill-foreground"
-                        fontSize={12}
-                      />
-                    </Bar>
-                  </BarChart>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-          </div>
-
+        <div className="flex flex-col md:flex-row w-full gap-4">
+          <ChartComponent
+            data={jointsChartData}
+            title="Total Joints Chart"
+            description="Bar chart representing total joints"
+            chartConfig={chartConfig}
+            className="flex-1"
+          />
+          <ChartComponent
+            data={inchDiaChartData}
+            title="Total Inch Dia Chart"
+            description="Bar chart representing total inch dia"
+            chartConfig={chartConfig}
+            className="flex-1"
+          />
         </div>
       )}
     </Card>
   );
 }
-
-
-
-
-
