@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState,useMemo } from "react";
 import data from "@/app/data.json";
 import {
   Table,
@@ -88,25 +88,8 @@ const calculateMOCSummary = (data: DataType[]): MOCSummary[] => {
 
 const mocSummaryData = calculateMOCSummary(jsonData);
 
-// Calculate grand totals
-const grandTotalJoints = mocSummaryData.reduce((acc, item) => acc + item.TOTAL_JOINTS, 0);
-const grandTotalShopJoints = mocSummaryData.reduce((acc, item) => acc + item.SHOP_JOINTS, 0);
-const grandTotalFieldJoints = mocSummaryData.reduce((acc, item) => acc + item.FIELD_JOINTS, 0);
-const grandTotalInchDia = mocSummaryData.reduce((acc, item) => acc + item.TOTAL_INCH_DIA, 0);
-const grandTotalShopInchDia = mocSummaryData.reduce((acc, item) => acc + item.SHOP_INCH_DIA, 0);
-const grandTotalFieldInchDia = mocSummaryData.reduce((acc, item) => acc + item.FIELD_INCH_DIA, 0);
 
-const jointsChartData = [
-  { metric: "Shop Joints", value: grandTotalShopJoints },
-  { metric: "Field Joints", value: grandTotalFieldJoints },
-  { metric: "Total Joints", value: grandTotalJoints },
-];
 
-const inchDiaChartData = [
-  { metric: "Shop Inch Dia", value: grandTotalShopInchDia },
-  { metric: "Field Inch Dia", value: grandTotalFieldInchDia },
-  { metric: "Total Inch Dia", value: grandTotalInchDia },
-];
 
 const chartConfig = {
   value: {
@@ -120,6 +103,57 @@ const chartConfig = {
 
 export default function TotalJointsByMOC() {
   const [showTable, setShowTable] = useState<"joints" | "inchDia" | "chart">("joints");
+
+  const mocSummaryData = useMemo(() => calculateMOCSummary(jsonData), [jsonData]);
+
+  const grandTotalJoints = useMemo(
+    () => mocSummaryData.reduce((acc, item) => acc + item.TOTAL_JOINTS, 0),
+    [mocSummaryData]
+  );
+
+  const grandTotalShopJoints = useMemo(
+    () => mocSummaryData.reduce((acc, item) => acc + item.SHOP_JOINTS, 0),
+    [mocSummaryData]
+  );
+
+  const grandTotalFieldJoints = useMemo(
+    () => mocSummaryData.reduce((acc, item) => acc + item.FIELD_JOINTS, 0),
+    [mocSummaryData]
+  );
+
+  const grandTotalInchDia = useMemo(
+    () => mocSummaryData.reduce((acc, item) => acc + item.TOTAL_INCH_DIA, 0),
+    [mocSummaryData]
+  );
+
+  const grandTotalShopInchDia = useMemo(
+    () => mocSummaryData.reduce((acc, item) => acc + item.SHOP_INCH_DIA, 0),
+    [mocSummaryData]
+  );
+
+  const grandTotalFieldInchDia = useMemo(
+    () => mocSummaryData.reduce((acc, item) => acc + item.FIELD_INCH_DIA, 0),
+    [mocSummaryData]
+  );
+
+
+  const jointsChartData = useMemo(
+    () => [
+      { metric: "Shop Joints", value: grandTotalShopJoints },
+      { metric: "Field Joints", value: grandTotalFieldJoints },
+      { metric: "Total Joints", value: grandTotalJoints },
+    ],
+    [grandTotalShopJoints, grandTotalFieldJoints, grandTotalJoints]
+  );
+  
+  const inchDiaChartData = useMemo(
+    () => [
+      { metric: "Shop Inch Dia", value: grandTotalShopInchDia },
+      { metric: "Field Inch Dia", value: grandTotalFieldInchDia },
+      { metric: "Total Inch Dia", value: grandTotalInchDia },
+    ],
+    [grandTotalShopInchDia, grandTotalFieldInchDia, grandTotalInchDia]
+  );
 
   const tableHeadersJoints = [
     { label: "Sr. No", className: "font-bold w-16 p-1.5" },
