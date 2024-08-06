@@ -53,7 +53,6 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
   const totalFieldInchDia = filteredData.reduce((sum, item) => sum + item['FIELD INCH DIA'], 0);
   const totalInchDia = totalShopInchDia + totalFieldInchDia;
 
-
   const chartDataJoints = [
     { name: 'Shop', value: totalShopJoints },
     { name: 'Field', value: totalFieldJoints },
@@ -71,6 +70,7 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
       </CardHeader>
       <Separator />
       <CardContent className="overflow-auto">
+      <div className="overflow-x-auto">
         <Table className="table-fixed">
           <TableBody>
             <TableRow className="h-6 bg-gray-200 font-bold">
@@ -138,59 +138,56 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
             </TableRow>
           </TableBody>
         </Table>
+        </div>
         <Separator />
       </CardContent>
-      <CardFooter className="overflow-auto flex">
-        <div className="w-1/3">
-          <Table className="table-fixed" style={{ width: 'auto' }}>
-            <TableBody>
-              <TableRow className="h-8 bg-gray-200 font-bold text-lg">
-                <TableCell className="px-2 py-2" style={{ width: '70px' }}>Summary</TableCell>
-                <TableCell className="px-2 py-2" style={{ width: '40px' }}>Shop</TableCell>
-                <TableCell className="px-2 py-2" style={{ width: '40px' }}>Field</TableCell>
-                <TableCell className="px-2 py-2" style={{ width: '40px' }}>Total</TableCell>
-              </TableRow>
-              <TableRow className="h-8 text-lg">
-                <TableCell className="px-2 py-2" style={{ width: '70px' }}>Joints</TableCell>
-                <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalShopJoints)}</TableCell>
-                <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalFieldJoints)}</TableCell>
-                <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalJoints)}</TableCell>
-              </TableRow>
-              <TableRow className="h-8 text-lg">
-                <TableCell className="px-2 py-2" style={{ width: '70px' }}>Inch Dia</TableCell>
-                <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalShopInchDia)}</TableCell>
-                <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalFieldInchDia)}</TableCell>
-                <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalInchDia)}</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-        <div className="w-2/3 flex">
-          <div className="flex-1">
-            <h3 className="text-center text-lg">Joints</h3>
-            <BarChart width={400} height={300} data={chartDataJoints}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="value" fill="#8884d8"  barSize={20} />
-              <LabelList dataKey="value" position="center" fill="#fff" />
-            </BarChart>
-          </div>
-          <div className="flex-1">
-            <h3 className="text-center text-lg">Inch Dia</h3>
-            <BarChart width={400} height={300} data={chartDataInchDia}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="value" fill="#82ca9d"  barSize={20} />
-              <LabelList dataKey="value" position="center" fill="#fff" />
-            </BarChart>
-          </div>
-        </div>
-      </CardFooter>
+      <CardFooter className="flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0 lg:space-x-4">
+  <div className="w-full lg:w-1/3">
+    <Table className="table-fixed w-full">
+      <TableBody>
+        <TableRow className="h-8 bg-gray-200 font-bold text-lg">
+          <TableCell className="px-2 py-2" style={{ width: '70px' }}>Summary</TableCell>
+          <TableCell className="px-2 py-2" style={{ width: '40px' }}>Shop</TableCell>
+          <TableCell className="px-2 py-2" style={{ width: '40px' }}>Field</TableCell>
+          <TableCell className="px-2 py-2" style={{ width: '40px' }}>Total</TableCell>
+        </TableRow>
+        <TableRow className="h-8 text-lg">
+          <TableCell className="px-2 py-2" style={{ width: '70px' }}>Joints</TableCell>
+          <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalShopJoints)}</TableCell>
+          <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalFieldJoints)}</TableCell>
+          <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalJoints)}</TableCell>
+        </TableRow>
+        <TableRow className="h-8 text-lg">
+          <TableCell className="px-2 py-2" style={{ width: '70px' }}>Inch Dia</TableCell>
+          <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalShopInchDia)}</TableCell>
+          <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalFieldInchDia)}</TableCell>
+          <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalInchDia)}</TableCell>
+        </TableRow>
+      </TableBody>
+    </Table>
+  </div>
+  <div className="w-full lg:w-2/3 overflow-x-auto">
+    <h3 className="text-center text-lg">Joints</h3>
+    <BarChart
+      width={400}
+      height={300}
+      data={chartDataJoints}
+      className="m-auto"
+    >
+      <XAxis dataKey="name" />
+      <YAxis />
+      <Tooltip />
+      <Legend />
+      <Bar dataKey="value" fill="#8884d8">
+        <LabelList dataKey="value" position="top" />
+      </Bar>
+    </BarChart>
+  </div>
+</CardFooter>
+
 
     </Card>
   );
 }
+
+
