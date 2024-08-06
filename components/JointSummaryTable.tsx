@@ -17,7 +17,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, LabelList } from 'recharts';
-import { Badge } from '@/components/ui/badge'; // Import the Badge component
 
 interface DataItem {
   MOC: string;
@@ -68,67 +67,67 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
       </CardHeader>
       <Separator />
       <CardContent className="overflow-auto">
-        <div className="overflow-x-auto">
-          <Table className="min-w-full table-fixed">
+        <div className="w-full overflow-x-auto">
+          <Table className="w-full min-w-max">
             <TableBody>
               <TableRow className="h-6 bg-gray-200 font-bold">
-                <TableCell className="px-1 py-1" style={{ width: '150px' }}>SIZE (INCHES)</TableCell>
+                <TableCell className="px-1 py-1">SIZE (INCHES)</TableCell>
                 {filteredData.map((item, index) => (
                   <TableCell key={index} className="px-1 py-1">{item['SIZE (INCHES)']}</TableCell>
                 ))}
                 <TableCell className="px-1 py-1 font-bold">Total</TableCell>
               </TableRow>
               <TableRow className="h-6">
-                <TableCell className="px-1 py-1" style={{ width: '150px' }}>PIPE SCHEDULE</TableCell>
+                <TableCell className="px-1 py-1">PIPE SCHEDULE</TableCell>
                 {filteredData.map((item, index) => (
                   <TableCell key={index} className="px-1 py-1">{item['PIPE SCHEDULE']}</TableCell>
                 ))}
                 <TableCell className="px-1 py-1">0</TableCell>
               </TableRow>
               <TableRow className="h-6">
-                <TableCell className="px-1 py-1" style={{ width: '150px' }}>THKNESS</TableCell>
+                <TableCell className="px-1 py-1">THKNESS</TableCell>
                 {filteredData.map((item, index) => (
                   <TableCell key={index} className="px-1 py-1">{item.THKNESS}</TableCell>
                 ))}
                 <TableCell className="px-1 py-1">0</TableCell>
               </TableRow>
               <TableRow className="h-6">
-                <TableCell className="px-1 py-1" style={{ width: '150px' }}>SHOP JOINTS</TableCell>
+                <TableCell className="px-1 py-1">SHOP JOINTS</TableCell>
                 {filteredData.map((item, index) => (
                   <TableCell key={index} className="px-1 py-1">{item['SHOP JOINTS']}</TableCell>
                 ))}
                 <TableCell className="px-1 py-1">{totalShopJoints}</TableCell>
               </TableRow>
               <TableRow className="h-6">
-                <TableCell className="px-1 py-1" style={{ width: '150px' }}>SHOP INCH DIA</TableCell>
+                <TableCell className="px-1 py-1">SHOP INCH DIA</TableCell>
                 {filteredData.map((item, index) => (
                   <TableCell key={index} className="px-1 py-1">{item['SHOP INCH DIA']}</TableCell>
                 ))}
                 <TableCell className="px-1 py-1">{totalShopInchDia}</TableCell>
               </TableRow>
               <TableRow className="h-6">
-                <TableCell className="px-1 py-1" style={{ width: '150px' }}>FIELD JOINTS</TableCell>
+                <TableCell className="px-1 py-1">FIELD JOINTS</TableCell>
                 {filteredData.map((item, index) => (
                   <TableCell key={index} className="px-1 py-1">{item['FIELD JOINTS']}</TableCell>
                 ))}
                 <TableCell className="px-1 py-1">{totalFieldJoints}</TableCell>
               </TableRow>
               <TableRow className="h-6">
-                <TableCell className="px-1 py-1" style={{ width: '150px' }}>FIELD INCH DIA</TableCell>
+                <TableCell className="px-1 py-1">FIELD INCH DIA</TableCell>
                 {filteredData.map((item, index) => (
                   <TableCell key={index} className="px-1 py-1">{item['FIELD INCH DIA']}</TableCell>
                 ))}
                 <TableCell className="px-1 py-1">{totalFieldInchDia}</TableCell>
               </TableRow>
               <TableRow className="h-6">
-                <TableCell className="px-1 py-1" style={{ width: '150px' }}>TOTAL JOINTS</TableCell>
+                <TableCell className="px-1 py-1">TOTAL JOINTS</TableCell>
                 {filteredData.map((item, index) => (
                   <TableCell key={index} className="px-1 py-1">{item['TOTAL JOINTS']}</TableCell>
                 ))}
                 <TableCell className="px-1 py-1">{totalJoints}</TableCell>
               </TableRow>
               <TableRow className="h-6">
-                <TableCell className="px-1 py-1" style={{ width: '150px' }}>TOTAL INCH DIA</TableCell>
+                <TableCell className="px-1 py-1">TOTAL INCH DIA</TableCell>
                 {filteredData.map((item, index) => (
                   <TableCell key={index} className="px-1 py-1">{item['TOTAL INCH DIA']}</TableCell>
                 ))}
@@ -147,32 +146,33 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
       </CardFooter>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-4xl"> {/* Increased dialog width */}
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>{moc ? `${moc} Joints Summary Chart` : 'Joints Summary Chart'}</DialogTitle>
           </DialogHeader>
-          <div className="flex justify-center my-4">
-            <BarChart width={400} height={300} data={chartDataJoints}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="value" fill="#8884d8" barSize={20}> {/* Decreased bar width */}
-                <LabelList dataKey="value" position="top" />
-              </Bar>
-            </BarChart>
-          </div>
-          <Separator />
-          <div className="flex justify-center my-4">
-            <BarChart width={400} height={300} data={chartDataInchDia}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="value" fill="#82ca9d" barSize={20}> {/* Decreased bar width */}
-                <LabelList dataKey="value" position="top" />
-              </Bar>
-            </BarChart>
+          <div className="flex flex-col lg:flex-row justify-center my-4 space-y-4 lg:space-y-0 lg:space-x-4">
+            <div className="w-full lg:w-1/2">
+              <BarChart width={400} height={300} data={chartDataJoints}>
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="value" fill="#8884d8">
+                  <LabelList dataKey="value" position="top" />
+                </Bar>
+              </BarChart>
+            </div>
+            <div className="w-full lg:w-1/2">
+              <BarChart width={400} height={300} data={chartDataInchDia}>
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="value" fill="#82ca9d">
+                  <LabelList dataKey="value" position="top" />
+                </Bar>
+              </BarChart>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
