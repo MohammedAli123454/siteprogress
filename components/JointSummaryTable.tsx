@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend,LabelList } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, LabelList } from 'recharts';
 import { Badge } from '@/components/ui/badge'; // Import the Badge component
 
 interface DataItem {
@@ -43,8 +43,6 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
 
   const filteredData = moc ? data.filter((item) => item.MOC === moc) : data;
 
-  
-
   const totalShopJoints = filteredData.reduce((sum, item) => sum + item['SHOP JOINTS'], 0);
   const totalFieldJoints = filteredData.reduce((sum, item) => sum + item['FIELD JOINTS'], 0);
   const totalJoints = totalShopJoints + totalFieldJoints;
@@ -70,124 +68,150 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
       </CardHeader>
       <Separator />
       <CardContent className="overflow-auto">
-      <div className="overflow-x-auto">
-        <Table className="table-fixed">
-          <TableBody>
-            <TableRow className="h-6 bg-gray-200 font-bold">
-              <TableCell className="px-1 py-1" style={{ width: '150px' }}>SIZE (INCHES)</TableCell>
-              {filteredData.map((item, index) => (
-                <TableCell key={index} className="px-1 py-1">{item['SIZE (INCHES)']}</TableCell>
-              ))}
-              <TableCell className="px-1 py-1 font-bold">Total</TableCell>
-            </TableRow>
-            <TableRow className="h-6">
-              <TableCell className="px-1 py-1" style={{ width: '150px' }}>PIPE SCHEDULE</TableCell>
-              {filteredData.map((item, index) => (
-                <TableCell key={index} className="px-1 py-1">{item['PIPE SCHEDULE']}</TableCell>
-              ))}
-              <TableCell className="px-1 py-1">0</TableCell>
-            </TableRow>
-            <TableRow className="h-6">
-              <TableCell className="px-1 py-1" style={{ width: '150px' }}>THKNESS</TableCell>
-              {filteredData.map((item, index) => (
-                <TableCell key={index} className="px-1 py-1">{item.THKNESS}</TableCell>
-              ))}
-              <TableCell className="px-1 py-1">0</TableCell>
-            </TableRow>
-            <TableRow className="h-6">
-              <TableCell className="px-1 py-1" style={{ width: '150px' }}>SHOP JOINTS</TableCell>
-              {filteredData.map((item, index) => (
-                <TableCell key={index} className="px-1 py-1">{item['SHOP JOINTS']}</TableCell>
-              ))}
-              <TableCell className="px-1 py-1">{totalShopJoints}</TableCell>
-            </TableRow>
-            <TableRow className="h-6">
-              <TableCell className="px-1 py-1" style={{ width: '150px' }}>SHOP INCH DIA</TableCell>
-              {filteredData.map((item, index) => (
-                <TableCell key={index} className="px-1 py-1">{item['SHOP INCH DIA']}</TableCell>
-              ))}
-              <TableCell className="px-1 py-1">{totalShopInchDia}</TableCell>
-            </TableRow>
-            <TableRow className="h-6">
-              <TableCell className="px-1 py-1" style={{ width: '150px' }}>FIELD JOINTS</TableCell>
-              {filteredData.map((item, index) => (
-                <TableCell key={index} className="px-1 py-1">{item['FIELD JOINTS']}</TableCell>
-              ))}
-              <TableCell className="px-1 py-1">{totalFieldJoints}</TableCell>
-            </TableRow>
-            <TableRow className="h-6">
-              <TableCell className="px-1 py-1" style={{ width: '150px' }}>FIELD INCH DIA</TableCell>
-              {filteredData.map((item, index) => (
-                <TableCell key={index} className="px-1 py-1">{item['FIELD INCH DIA']}</TableCell>
-              ))}
-              <TableCell className="px-1 py-1">{totalFieldInchDia}</TableCell>
-            </TableRow>
-            <TableRow className="h-6">
-              <TableCell className="px-1 py-1" style={{ width: '150px' }}>TOTAL JOINTS</TableCell>
-              {filteredData.map((item, index) => (
-                <TableCell key={index} className="px-1 py-1">{item['TOTAL JOINTS']}</TableCell>
-              ))}
-              <TableCell className="px-1 py-1">{totalJoints}</TableCell>
-            </TableRow>
-            <TableRow className="h-6">
-              <TableCell className="px-1 py-1" style={{ width: '150px' }}>TOTAL INCH DIA</TableCell>
-              {filteredData.map((item, index) => (
-                <TableCell key={index} className="px-1 py-1">{item['TOTAL INCH DIA']}</TableCell>
-              ))}
-              <TableCell className="px-1 py-1">{totalInchDia}</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
+        <div className="overflow-x-auto">
+          <Table className="min-w-full table-fixed">
+            <TableBody>
+              <TableRow className="h-6 bg-gray-200 font-bold">
+                <TableCell className="px-1 py-1" style={{ width: '150px' }}>SIZE (INCHES)</TableCell>
+                {filteredData.map((item, index) => (
+                  <TableCell key={index} className="px-1 py-1">{item['SIZE (INCHES)']}</TableCell>
+                ))}
+                <TableCell className="px-1 py-1 font-bold">Total</TableCell>
+              </TableRow>
+              <TableRow className="h-6">
+                <TableCell className="px-1 py-1" style={{ width: '150px' }}>PIPE SCHEDULE</TableCell>
+                {filteredData.map((item, index) => (
+                  <TableCell key={index} className="px-1 py-1">{item['PIPE SCHEDULE']}</TableCell>
+                ))}
+                <TableCell className="px-1 py-1">0</TableCell>
+              </TableRow>
+              <TableRow className="h-6">
+                <TableCell className="px-1 py-1" style={{ width: '150px' }}>THKNESS</TableCell>
+                {filteredData.map((item, index) => (
+                  <TableCell key={index} className="px-1 py-1">{item.THKNESS}</TableCell>
+                ))}
+                <TableCell className="px-1 py-1">0</TableCell>
+              </TableRow>
+              <TableRow className="h-6">
+                <TableCell className="px-1 py-1" style={{ width: '150px' }}>SHOP JOINTS</TableCell>
+                {filteredData.map((item, index) => (
+                  <TableCell key={index} className="px-1 py-1">{item['SHOP JOINTS']}</TableCell>
+                ))}
+                <TableCell className="px-1 py-1">{totalShopJoints}</TableCell>
+              </TableRow>
+              <TableRow className="h-6">
+                <TableCell className="px-1 py-1" style={{ width: '150px' }}>SHOP INCH DIA</TableCell>
+                {filteredData.map((item, index) => (
+                  <TableCell key={index} className="px-1 py-1">{item['SHOP INCH DIA']}</TableCell>
+                ))}
+                <TableCell className="px-1 py-1">{totalShopInchDia}</TableCell>
+              </TableRow>
+              <TableRow className="h-6">
+                <TableCell className="px-1 py-1" style={{ width: '150px' }}>FIELD JOINTS</TableCell>
+                {filteredData.map((item, index) => (
+                  <TableCell key={index} className="px-1 py-1">{item['FIELD JOINTS']}</TableCell>
+                ))}
+                <TableCell className="px-1 py-1">{totalFieldJoints}</TableCell>
+              </TableRow>
+              <TableRow className="h-6">
+                <TableCell className="px-1 py-1" style={{ width: '150px' }}>FIELD INCH DIA</TableCell>
+                {filteredData.map((item, index) => (
+                  <TableCell key={index} className="px-1 py-1">{item['FIELD INCH DIA']}</TableCell>
+                ))}
+                <TableCell className="px-1 py-1">{totalFieldInchDia}</TableCell>
+              </TableRow>
+              <TableRow className="h-6">
+                <TableCell className="px-1 py-1" style={{ width: '150px' }}>TOTAL JOINTS</TableCell>
+                {filteredData.map((item, index) => (
+                  <TableCell key={index} className="px-1 py-1">{item['TOTAL JOINTS']}</TableCell>
+                ))}
+                <TableCell className="px-1 py-1">{totalJoints}</TableCell>
+              </TableRow>
+              <TableRow className="h-6">
+                <TableCell className="px-1 py-1" style={{ width: '150px' }}>TOTAL INCH DIA</TableCell>
+                {filteredData.map((item, index) => (
+                  <TableCell key={index} className="px-1 py-1">{item['TOTAL INCH DIA']}</TableCell>
+                ))}
+                <TableCell className="px-1 py-1">{totalInchDia}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
         <Separator />
       </CardContent>
       <CardFooter className="flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0 lg:space-x-4">
-  <div className="w-full lg:w-1/3">
-    <Table className="table-fixed w-full">
-      <TableBody>
-        <TableRow className="h-8 bg-gray-200 font-bold text-lg">
-          <TableCell className="px-2 py-2" style={{ width: '70px' }}>Summary</TableCell>
-          <TableCell className="px-2 py-2" style={{ width: '40px' }}>Shop</TableCell>
-          <TableCell className="px-2 py-2" style={{ width: '40px' }}>Field</TableCell>
-          <TableCell className="px-2 py-2" style={{ width: '40px' }}>Total</TableCell>
-        </TableRow>
-        <TableRow className="h-8 text-lg">
-          <TableCell className="px-2 py-2" style={{ width: '70px' }}>Joints</TableCell>
-          <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalShopJoints)}</TableCell>
-          <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalFieldJoints)}</TableCell>
-          <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalJoints)}</TableCell>
-        </TableRow>
-        <TableRow className="h-8 text-lg">
-          <TableCell className="px-2 py-2" style={{ width: '70px' }}>Inch Dia</TableCell>
-          <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalShopInchDia)}</TableCell>
-          <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalFieldInchDia)}</TableCell>
-          <TableCell className="px-2 py-2" style={{ width: '40px' }}>{Math.round(totalInchDia)}</TableCell>
-        </TableRow>
-      </TableBody>
-    </Table>
-  </div>
-  <div className="w-full lg:w-2/3 overflow-x-auto">
-    <h3 className="text-center text-lg">Joints</h3>
-    <BarChart
-      width={400}
-      height={300}
-      data={chartDataJoints}
-      className="m-auto"
-    >
-      <XAxis dataKey="name" />
-      <YAxis />
-      <Tooltip />
-      <Legend />
-      <Bar dataKey="value" fill="#8884d8">
-        <LabelList dataKey="value" position="top" />
-      </Bar>
-    </BarChart>
-  </div>
-</CardFooter>
+        <div className="flex justify-center lg:justify-end w-full space-x-4 lg:w-auto">
+          <Button variant="outline" onClick={() => setDialogOpen(true)}>View Chart</Button>
+          <Button variant="outline" onClick={() => setOverallDialogOpen(true)}>View Summary</Button>
+        </div>
+      </CardFooter>
 
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-4xl"> {/* Increased dialog width */}
+          <DialogHeader>
+            <DialogTitle>{moc ? `${moc} Joints Summary Chart` : 'Joints Summary Chart'}</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center my-4">
+            <BarChart width={400} height={300} data={chartDataJoints}>
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="value" fill="#8884d8" barSize={20}> {/* Decreased bar width */}
+                <LabelList dataKey="value" position="top" />
+              </Bar>
+            </BarChart>
+          </div>
+          <Separator />
+          <div className="flex justify-center my-4">
+            <BarChart width={400} height={300} data={chartDataInchDia}>
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="value" fill="#82ca9d" barSize={20}> {/* Decreased bar width */}
+                <LabelList dataKey="value" position="top" />
+              </Bar>
+            </BarChart>
+          </div>
+        </DialogContent>
+      </Dialog>
 
+      <Dialog open={overallDialogOpen} onOpenChange={setOverallDialogOpen}>
+      <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Overall Joints</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col lg:flex-row">
+            <div className="flex-grow">
+              <h2 className="text-xl font-semibold mb-4">Overall Joint Summary</h2>
+              <Table className="w-full">
+                <TableBody>
+                  <TableRow className="h-8 bg-gray-200 font-bold text-lg">
+                    <TableCell className="px-2 py-2">Summary</TableCell>
+                    <TableCell className="px-2 py-2">Shop</TableCell>
+                    <TableCell className="px-2 py-2">Field</TableCell>
+                    <TableCell className="px-2 py-2">Total</TableCell>
+                  </TableRow>
+                  <TableRow className="h-8 text-lg">
+                    <TableCell className="px-2 py-2">Joints</TableCell>
+                    <TableCell className="px-2 py-2">{Math.round(totalShopJoints)}</TableCell>
+                    <TableCell className="px-2 py-2">{Math.round(totalFieldJoints)}</TableCell>
+                    <TableCell className="px-2 py-2">{Math.round(totalJoints)}</TableCell>
+                  </TableRow>
+                  <TableRow className="h-8 text-lg">
+                    <TableCell className="px-2 py-2">Inch Dia</TableCell>
+                    <TableCell className="px-2 py-2">{Math.round(totalShopInchDia)}</TableCell>
+                    <TableCell className="px-2 py-2">{Math.round(totalFieldInchDia)}</TableCell>
+                    <TableCell className="px-2 py-2">{Math.round(totalInchDia)}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </DialogContent>
+
+      </Dialog>
     </Card>
   );
 }
-
-
