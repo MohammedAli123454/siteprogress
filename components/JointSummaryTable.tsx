@@ -150,8 +150,8 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
           <DialogHeader>
             <DialogTitle>{moc ? `${moc} Joints Summary Chart` : 'Joints Summary Chart'}</DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col lg:flex-row justify-center my-4 space-y-4 lg:space-y-0 lg:space-x-4">
-            <div className="w-full lg:w-1/2">
+          <div className="flex flex-col md:flex-row justify-center md:justify-between my-4">
+          <div className="w-full md:w-1/2 lg:w-1/3 p-2">
               <BarChart width={400} height={300} data={chartDataJoints}>
                 <XAxis dataKey="name" />
                 <YAxis />
@@ -162,7 +162,7 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
                 </Bar>
               </BarChart>
             </div>
-            <div className="w-full lg:w-1/2">
+            <div className="w-full md:w-1/2 lg:w-1/3 p-2">
               <BarChart width={400} height={300} data={chartDataInchDia}>
                 <XAxis dataKey="name" />
                 <YAxis />
