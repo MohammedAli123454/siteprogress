@@ -104,6 +104,115 @@
       "MOC": "155-PC-19-0002",
       "MOC NAME": "UPGRADE AIR COMPRESSOR DISCHARGE HEADER PIPING FROM CS TO SS"
     },
+    {
+     
+      "SIZE (INCHES)": 0.75,
+      "PIPE SCHEDULE": "Sch",
+      "THKNESS": "5.56mm (P9)",
+      "SHOP JOINTS": 39,
+      "SHOP INCH DIA": 29.25,
+      "FIELD JOINTS": 0,
+      "FIELD INCH DIA": 0,
+      "TOTAL JOINTS": 39,
+      "TOTAL INCH DIA": 29.25,
+      "MOC": "113-PC-22-0027",
+      "MOC NAME": "Flash Zone Strainers Modification"
+    },
+    {
+      "SIZE (INCHES)": 1.00,
+      "PIPE SCHEDULE": "Sch",
+      "THKNESS": "4.55mm (P9)",
+      "SHOP JOINTS": 97,
+      "SHOP INCH DIA": 97,
+      "FIELD JOINTS": 0,
+      "FIELD INCH DIA": 0,
+      "TOTAL JOINTS": 97,
+      "TOTAL INCH DIA": 97,
+      "MOC": "113-PC-22-0027",
+      "MOC NAME": "Flash Zone Strainers Modification"
+    },
+    {
+      "SIZE (INCHES)": 1.50,
+      "PIPE SCHEDULE": "Sch",
+      "THKNESS": "5.08mm (CS)",
+      "SHOP JOINTS": 6,
+      "SHOP INCH DIA": 9,
+      "FIELD JOINTS": 0,
+      "FIELD INCH DIA": 0,
+      "TOTAL JOINTS": 6,
+      "TOTAL INCH DIA": 9,
+      "MOC": "113-PC-22-0027",
+      "MOC NAME": "Flash Zone Strainers Modification"
+    },
+    {
+
+      "SIZE (INCHES)": 2.00,
+      "PIPE SCHEDULE": "Sch",
+      "THKNESS": "5.54mm (P9)",
+      "SHOP JOINTS": 196,
+      "SHOP INCH DIA": 392,
+      "FIELD JOINTS": 0,
+      "FIELD INCH DIA": 0,
+      "TOTAL JOINTS": 166,
+      "TOTAL INCH DIA": 392,
+      "MOC": "113-PC-22-0027",
+      "MOC NAME": "Flash Zone Strainers Modification"
+    },
+    {
+
+      "SIZE (INCHES)": 2.00,
+      "PIPE SCHEDULE": "Sch",
+      "THKNESS": "5.54mm (CS)",
+      "SHOP JOINTS": 148,
+      "SHOP INCH DIA": 296,
+      "FIELD JOINTS": 2,
+      "FIELD INCH DIA": 4,
+      "TOTAL JOINTS": 150,
+      "TOTAL INCH DIA": 300,
+      "MOC": "113-PC-22-0027",
+      "MOC NAME": "Flash Zone Strainers Modification"
+    },
+    {
+     
+      "SIZE (INCHES)": 3.00,
+      "PIPE SCHEDULE": "Sch",
+      "THKNESS": "7.62mm (P9)",
+      "SHOP JOINTS": 70,
+      "SHOP INCH DIA": 210,
+      "FIELD JOINTS": 1,
+      "FIELD INCH DIA": 3,
+      "TOTAL JOINTS": 71,
+      "TOTAL INCH DIA": 213,
+      "MOC": "113-PC-22-0027",
+      "MOC NAME": "Flash Zone Strainers Modification"
+    },
+    {
+      "SIZE (INCHES)": 3.00,
+      "PIPE SCHEDULE": "Sch",
+      "THKNESS": "5.49mm (CS)",
+      "SHOP JOINTS": 20,
+      "SHOP INCH DIA": 60,
+      "FIELD JOINTS": 0,
+      "FIELD INCH DIA": 0,
+      "TOTAL JOINTS": 20,
+      "TOTAL INCH DIA": 60,
+      "MOC": "113-PC-22-0027",
+      "MOC NAME": "Flash Zone Strainers Modification"
+    },
+    {
+
+      "SIZE (INCHES)": 8.00,
+      "PIPE SCHEDULE": "Sch",
+      "THKNESS": "12.70mm (P9)",
+      "SHOP JOINTS": 85,
+      "SHOP INCH DIA": 680,
+      "FIELD JOINTS": 2,
+      "FIELD INCH DIA": 16,
+      "TOTAL JOINTS": 87,
+      "TOTAL INCH DIA": 696,
+      "MOC": "113-PC-22-0027",
+      "MOC NAME": "Flash Zone Strainers Modification"
+    },
   {
       "SIZE (INCHES)": 0.75,
       "PIPE SCHEDULE": "Sch XS",

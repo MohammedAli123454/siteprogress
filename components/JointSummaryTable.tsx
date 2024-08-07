@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -16,7 +16,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, LabelList } from 'recharts';
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import ChartComponent from './BarChartComponent';
 
 interface DataItem {
   MOC: string;
@@ -36,6 +43,16 @@ interface JointSummaryTableProps {
   moc?: string; // Make moc optional
 }
 
+const chartConfig = {
+  value: {
+    label: "value",
+    color: "hsl(var(--chart-2))",
+  },
+  label: {
+    color: "hsl(var(--background))",
+  },
+} satisfies ChartConfig;
+
 export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [overallDialogOpen, setOverallDialogOpen] = useState(false);
@@ -50,15 +67,23 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
   const totalFieldInchDia = filteredData.reduce((sum, item) => sum + item['FIELD INCH DIA'], 0);
   const totalInchDia = totalShopInchDia + totalFieldInchDia;
 
-  const chartDataJoints = [
-    { name: 'Shop', value: totalShopJoints },
-    { name: 'Field', value: totalFieldJoints },
-  ];
-
-  const chartDataInchDia = [
-    { name: 'Shop', value: totalShopInchDia },
-    { name: 'Field', value: totalFieldInchDia },
-  ];
+  const jointsChartData = useMemo(
+    () => [
+      { metric: "Shop Joints", value: totalShopJoints },
+      { metric: "Field Joints", value: totalFieldJoints },
+      { metric: "Total Joints", value: totalJoints },
+    ],
+    [totalShopJoints, totalFieldJoints, totalJoints]
+  );
+  
+  const inchDiaChartData = useMemo(
+    () => [
+      { metric: "Shop Inch Dia", value: totalShopInchDia },
+      { metric: "Field Inch Dia", value: totalFieldInchDia },
+      { metric: "Total Inch Dia", value: totalInchDia },
+    ],
+    [totalShopInchDia, totalFieldInchDia, totalInchDia]
+  );
 
   return (
     <Card>
@@ -146,33 +171,31 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
       </CardFooter>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-6xl">
           <DialogHeader>
             <DialogTitle>{moc ? `${moc} Joints Summary Chart` : 'Joints Summary Chart'}</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col md:flex-row justify-center md:justify-between my-4">
-          <div className="w-full md:w-1/2 lg:w-1/3 p-2">
-              <BarChart width={400} height={300} data={chartDataJoints}>
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="value" fill="#8884d8">
-                  <LabelList dataKey="value" position="top" />
-                </Bar>
-              </BarChart>
+          <div className="w-full md:w-1/2 lg:w-1/2 p-1">
+          <ChartComponent
+            data={jointsChartData}
+            title="Total Joints Chart"
+            description="Bar chart representing total joints"
+            chartConfig={chartConfig}
+            className="flex-1"
+          />
             </div>
-            <div className="w-full md:w-1/2 lg:w-1/3 p-2">
-              <BarChart width={400} height={300} data={chartDataInchDia}>
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="value" fill="#82ca9d">
-                  <LabelList dataKey="value" position="top" />
-                </Bar>
-              </BarChart>
+        
+            <div className="w-full md:w-1/2 lg:w-1/2 p-1">
+            <ChartComponent
+            data={inchDiaChartData}
+            title="Total Inch Chart"
+            description="Bar chart representing total joints"
+            chartConfig={chartConfig}
+            className="flex-1"
+          />
             </div>
+            
           </div>
         </DialogContent>
       </Dialog>

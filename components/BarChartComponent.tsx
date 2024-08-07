@@ -32,7 +32,10 @@ export default function ChartComponent({
             data={data}
             layout="vertical"
             margin={{
-              right: 16,
+              top: 20,
+              right: 70, // Increase the right margin to give more space for the values
+              left: 20,
+              bottom: 20,
             }}
           >
             <CartesianGrid horizontal={false} />
