@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/chart";
 import ChartComponent from './BarChartComponent';
 
+
 interface DataItem {
   MOC: string;
   'SIZE (INCHES)': number;
@@ -53,6 +54,9 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+
+
+
 export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [overallDialogOpen, setOverallDialogOpen] = useState(false);
@@ -75,7 +79,7 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
     ],
     [totalShopJoints, totalFieldJoints, totalJoints]
   );
-  
+
   const inchDiaChartData = useMemo(
     () => [
       { metric: "Shop Inch Dia", value: totalShopInchDia },
@@ -83,6 +87,25 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
       { metric: "Total Inch Dia", value: totalInchDia },
     ],
     [totalShopInchDia, totalFieldInchDia, totalInchDia]
+  );
+
+  const generateRow = (label: string, key: keyof DataItem, total?: number, totalLabel?: string) => (
+    <TableRow className="h-6">
+      <TableCell className="px-1 py-1">{label}</TableCell>
+      {filteredData.map((item, index) => (
+        <TableCell key={index} className="px-1 py-1">{item[key]}</TableCell>
+      ))}
+      <TableCell className="px-1 py-1">{totalLabel ? totalLabel : (total !== undefined ? total : 0)}</TableCell>
+    </TableRow>
+  );
+
+  const generateOverallRow = (label: string, shop: number, field: number, total: number) => (
+    <TableRow className="h-8 text-lg">
+      <TableCell className="px-2 py-2">{label}</TableCell>
+      <TableCell className="px-2 py-2">{Math.round(shop)}</TableCell>
+      <TableCell className="px-2 py-2">{Math.round(field)}</TableCell>
+      <TableCell className="px-2 py-2">{Math.round(total)}</TableCell>
+    </TableRow>
   );
 
   return (
@@ -95,69 +118,15 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
         <div className="w-full overflow-x-auto">
           <Table className="w-full min-w-max">
             <TableBody>
-              <TableRow className="h-6 bg-gray-200 font-bold">
-                <TableCell className="px-1 py-1">SIZE (INCHES)</TableCell>
-                {filteredData.map((item, index) => (
-                  <TableCell key={index} className="px-1 py-1">{item['SIZE (INCHES)']}</TableCell>
-                ))}
-                <TableCell className="px-1 py-1 font-bold">Total</TableCell>
-              </TableRow>
-              <TableRow className="h-6">
-                <TableCell className="px-1 py-1">PIPE SCHEDULE</TableCell>
-                {filteredData.map((item, index) => (
-                  <TableCell key={index} className="px-1 py-1">{item['PIPE SCHEDULE']}</TableCell>
-                ))}
-                <TableCell className="px-1 py-1">0</TableCell>
-              </TableRow>
-              <TableRow className="h-6">
-                <TableCell className="px-1 py-1">THKNESS</TableCell>
-                {filteredData.map((item, index) => (
-                  <TableCell key={index} className="px-1 py-1">{item.THKNESS}</TableCell>
-                ))}
-                <TableCell className="px-1 py-1">0</TableCell>
-              </TableRow>
-              <TableRow className="h-6">
-                <TableCell className="px-1 py-1">SHOP JOINTS</TableCell>
-                {filteredData.map((item, index) => (
-                  <TableCell key={index} className="px-1 py-1">{item['SHOP JOINTS']}</TableCell>
-                ))}
-                <TableCell className="px-1 py-1">{totalShopJoints}</TableCell>
-              </TableRow>
-              <TableRow className="h-6">
-                <TableCell className="px-1 py-1">SHOP INCH DIA</TableCell>
-                {filteredData.map((item, index) => (
-                  <TableCell key={index} className="px-1 py-1">{item['SHOP INCH DIA']}</TableCell>
-                ))}
-                <TableCell className="px-1 py-1">{totalShopInchDia}</TableCell>
-              </TableRow>
-              <TableRow className="h-6">
-                <TableCell className="px-1 py-1">FIELD JOINTS</TableCell>
-                {filteredData.map((item, index) => (
-                  <TableCell key={index} className="px-1 py-1">{item['FIELD JOINTS']}</TableCell>
-                ))}
-                <TableCell className="px-1 py-1">{totalFieldJoints}</TableCell>
-              </TableRow>
-              <TableRow className="h-6">
-                <TableCell className="px-1 py-1">FIELD INCH DIA</TableCell>
-                {filteredData.map((item, index) => (
-                  <TableCell key={index} className="px-1 py-1">{item['FIELD INCH DIA']}</TableCell>
-                ))}
-                <TableCell className="px-1 py-1">{totalFieldInchDia}</TableCell>
-              </TableRow>
-              <TableRow className="h-6">
-                <TableCell className="px-1 py-1">TOTAL JOINTS</TableCell>
-                {filteredData.map((item, index) => (
-                  <TableCell key={index} className="px-1 py-1">{item['TOTAL JOINTS']}</TableCell>
-                ))}
-                <TableCell className="px-1 py-1">{totalJoints}</TableCell>
-              </TableRow>
-              <TableRow className="h-6">
-                <TableCell className="px-1 py-1">TOTAL INCH DIA</TableCell>
-                {filteredData.map((item, index) => (
-                  <TableCell key={index} className="px-1 py-1">{item['TOTAL INCH DIA']}</TableCell>
-                ))}
-                <TableCell className="px-1 py-1">{totalInchDia}</TableCell>
-              </TableRow>
+              {generateRow('SIZE (INCHES)', 'SIZE (INCHES)', undefined, 'Total')}
+              {generateRow('PIPE SCHEDULE', 'PIPE SCHEDULE')}
+              {generateRow('THKNESS', 'THKNESS')}
+              {generateRow('SHOP JOINTS', 'SHOP JOINTS', totalShopJoints)}
+              {generateRow('SHOP INCH DIA', 'SHOP INCH DIA', totalShopInchDia)}
+              {generateRow('FIELD JOINTS', 'FIELD JOINTS', totalFieldJoints)}
+              {generateRow('FIELD INCH DIA', 'FIELD INCH DIA', totalFieldInchDia)}
+              {generateRow('TOTAL JOINTS', 'TOTAL JOINTS', totalJoints)}
+              {generateRow('TOTAL INCH DIA', 'TOTAL INCH DIA', totalInchDia)}
             </TableBody>
           </Table>
         </div>
@@ -176,32 +145,30 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
             <DialogTitle>{moc ? `${moc} Joints Summary Chart` : 'Joints Summary Chart'}</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col md:flex-row justify-center md:justify-between my-4">
-          <div className="w-full md:w-1/2 lg:w-1/2 p-1">
-          <ChartComponent
-            data={jointsChartData}
-            title="Total Joints Chart"
-            description="Bar chart representing total joints"
-            chartConfig={chartConfig}
-            className="flex-1"
-          />
-            </div>
-        
             <div className="w-full md:w-1/2 lg:w-1/2 p-1">
-            <ChartComponent
-            data={inchDiaChartData}
-            title="Total Inch Chart"
-            description="Bar chart representing total joints"
-            chartConfig={chartConfig}
-            className="flex-1"
-          />
+              <ChartComponent
+                data={jointsChartData}
+                title="Total Joints Chart"
+                description="Bar chart representing total joints"
+                chartConfig={chartConfig}
+                className="flex-1"
+              />
             </div>
-            
+            <div className="w-full md:w-1/2 lg:w-1/2 p-1">
+              <ChartComponent
+                data={inchDiaChartData}
+                title="Total Inch Chart"
+                description="Bar chart representing total joints"
+                chartConfig={chartConfig}
+                className="flex-1"
+              />
+            </div>
           </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={overallDialogOpen} onOpenChange={setOverallDialogOpen}>
-      <DialogContent>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Overall Joints</DialogTitle>
           </DialogHeader>
@@ -216,25 +183,16 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
                     <TableCell className="px-2 py-2">Field</TableCell>
                     <TableCell className="px-2 py-2">Total</TableCell>
                   </TableRow>
-                  <TableRow className="h-8 text-lg">
-                    <TableCell className="px-2 py-2">Joints</TableCell>
-                    <TableCell className="px-2 py-2">{Math.round(totalShopJoints)}</TableCell>
-                    <TableCell className="px-2 py-2">{Math.round(totalFieldJoints)}</TableCell>
-                    <TableCell className="px-2 py-2">{Math.round(totalJoints)}</TableCell>
-                  </TableRow>
-                  <TableRow className="h-8 text-lg">
-                    <TableCell className="px-2 py-2">Inch Dia</TableCell>
-                    <TableCell className="px-2 py-2">{Math.round(totalShopInchDia)}</TableCell>
-                    <TableCell className="px-2 py-2">{Math.round(totalFieldInchDia)}</TableCell>
-                    <TableCell className="px-2 py-2">{Math.round(totalInchDia)}</TableCell>
-                  </TableRow>
+                  {generateOverallRow('Joints', totalShopJoints, totalFieldJoints, totalJoints)}
+                  {generateOverallRow('Inch Dia', totalShopInchDia, totalFieldInchDia, totalInchDia)}
                 </TableBody>
               </Table>
             </div>
           </div>
         </DialogContent>
-
       </Dialog>
     </Card>
   );
 }
+
+export default JointSummaryTable;

@@ -1,0 +1,642 @@
+[
+    {
+        "MOC": "155-PC-19-0002",
+        "MOC NAME": "UPGRADE AIR COMPRESSOR DISCHARGE HEADER PIPING FROM CS TO SS",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10; ASME CL 150; SS; TRIM 8\" CN 12; HNDWHL OPR ; FULL PO",
+        "Size": "10.00",
+        "Qty": "3"
+    },
+    {
+        "MOC": "155-PC-19-0002",
+        "MOC NAME": "UPGRADE AIR COMPRESSOR DISCHARGE HEADER PIPING FROM CS TO SS",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10; ASME CL 150; SS; TRIM CN 12; HNDWHL OPR ; FULL PORT;",
+        "Size": "8.00",
+        "Qty": "1"
+    },
+    {
+        "MOC": "155-PC-19-0002",
+        "MOC NAME": "UPGRADE AIR COMPRESSOR DISCHARGE HEADER PIPING FROM CS TO SS",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10; ASME CL 150; SS; TRIM CN 12; HNDWHL OPR ; FULL PORT;",
+        "Size": "6.00",
+        "Qty": "7"
+    },
+    {
+        "MOC": "155-PC-19-0002",
+        "MOC NAME": "UPGRADE AIR COMPRESSOR DISCHARGE HEADER PIPING FROM CS TO SS",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10; ASME CL 150; SS; TRIM CN 12; HNDWHL OPR ; FULL PORT;",
+        "Size": "3.00",
+        "Qty": "1"
+    },
+    {
+        "MOC": "155-PC-19-0002",
+        "MOC NAME": "UPGRADE AIR COMPRESSOR DISCHARGE HEADER PIPING FROM CS TO SS",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10; ASME CL 150; SS; TRIM CN 12; HNDWHL OPR ; FULL PORT;",
+        "Size": "2.00",
+        "Qty": "2"
+    },
+    {
+        "MOC": "155-PC-19-0002",
+        "MOC NAME": "UPGRADE AIR COMPRESSOR DISCHARGE HEADER PIPING FROM CS TO SS",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW X FNPT; API-602; API CL 800; SS; TRIM CN 12; HNDWHL OPR ; FULL PORT; BLT BNT; OS&Y;",
+        "Size": "1.00",
+        "Qty": "2"
+    },
+    {
+        "MOC": "155-PC-19-0002",
+        "MOC NAME": "UPGRADE AIR COMPRESSOR DISCHARGE HEADER PIPING FROM CS TO SS",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; PE X FNPT; API-602; API CL 800; SS; TRIM CN 12; HNDWHL OPR EXTND BODY TYPE; STD PORT; BL",
+        "Size": "0.75",
+        "Qty": "1"
+    },
+    {
+        "MOC": "155-PC-19-0002",
+        "MOC NAME": "UPGRADE AIR COMPRESSOR DISCHARGE HEADER PIPING FROM CS TO SS",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW X FNPT; API-602; API CL 800; SS; TRIM CN 12; HNDWHL OPR ; STD PORT; BLT BNT; OS&Y; SO",
+        "Size": "0.75",
+        "Qty": "8"
+    },
+    {
+        "MOC": "117-PC-23-0005",
+        "MOC NAME": "INSTALL ZV ON CCR OFF GAS TO ISM SCRUBBER LINE AT BL",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10;ASME CL 300; CS; TRIM CN 11; HNDWHL OPR ; BLT BNT; OS",
+        "Size": "4.00",
+        "Qty": "1"
+    },
+    {
+        "MOC": "117-PC-23-0005",
+        "MOC NAME": "INSTALL ZV ON CCR OFF GAS TO ISM SCRUBBER LINE AT BL",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; PE X FNPT; API-602; API CL 800; CS;TRIM CN 5; HNDWHL OPR EXTND BODY TYPE; STD PORT;BLT B",
+        "Size": "0.75",
+        "Qty": "2"
+    },
+    {
+        "MOC": "117-PC-23-0005",
+        "MOC NAME": "INSTALL ZV ON CCR OFF GAS TO ISM SCRUBBER LINE AT BL",
+        "Type": "INSTRUMENT ZV",
+        "Materials Description": "INSTRUMENT ZV-0120",
+        "Size": "4.00",
+        "Qty": "1"
+    },
+    {
+        "MOC": "112-PC-18-0014",
+        "MOC NAME": "112‐FCV‐0059 CONTROL VALVE UPGRADATION TO AVOID CAVITATION & REDUCE NOISE",
+        "Type": "Control Valve",
+        "Materials Description": "CONTROL VALVE;112-FCV-0059",
+        "Size": "4.00",
+        "Qty": "1"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Check Valve",
+        "Materials Description": "CHECK VALVE; FLGD RF; API-594 TYPE B/ASME B16.10; ASME CL 300; CS; TRIM CN 8 SWG TYPE; BLT COVER; CS",
+        "Size": "2\"",
+        "Qty": "2"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10; ASME CL 300; CS; TRIM CN 8; HNDWHL OPR ; FULL PORT;",
+        "Size": "2\"",
+        "Qty": "4"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10; ASME CL 300; CR-MO; TRIM CN 8; HNDWHL OPR ; FULL POR",
+        "Size": "2\"",
+        "Qty": "30"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10; ASME CL 300; CR-MO; TRIM CN 8; HNDWHL OPR ; FULL POR",
+        "Size": "3\"",
+        "Qty": "8"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10; ASME CL 300; CR-MO; TRIM CN 8; HNDWHL OPR ; FULL POR",
+        "Size": "8\"",
+        "Qty": "6"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Globe Valve",
+        "Materials Description": "GLOBE VALVE; FLGD RF; API-623/ASME B16.10; ASME CL 300; CR-MO; TRIM CN 8; HNDWHL OPR ; TBODY PATT; B",
+        "Size": "3\"",
+        "Qty": "4"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Check Valve",
+        "Materials Description": "CHECK VALVE; RF; API-594 TYPE A; ASME CL 300; CR-MO; API TRIM 8; DUALPL TYPE; DOUBLE GLANGED",
+        "Size": "2\"",
+        "Qty": "2"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; PE X FNPT; API-602; API CL 800; CS; TRIM CN 8; HNDWHL OPR EXTND BODY TYPE; STD PORT; BLT",
+        "Size": "0.75",
+        "Qty": "4"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; PE X FNPT; API-602; API CL 800; CR-MO TRIM CN 8; HNDWHL OPR EXTND BODY TYPE; STD PORT; B",
+        "Size": "1.00",
+        "Qty": "30"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW X FNPT; API-602; API CL 800; CS; TRIM CN 8; HNDWHL OPR ; STD PORT; BLT BNT; OS&Y; SOL",
+        "Size": "1/2\"",
+        "Qty": "24"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW; API-602; API CL 800; CS; TRIM CN 8; HNDWHL OPR ; STD PORT; BLT BNT; OS&Y; SOL WG; CS",
+        "Size": "1.5\"",
+        "Qty": "37"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW; API-602; API CL 800; CS; TRIM CN 8; HNDWHL OPR ; STD PORT; BLT BNT; OS&Y; SOL WG; CS",
+        "Size": "3/4\"",
+        "Qty": "24"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW; API-602; API CL 800; CS; TRIM CN 8; HNDWHL OPR ; STD PORT; BLT BNT; OS&Y; SOL WG; CS",
+        "Size": "1\"",
+        "Qty": "1"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW X FNPT; API-602; API CL 800; CR-MO TRIM CN 8; HNDWHL OPR EXTND BODY TYPE; STD PORT; B",
+        "Size": "1\"",
+        "Qty": "41"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW X FNPT; API-602; API CL 800;CR-MO;TRIM CN 8; HNDWHL OPR EXTND BODY TYPE; STD PORT; BL",
+        "Size": "3/4\"",
+        "Qty": "8"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW; API-602; API CL 800; CR-MO TRIM CN 8; HNDWHL OPR ; FULL PORT; BLT BNT; OS&Y; SOL WG;",
+        "Size": "3/4\"",
+        "Qty": "25"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Check Valve",
+        "Materials Description": "CHECK VALVE; SW; API-602; API CL 800; CR-MO; TRIM CN 8 SWG TYPE; BLT COVER; CR-MO BODY ASTM A182 GR",
+        "Size": "3/4\"",
+        "Qty": "24"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Globe Valve",
+        "Materials Description": "GLOBE VALVE; SW; API-602; API CL 800; CS; TRIM CN 8; HNDWHL OPR ; T-BODY PATT; BLT BNT; OS&Y; PLUG D",
+        "Size": "1\"",
+        "Qty": "1"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW; API-602; API CL 800; CS; TRIM CN 8; HNDWHL OPR ; STD PORT; BLT BNT; OS&Y; SOL WG; CS",
+        "Size": "3/4\"",
+        "Qty": "3"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW X FNPT; API-602; API CL 800; CS; TRIM CN 8; HNDWHL OPR ; STD PORT; BLT BNT; OS&Y; SOL",
+        "Size": "3/4\"",
+        "Qty": "3"
+    },
+    {
+        "MOC": "113-PC-22-0027",
+        "MOC NAME": "FLASH ZONE STRAINERS MODIFICATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW X FNPT; API-602; API CL 800; CS; TRIM CN 8; HNDWHL OPR; STD PORT; BLT BNT; OS&Y; SOL",
+        "Size": "3/4\"",
+        "Qty": "15"
+    },
+    {
+        "MOC": "110-PC-22-0030",
+        "MOC NAME": "UPGRADING CAUSTIC INJECTION QUILLS DOWNSTREAM OF DE-SALTERS",
+        "Type": "Check Valve",
+        "Materials Description": "CHECK VALVE; B16.5 FLGD RF; API-600/ASME B16.10; ASME CL 600; MONEL; TRIM CN 11 SWG TYPE; BLT BNT; M",
+        "Size": "3.00",
+        "Qty": "4"
+    },
+    {
+        "MOC": "112-PC-22-0025",
+        "MOC NAME": "UPGRADE FEED PUMP SPILL BACK CONTROL VALVE STEM (112-FCV-1001, 2001, 0007, 1003, 2003, 0008, 0012 & 0013) and (112-FCV-1002, 2002, 1026 & 2026)",
+        "Type": "Control Valve",
+        "Materials Description": "Fisher Control valve & Actuator:\nTag: 112‐FCV‐1001/0007/1003/2003/0008 :\nNPS 4 Inch Fisher NotchFlo",
+        "Size": "4\"",
+        "Qty": "5"
+    },
+    {
+        "MOC": "112-PC-22-0025",
+        "MOC NAME": "UPGRADE FEED PUMP SPILL BACK CONTROL VALVE STEM (112-FCV-1001, 2001, 0007, 1003, 2003, 0008, 0012 & 0013) and (112-FCV-1002, 2002, 1026 & 2026)",
+        "Type": "Control Valve",
+        "Materials Description": "Fisher Control valve & Actuator:\nTag: 112‐FCV‐0012/0013 :\nNPS 6 Inch Fisher NotchFlo DST Angle Valve",
+        "Size": "6\"",
+        "Qty": "2"
+    },
+    {
+        "MOC": "112-PC-22-0025",
+        "MOC NAME": "UPGRADE FEED PUMP SPILL BACK CONTROL VALVE STEM (112-FCV-1001, 2001, 0007, 1003, 2003, 0008, 0012 & 0013) and (112-FCV-1002, 2002, 1026 & 2026)",
+        "Type": "Control Valve",
+        "Materials Description": "Flowserve Control valve & Actuator:\nTag: 112‐FCV‐1002/2002 & 112‐FCV‐1026/2026",
+        "Size": "",
+        "Qty": "4"
+    },
+    {
+        "MOC": "111-PC-19-0006",
+        "MOC NAME": "TO REPLACE THE EXISTING STANDARD GLOBE VALVE WITH ENGINEERED GLOBE VALVE FOR MAKEUP COMPRESSOR 1ST AND 2ND STAGES SPILLBACK BYPASS VALVE",
+        "Type": "Globe Valve",
+        "Materials Description": "GLOBE VALVE; FLGD RF;ASME B16.34;ASME CL600;CS;TRIM CN 12; HNDWHL OPR; TBODY PATT; BNT;OS&Y;PLUG DIS",
+        "Size": "6.00",
+        "Qty": "1"
+    },
+    {
+        "MOC": "111-PC-19-0006",
+        "MOC NAME": "TO REPLACE THE EXISTING STANDARD GLOBE VALVE WITH ENGINEERED GLOBE VALVE FOR MAKEUP COMPRESSOR 1ST AND 2ND STAGES SPILLBACK BYPASS VALVE",
+        "Type": "Globe Valve",
+        "Materials Description": "GLOBE VALVE; FLGD RF;ASME B16.34;ASME CL600;CS;TRIM CN 12; HNDWHL OPR; TBODY PATT; BNT;OS&Y;PLUG DIS",
+        "Size": "6.00",
+        "Qty": "1"
+    },
+    {
+        "MOC": "144-PC-22-0001",
+        "MOC NAME": "CHANGE THE FLOW METERS TYPE",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10; ASME CL 300; CS; TRIM CN 12; HNDWHL OPR; YERP-SAES-A",
+        "Size": "2\" ",
+        "Qty": "3"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": "FCV",
+        "Materials Description": "Tag No: 119-FCV-0010, Control Valve, Type- Globe, Line Size- 8\" RF#300, Valve size- 8\" RF#300, Type",
+        "Size": "8.00",
+        "Qty": "1"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": "FCV",
+        "Materials Description": "Tag No. 119-FCV-0013 Control Valve Type- Globe, Line Size- 6\" RF#300, Valve size- 4\" RF#300, Type of",
+        "Size": "6.00",
+        "Qty": "1"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5/B16.47 SER A FLGD RF; ASME CL 150; SS DUPLEX; SS DUPLEX TRIM; GR OPR W/HNDWHL; FUL",
+        "Size": "16.00",
+        "Qty": "1"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10; ASME CL 150; DUPLEX; SS DUPLEX TRIM; HNDWHL OPR; FUL",
+        "Size": "8.00",
+        "Qty": "3"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10; ASME CL 150; DUPLEX; SS DUPLEX TRIM; HNDWHL OPR; FUL",
+        "Size": "6.00",
+        "Qty": "2"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": "Gate Valve",
+        "Materials Description": "Tag No: 119-XV-0004 Type- On-off Gate Valve, Size 12\" 150# RF, Body & Bonnet- ASTM A995 GR.4A, Trim-",
+        "Size": "12.00",
+        "Qty": "1"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": "Gate Valve",
+        "Materials Description": "Tag No: 119-XV-0005 Type- On-off Gate Valve, Size 12\" 150# RF, Body & Bonnet- ASTM A995 GR.4A, Trim-",
+        "Size": "12.00",
+        "Qty": "1"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": " Emergency Isolation Valve",
+        "Materials Description": "Tag No: 119-ZV-0104 Emergency Isolation Valve Type- ON/OFF BALL VALVE , Sub class- TRUNNION, Size- 8",
+        "Size": "8.00",
+        "Qty": "1"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": " Emergency Isolation Valve",
+        "Materials Description": "Tag No: 119-ZV-0105 Emergency Isolation Valve Type- ON/OFF BALL VALVE , Sub class- TRUNNION, Size- 1",
+        "Size": "12.00",
+        "Qty": "1"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": "Check Valve",
+        "Materials Description": "CHECK VALVE; B16.5 FLGD RF; API-594 TYPE B/ASME B16.10; ASME CL 150; SS DUPLEX; SS DUPLEX TRIM SWG",
+        "Size": "8.00",
+        "Qty": "2"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW; API-602; API CL 800; SS DUPLEX; SS DUPLEX TRIM; HNDWHL OPR; FULL PORT; BLT BNT; OS&Y",
+        "Size": "0.75",
+        "Qty": "1"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; PE X FNPT; API-602; API CL 800; SS DUPLEX; SS DUPLEX TRIM; HNDWHL OPR; FULL PORT; BLT BN",
+        "Size": "0.75",
+        "Qty": "10"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW X FNPT; API-602; API CL 800; SS DUPLEX; SS DUPLEX TRIM; HNDWHL OPR; FULL PORT; BLT B",
+        "Size": "0.75",
+        "Qty": "6"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW X FNPT; API-602; API CL 800; SS DUPLEX; SS DUPLEX TRIM; HNDWHL OPR; FULL PORT; BLT BN",
+        "Size": "0.50",
+        "Qty": "4"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": "Globe Valve",
+        "Materials Description": "GLOBE VALVE; SW; API-602; API CL 800; SS DUPLEX; SS DUPLEX TRIM; HNDWHL OPR; T-BODY PATT; BLT BNT; O",
+        "Size": "1.00",
+        "Qty": "2"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; PE X FNPT; API-602; API CL 800; SS DUPLEX; SS DUPLEX TRIM; HNDWHL OPR; FULL PORT; BLT BN",
+        "Size": "1.00",
+        "Qty": "9"
+    },
+    {
+        "MOC": "119-PC-22-0006",
+        "MOC NAME": "PIPING METALLURGY UPGRADE ",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW; API-602; API CL 800; SS DUPLEX; SS DUPLEX TRIM; HNDWHL OPR; FULL PORT; BLT BNT; OS&Y",
+        "Size": "1.00",
+        "Qty": "4"
+    },
+    {
+        "MOC": "148-PC-22-0002",
+        "MOC NAME": "DHT HCK SEGREGATION",
+        "Type": "MOV",
+        "Materials Description": "16 INCH MOV, CL 300 (16\"-XV-XXXX)",
+        "Size": "16\"",
+        "Qty": "4"
+    },
+    {
+        "MOC": "148-PC-22-0002",
+        "MOC NAME": "DHT HCK SEGREGATION",
+        "Type": "MOV",
+        "Materials Description": "12 INCH MOV, CL 300 (12\"-XV-XXXX)",
+        "Size": "12\"",
+        "Qty": "4"
+    },
+    {
+        "MOC": "148-PC-22-0002",
+        "MOC NAME": "DHT HCK SEGREGATION",
+        "Type": "MOV",
+        "Materials Description": "12 INCH MOV, CL 300 (12\"-XV-XXXX)",
+        "Size": "12\"",
+        "Qty": "1"
+    },
+    {
+        "MOC": "148-PC-22-0002",
+        "MOC NAME": "DHT HCK SEGREGATION",
+        "Type": "Gate Valve",
+        "Materials Description": "12 INCH MANUAL GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10; ASME CL 300; CS; TRIM CN 11; HNDWHL O",
+        "Size": "12\"",
+        "Qty": "2"
+    },
+    {
+        "MOC": "148-PC-22-0002",
+        "MOC NAME": "DHT HCK SEGREGATION",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; 1 INCH, PE X FNPT; API-602; API CL 800; CS; TRIM CN 8; HNDWHL OPR ; STD PORT; BLT BNT; O",
+        "Size": "1\"",
+        "Qty": "2"
+    },
+    {
+        "MOC": "118-PC-22-0008",
+        "MOC NAME": "Tempering The Cooling Air Piping And Instrument Upgrade",
+        "Type": "TCV Valve",
+        "Materials Description": "118-TCV-0591 CL150 RF",
+        "Size": "8\"",
+        "Qty": "1"
+    },
+    {
+        "MOC": "118-PC-22-0008",
+        "MOC NAME": "Tempering The Cooling Air Piping And Instrument Upgrade",
+        "Type": "TCV Valve",
+        "Materials Description": "118-TCV-0542 CL150 RF",
+        "Size": "24\"",
+        "Qty": "1"
+    },
+    {
+        "MOC": "118-PC-22-0008",
+        "MOC NAME": "Tempering The Cooling Air Piping And Instrument Upgrade",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; FLGD RTJ; API-600/ASME B16.10; ASME CL 300; SS; BVL GR OPR W/HNDWHL ; FULL PORT; BLT BNT",
+        "Size": "6\"",
+        "Qty": "1"
+    },
+    {
+        "MOC": "118-PC-22-0008",
+        "MOC NAME": "Tempering The Cooling Air Piping And Instrument Upgrade",
+        "Type": "Gate Valve",
+        "Materials Description": "118-VX-542 WAFER CHECK VALVE CL 300 RTJ",
+        "Size": "6\"",
+        "Qty": "1"
+    },
+    {
+        "MOC": "118-PC-22-0008",
+        "MOC NAME": "Tempering The Cooling Air Piping And Instrument Upgrade",
+        "Type": "Gate Valve",
+        "Materials Description": "SH1-118-0003(EXISTING TO BE REUSED)",
+        "Size": "34\"",
+        "Qty": "1"
+    },
+    {
+        "MOC": "118-PC-22-0008",
+        "MOC NAME": "Tempering The Cooling Air Piping And Instrument Upgrade",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10; ASME CL 150; CS; TRIM CN 8; HNDWHL OPR ; FULL PORT;",
+        "Size": "8\"",
+        "Qty": "1"
+    },
+    {
+        "MOC": "118-PC-22-0008",
+        "MOC NAME": "Tempering The Cooling Air Piping And Instrument Upgrade",
+        "Type": "Gate Valve",
+        "Materials Description": "CHECK VALVE; B16.5 FLGD RF; API-594 TYPE B/ASME B16.10; ASME CL 150; CS; TRIM CN 8 SWG TYPE; BLT COV",
+        "Size": "10\"",
+        "Qty": "1"
+    },
+    {
+        "MOC": "118-PC-22-0008",
+        "MOC NAME": "Tempering The Cooling Air Piping And Instrument Upgrade",
+        "Type": "Globe Valve",
+        "Materials Description": "GLOBE VALVE; FLANGED RF ;ASME CL150;CS BODY ASTM A216 GR WCC",
+        "Size": "4\"",
+        "Qty": "1"
+    },
+    {
+        "MOC": "118-PC-22-0008",
+        "MOC NAME": "Tempering The Cooling Air Piping And Instrument Upgrade",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; FLANGED RF; ASME CL 150; CS BODY ASTM A216 GR WCB",
+        "Size": "10\"",
+        "Qty": "2"
+    },
+    {
+        "MOC": "118-PC-22-0008",
+        "MOC NAME": "Tempering The Cooling Air Piping And Instrument Upgrade",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; PE X FNPT; API-602; API CL 800; SS; HNDWHL OPR EXTND BODY TYPE (EXTND LENGTH 4\"); STD PO",
+        "Size": "3/4\"",
+        "Qty": "1"
+    },
+    {
+        "MOC": "118-PC-22-0008",
+        "MOC NAME": "Tempering The Cooling Air Piping And Instrument Upgrade",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW X FNPT; API-602; API CL 800;CS; TRIM CN 8; HNDWHL OPR ; STD PORT; BLT BNT; OS&Y; SOL",
+        "Size": "3/4\"",
+        "Qty": "4"
+    },
+    {
+        "MOC": "113-PC-22-0025",
+        "MOC NAME": "DCU CHARGE PUMPS 113-G-0001 MIN. FLOW",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10; ASME CL 600; CS; TRIM CN 5; HNDWHL OPR ; FULL PORT;",
+        "Size": "3\"",
+        "Qty": "1"
+    },
+    {
+        "MOC": "113-PC-22-0025",
+        "MOC NAME": "DCU CHARGE PUMPS 113-G-0001 MIN. FLOW",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; B16.5 FLGD RF; API-600/ASME B16.10 ASME CL 600; CR-MO; TRIM CN 8; HNDWHL OPR ; FULL PORT",
+        "Size": "2\"",
+        "Qty": "9"
+    },
+    {
+        "MOC": "113-PC-22-0025",
+        "MOC NAME": "DCU CHARGE PUMPS 113-G-0001 MIN. FLOW",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW; API-602; API CL 800; CS; TRIM CN 5; HNDWHL OPR ; STD PORT; BLT BNT;S&Y; SOL WG; CS B",
+        "Size": "1\"",
+        "Qty": "3"
+    },
+    {
+        "MOC": "113-PC-22-0025",
+        "MOC NAME": "DCU CHARGE PUMPS 113-G-0001 MIN. FLOW",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW; API-602; API CL 800; CR-MO; TRIM CN 8; HNDWHL OPR ; FULL PORT; BLT BNT; OS&Y; SOL WG",
+        "Size": "1\"",
+        "Qty": "6"
+    },
+    {
+        "MOC": "113-PC-22-0025",
+        "MOC NAME": "DCU CHARGE PUMPS 113-G-0001 MIN. FLOW",
+        "Type": "Gate Valve",
+        "Materials Description": "GATE VALVE; SW X FNPT; API-602; API CL 800 CR-MO; TRIM CN 8; HNDWHL OPR ; STD PORT; BLT BNT; OS&Y; S",
+        "Size": "1\"",
+        "Qty": "3"
+    },
+    {
+        "MOC": "113-PC-22-0025",
+        "MOC NAME": "DCU CHARGE PUMPS 113-G-0001 MIN. FLOW",
+        "Type": "Check Valve",
+        "Materials Description": "CHECK VALVE; SW; API-602; API CL 800; CR-MO; TRIM CN 8 SWG TYPE; BLT COVER; CR-MO BODY ASTM A182 GR",
+        "Size": "1\"",
+        "Qty": "3"
+    },
+    {
+        "MOC": "113-PC-22-0025",
+        "MOC NAME": "DCU CHARGE PUMPS 113-G-0001 MIN. FLOW",
+        "Type": "Gate Valve",
+        "Materials Description": "DRILLED GATE VALVE (113-VX-001)",
+        "Size": "1\"",
+        "Qty": "3"
+    }
+]
