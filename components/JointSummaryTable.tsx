@@ -65,6 +65,10 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+const truncateText = (text: string, maxLength: number) => {
+  return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+};
+
 export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [overallDialogOpen, setOverallDialogOpen] = useState(false);
@@ -81,6 +85,8 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
   const totalShopInchDia = filteredData.reduce((sum, item) => sum + item['SHOP INCH DIA'], 0);
   const totalFieldInchDia = filteredData.reduce((sum, item) => sum + item['FIELD INCH DIA'], 0);
   const totalInchDia = totalShopInchDia + totalFieldInchDia;
+
+
 
    // Get the MOC Name based on the MOC passed as props
    const mocName = useMemo(() => {
@@ -209,7 +215,7 @@ const generateValveRow = (label: string, key: keyof ValveDataItem, isFirstRow: b
       </Dialog>
 
       <Dialog open={overallDialogOpen} onOpenChange={setOverallDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-6xl">
           <DialogHeader>
             <DialogTitle>Overall Joints</DialogTitle>
 
@@ -237,61 +243,71 @@ const generateValveRow = (label: string, key: keyof ValveDataItem, isFirstRow: b
         </DialogContent>
       </Dialog>
 
-      <Dialog open={valveDialogOpen} onOpenChange={setValveDialogOpen}> {/* Valve Detail Dialog */}
+      <Dialog open={valveDialogOpen} onOpenChange={setValveDialogOpen}>
+  {/* Valve Detail Dialog */}
   <DialogContent className="max-w-6xl">
     <DialogHeader>
       <DialogTitle>{moc ? `${moc} Valve Detail` : 'Valve Detail'}</DialogTitle>
-      <CardDescription>{mocName}</CardDescription>
+      <p>{mocName}</p>
     </DialogHeader>
-    <div className="flex flex-col lg:flex-row">
-      <div className="flex-grow">
-        <h2 className="text-xl font-semibold mb-4">Valve Details</h2>
-        
+
+    <Card className="mt-4 max-w-full">
+
+      <CardContent className="overflow-x-auto overflow-y-auto max-h-96"> {/* Added max-h-96 for limiting height */}
+        <div className="w-full">
         {showFullValveInfo ? (
-          <div className="mt-4">
-            <h3 className="text-lg font-bold mb-2">Full Valve Information</h3>
-            <Table className="w-full">
-              <TableHead>
-                <TableRow>
-                  <TableCell className="font-semibold w-1/6">Valve Type</TableCell>
-                  <TableCell className="font-semibold w-3/5">Description</TableCell>
-                  <TableCell className="font-semibold w-1/6">Size</TableCell>
-                  <TableCell className="font-semibold w-1/6">Quantities</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {Object.values(consolidatedValveData).map((item, index) => (
-                  <TableRow key={index} className="h-6">
-                    <TableCell className="px-1 py-1">{item.Type}</TableCell>
-                    <TableCell className="px-1 py-1">{item['Materials Description']}</TableCell>
-                    <TableCell className="px-1 py-1">{item.Size}</TableCell>
-                    <TableCell className="px-1 py-1">{item.Qty}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        ) : (
-          <Table className="w-full">
+          <Table className="w-full max-w-full">
+            <TableHead>
+
+              <TableRow className="flex w-full box-border font-bold text-lg bg-gray-200 ">
+                <TableCell className="font-semibold w-[12%] px-2 py-3 box-border">Type</TableCell>
+                <TableCell className="font-semibold w-[74%] px-2 py-3 box-border">Description</TableCell>
+                <TableCell className="font-semibold w-[8%] px-2 py-3 box-border">Size</TableCell>
+                <TableCell className="font-semibold w-[8%] px-2 py-3 box-border">Qty</TableCell>
+              </TableRow>
+            </TableHead>
             <TableBody>
-              {generateValveRow("Valve Type", "Type", true)}
-              {generateValveRow("Size", "Size")}
-              {generateValveRow("Qty", "Qty")}
+              {Object.values(consolidatedValveData).map((item, index) => (
+                <TableRow key={index} className="flex w-full box-border">
+                  <TableCell className="px-2 py-3 w-[8%] box-border">{item.Type}</TableCell>
+                 
+                 
+
+                  <TableCell className="px-2 py-3 w-[76%] box-border">
+  {truncateText(item['Materials Description'] ?? "", 90)}
+</TableCell>
+
+                  <TableCell className="px-2 py-3 w-[8%] box-border">{item.Size}</TableCell>
+                  <TableCell className="px-2 py-3 w-[8%] box-border">{item.Qty}</TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
-        )}
-      </div>
-    </div>
-    <DialogFooter className="w-full flex justify-between items-center">
-      <Button onClick={() => setShowFullValveInfo(!showFullValveInfo)}>
-        {showFullValveInfo ? "Hide Full Valves Info" : "Show Full Valves Info"}
-      </Button>
-      <p className="text-lg font-semibold">Total No Of Valves: {filteredValveData.reduce((sum, item) => sum + item.Qty, 0)}</p>
-    </DialogFooter>
+           ) : (
+            <Table className="w-full">
+              <TableBody>
+                {generateValveRow("Valve Type", "Type", true)}
+                {generateValveRow("Size", "Size")}
+                {generateValveRow("Qty", "Qty")}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      </CardContent>
+
+      <CardFooter className="w-full flex justify-between items-center">
+        <Button onClick={() => setShowFullValveInfo(!showFullValveInfo)}>
+          {showFullValveInfo ? "Hide Full Valves Info" : "Show Full Valves Info"}
+        </Button>
+        <p className="text-lg font-semibold">Total No Of Valves: {filteredValveData.reduce((sum, item) => sum + item.Qty, 0)}</p>
+      </CardFooter>
+    </Card>
   </DialogContent>
 </Dialog>
 
 
+
+    
     </Card>
   );
 }
