@@ -252,38 +252,32 @@ const generateValveRow = (label: string, key: keyof ValveDataItem, isFirstRow: b
     </DialogHeader>
 
     <Card className="mt-4 max-w-full">
-
       <CardContent className="overflow-x-auto overflow-y-auto max-h-96"> {/* Added max-h-96 for limiting height */}
-        <div className="w-full">
-        {showFullValveInfo ? (
-          <Table className="w-full max-w-full">
-            <TableHead>
-
-              <TableRow className="flex w-full box-border font-bold text-lg bg-gray-200 ">
-                <TableCell className="font-semibold w-[12%] px-2 py-3 box-border">Type</TableCell>
-                <TableCell className="font-semibold w-[74%] px-2 py-3 box-border">Description</TableCell>
-                <TableCell className="font-semibold w-[8%] px-2 py-3 box-border">Size</TableCell>
-                <TableCell className="font-semibold w-[8%] px-2 py-3 box-border">Qty</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {Object.values(consolidatedValveData).map((item, index) => (
-                <TableRow key={index} className="flex w-full box-border">
-                  <TableCell className="px-2 py-3 w-[8%] box-border">{item.Type}</TableCell>
-                 
-                 
-
-                  <TableCell className="px-2 py-3 w-[76%] box-border">
-  {truncateText(item['Materials Description'] ?? "", 90)}
-</TableCell>
-
-                  <TableCell className="px-2 py-3 w-[8%] box-border">{item.Size}</TableCell>
-                  <TableCell className="px-2 py-3 w-[8%] box-border">{item.Qty}</TableCell>
+        <div className="w-full min-w-max">
+          {showFullValveInfo ? (
+            <Table className="w-full min-w-full">
+              <TableHead>
+                <TableRow className="flex w-full box-border font-bold text-lg bg-gray-200">
+                  <TableCell className="font-semibold w-[12%] px-2 py-3 box-border">Type</TableCell>
+                  <TableCell className="font-semibold w-[74%] px-2 py-3 box-border">Description</TableCell>
+                  <TableCell className="font-semibold w-[8%] px-2 py-3 box-border">Size</TableCell>
+                  <TableCell className="font-semibold w-[8%] px-2 py-3 box-border">Qty</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-           ) : (
+              </TableHead>
+              <TableBody>
+                {Object.values(consolidatedValveData).map((item, index) => (
+                  <TableRow key={index} className="flex w-full box-border">
+                    <TableCell className="px-2 py-3 w-[12%] box-border">{item.Type}</TableCell>
+                    <TableCell className="px-2 py-3 w-[74%] box-border">
+                      {truncateText(item['Materials Description'] ?? "", 90)}
+                    </TableCell>
+                    <TableCell className="px-2 py-3 w-[8%] box-border">{item.Size}</TableCell>
+                    <TableCell className="px-2 py-3 w-[8%] box-border">{item.Qty}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
             <Table className="w-full">
               <TableBody>
                 {generateValveRow("Valve Type", "Type", true)}
@@ -304,6 +298,7 @@ const generateValveRow = (label: string, key: keyof ValveDataItem, isFirstRow: b
     </Card>
   </DialogContent>
 </Dialog>
+
 
 
 
