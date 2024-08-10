@@ -245,14 +245,14 @@ const generateValveRow = (label: string, key: keyof ValveDataItem, isFirstRow: b
 
       <Dialog open={valveDialogOpen} onOpenChange={setValveDialogOpen}>
   {/* Valve Detail Dialog */}
-  <DialogContent className="max-w-6xl">
+  <DialogContent className="max-w-6xl min-h-screen"> {/* Ensure dialog content takes up at least the full screen height */}
     <DialogHeader>
       <DialogTitle>{moc ? `${moc} Valve Detail` : 'Valve Detail'}</DialogTitle>
       <p>{mocName}</p>
     </DialogHeader>
 
     <Card className="mt-4 max-w-full">
-      <CardContent className="overflow-x-auto overflow-y-auto max-h-96"> {/* Added max-h-96 for limiting height */}
+      <CardContent className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-12rem)]"> {/* Adjust height to fit within screen */}
         <div className="w-full min-w-max">
           {showFullValveInfo ? (
             <Table className="w-full min-w-full">
@@ -291,9 +291,9 @@ const generateValveRow = (label: string, key: keyof ValveDataItem, isFirstRow: b
 
       <CardFooter className="w-full flex justify-between items-center">
         <Button onClick={() => setShowFullValveInfo(!showFullValveInfo)}>
-          {showFullValveInfo ? "Hide Full Valves Info" : "Show Full Valves Info"}
+          {showFullValveInfo ? "Summary" : "Detail"}
         </Button>
-        <p className="text-lg font-semibold">Total No Of Valves: {filteredValveData.reduce((sum, item) => sum + item.Qty, 0)}</p>
+        <p className="text-lg font-semibold">Total Valves: {filteredValveData.reduce((sum, item) => sum + item.Qty, 0)}</p>
       </CardFooter>
     </Card>
   </DialogContent>
