@@ -18,7 +18,7 @@ export default function Navbar({}: Props) {
                 <Button onClick={() => router.push('/AllMOCJoints')} variant='secondary' className={buttonClasses}>MOC Joints Detail</Button>
                 <Button onClick={() => router.push('/OverallJointsSummary')} variant='secondary' className={buttonClasses}>Overall Joints By Sizes</Button>
                 <Button onClick={() => router.push('/TotalJointsByMOC')} variant='secondary' className={buttonClasses}>Overall Joints By MOCs</Button>
-               
+                <Button onClick={() => router.push('/AllMocMaterials')} variant='secondary' className={buttonClasses}>All MOC Materials</Button>
             </div>
         </div>
     )
