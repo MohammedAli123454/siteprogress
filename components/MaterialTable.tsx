@@ -24,6 +24,8 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select"; // Ensure you have these components
+import { Button } from "@/components/ui/button"
+
 
 type DataType = {
   MOC: string;
@@ -60,6 +62,13 @@ export function MaterialTable({ data, moc }: MaterialTableProps) {
   const [selectedVendor, setSelectedVendor] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
+  const resetFilters = () => {
+    setSelectedCategory("all");
+    setSelectedSubCategory("all");
+    setSelectedVendor("all");
+    setSelectedStatus("all");
+  };
+
   const filteredData = useMemo(() => {
     return data.filter((item) => {
       return (
@@ -81,84 +90,105 @@ export function MaterialTable({ data, moc }: MaterialTableProps) {
     return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
   };
 
-  const filtered_Data = data.filter(item => item.MOC === moc);
-// Extract unique values for filters and filter out empty values
-const categories = [...new Set(filtered_Data.map((item) => item.Category).filter(Boolean))];
-const subCategories = [...new Set(filtered_Data.map((item) => item.SubCategory).filter(Boolean))];
-const vendors = [...new Set(filtered_Data.map((item) => item.Vendor).filter(Boolean))];
-const statuses = [...new Set(filtered_Data.map((item) => item.Status).filter(Boolean))];
+  const filteredCategories = useMemo(() => {
+    return [...new Set(data.filter((item) => !moc || item.MOC === moc).map((item) => item.Category).filter(Boolean))];
+  }, [data, moc]);
+
+  const filteredSubCategories = useMemo(() => {
+    return [...new Set(data.filter((item) =>(!moc || item.MOC === moc) &&
+        (selectedCategory === "all" || item.Category === selectedCategory)).map((item) => item.SubCategory).filter(Boolean))];
+  }, [data, selectedCategory, moc]);
+
+  const filteredVendors = useMemo(() => {
+    return [...new Set(data.filter((item) =>(!moc || item.MOC === moc) && (selectedCategory === "all" || item.Category === selectedCategory)
+      ).map((item) => item.Vendor).filter(Boolean))];
+  }, [data, selectedCategory, moc]);
+
+  const filteredStatuses = useMemo(() => {
+    return [...new Set(data.filter((item) =>(!moc || item.MOC === moc) && (selectedCategory === "all" || item.Category === selectedCategory)
+      ).map((item) => item.Status).filter(Boolean))];
+  }, [data, selectedCategory, moc]);
 
 
   return (
     <Card>
-      <CardHeader className="flex flex-col justify-center text-center space-y-2">
-        <CardTitle className="text-center">
-          {moc ? `${moc} MATERIAL SUMMARY` : "MATERIAL SUMMARY"}
-        </CardTitle>
+      <CardHeader className="flex flex-col justify-center text-center space-y-0">
+        <div className="flex flex-row justify-around text-center">
+          <CardTitle className="text-center">
+            {moc ? `${moc} MATERIAL SUMMARY` : "MATERIAL SUMMARY"}
+          </CardTitle>
+
+          {/* Reset Button */}
+          <CardContent className="flex justify-end">
+            <Button onClick={resetFilters} variant="secondary">
+              Reset Filters
+            </Button>
+          </CardContent>
+
+        </div>
+
         <CardDescription>{mocName}</CardDescription>
       </CardHeader>
-      <Separator />
+
 
       {/* Filters */}
       <CardContent className="grid grid-cols-2 gap-4">
-  <Select onValueChange={(value) => setSelectedCategory(value)}>
-    <SelectTrigger>
-      <SelectValue placeholder="Select Category" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="all">All Categories</SelectItem>
-      {categories.map((category, index) => (
-        <SelectItem key={index} value={category}>
-          {category}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
+        <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select Category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {filteredCategories.map((category, index) => (
+              <SelectItem key={index} value={category}>
+                {category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-  <Select onValueChange={(value) => setSelectedSubCategory(value)}>
-    <SelectTrigger>
-      <SelectValue placeholder="Select SubCategory" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="all">All SubCategories</SelectItem>
-      {subCategories.map((subCategory, index) => (
-        <SelectItem key={index} value={subCategory}>
-          {subCategory}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
+        <Select value={selectedSubCategory} onValueChange={(value) => setSelectedSubCategory(value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select SubCategory" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All SubCategories</SelectItem>
+            {filteredSubCategories.map((subCategory, index) => (
+              <SelectItem key={index} value={subCategory}>
+                {subCategory}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-  <Select onValueChange={(value) => setSelectedVendor(value)}>
-    <SelectTrigger>
-      <SelectValue placeholder="Select Vendor" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="all">All Vendors</SelectItem>
-      {vendors.map((vendor, index) => (
-        <SelectItem key={index} value={vendor}>
-          {truncateText(vendor, 22)}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
+        <Select value={selectedVendor} onValueChange={(value) => setSelectedVendor(value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select Vendor" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Vendors</SelectItem>
+            {filteredVendors.map((vendor, index) => (
+              <SelectItem key={index} value={vendor}>
+                {truncateText(vendor, 22)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-  <Select onValueChange={(value) => setSelectedStatus(value)}>
-    <SelectTrigger>
-      <SelectValue placeholder="Select Status" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="all">All Statuses</SelectItem>
-      {statuses.map((status, index) => (
-        <SelectItem key={index} value={status}>
-          {status}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
-</CardContent>
-
-      <Separator />
+        <Select value={selectedStatus} onValueChange={(value) => setSelectedStatus(value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            {filteredStatuses.map((status, index) => (
+              <SelectItem key={index} value={status}>
+                {status}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </CardContent>
 
       <CardContent className="overflow-auto">
         <div className="w-full overflow-x-auto">
