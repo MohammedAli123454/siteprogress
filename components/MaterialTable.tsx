@@ -90,11 +90,27 @@ const MaterialTable: React.FC<MaterialTableProps> = ({ data, moc }) => {
   const mocName = useMemo(() => {
     return moc ? (filteredData[0]?.MOCName || "Unknown MOC") : "MATERIAL SUMMARY";
   }, [filteredData, moc]);
-
   const truncateText = (text: string, maxLength: number) => {
     if (typeof text !== 'string') return '';
     return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
   };
+
+  const FilterSelect = ({ label, value, onChange, options }: { label: string, value: string, onChange: (value: string) => void, options: string[] }) => (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger>
+        <SelectValue placeholder={`Select ${label}`} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">{`All ${label}s`}</SelectItem>
+        {options.map((option, index) => (
+          <SelectItem key={index} value={option}>
+            {option}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
 
   const filteredCategories = useMemo(() => {
     return [...new Set(data.filter((item) => !moc || item.MOC === moc).map((item) => item.Category).filter(Boolean))];
@@ -139,61 +155,10 @@ const MaterialTable: React.FC<MaterialTableProps> = ({ data, moc }) => {
                 <DialogTitle>Select Filters</DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-4">
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {filteredCategories.map((category, index) => (
-                      <SelectItem key={index} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select value={selectedSubCategory} onValueChange={setSelectedSubCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select SubCategory" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All SubCategories</SelectItem>
-                    {filteredSubCategories.map((subCategory, index) => (
-                      <SelectItem key={index} value={subCategory}>
-                        {subCategory}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select value={selectedVendor} onValueChange={setSelectedVendor}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Vendor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Vendors</SelectItem>
-                    {filteredVendors.map((vendor, index) => (
-                      <SelectItem key={index} value={vendor}>
-                        {vendor}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    {filteredStatuses.map((status, index) => (
-                      <SelectItem key={index} value={status}>
-                        {status}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FilterSelect label="Category" value={selectedCategory} onChange={setSelectedCategory} options={filteredCategories} />
+                <FilterSelect label="SubCategory" value={selectedSubCategory} onChange={setSelectedSubCategory} options={filteredSubCategories} />
+                <FilterSelect label="Vendor" value={selectedVendor} onChange={setSelectedVendor} options={filteredVendors} />
+                <FilterSelect label="Status" value={selectedStatus} onChange={setSelectedStatus} options={filteredStatuses} />
               </div>
               <div className="flex justify-between mt-4">
                 <Button variant="secondary" onClick={resetFilters}>
