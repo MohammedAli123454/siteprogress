@@ -1,0 +1,158 @@
+{
+  "id": "90a6f91c-3c9c-47dc-b8f5-c54a9dd26056",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.materials": {
+      "name": "materials",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "MOC": {
+          "name": "MOC",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "MOCName": {
+          "name": "MOCName",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "Category": {
+          "name": "Category",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "SubCategory": {
+          "name": "SubCategory",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "Description": {
+          "name": "Description",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Size": {
+          "name": "Size",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Qty": {
+          "name": "Qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "UOM": {
+          "name": "UOM",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "LOI": {
+          "name": "LOI",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PO": {
+          "name": "PO",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MTA": {
+          "name": "MTA",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Vendor": {
+          "name": "Vendor",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Mfgr": {
+          "name": "Mfgr",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "NMR601": {
+          "name": "NMR601",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "NMR602": {
+          "name": "NMR602",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "NMR603": {
+          "name": "NMR603",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "FAT": {
+          "name": "FAT",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "EstimatedDel": {
+          "name": "EstimatedDel",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TargetDate": {
+          "name": "TargetDate",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Status": {
+          "name": "Status",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Remarks": {
+          "name": "Remarks",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
