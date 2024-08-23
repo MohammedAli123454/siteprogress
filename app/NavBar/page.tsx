@@ -21,6 +21,7 @@ export default function Navbar({}: Props) {
                 <Button onClick={() => router.push('/AllMocMaterials')} variant='secondary' className={buttonClasses}>All MOC Materials</Button>
                 <Button onClick={() => router.push('/Scope')} variant='secondary' className={buttonClasses}>Scope</Button>
                 <Button onClick={() => router.push('/CarFeatures')} variant='secondary' className={buttonClasses}>Car Features</Button>
+                <Button onClick={() => router.push('/EditableTable')} variant='secondary' className={buttonClasses}>Editable Table</Button>
             </div>
         </div>
     )
