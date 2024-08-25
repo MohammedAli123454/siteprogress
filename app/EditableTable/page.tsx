@@ -31,6 +31,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { toast } from "@/components/ui/use-toast"
 
 // Define the schema using Zod
 const schema = z.object({
@@ -69,8 +70,9 @@ export default function EditableForm() {
     mode: "onSubmit",
   });
   const [invoiceDate, setInvoiceDate] = React.useState<Date | undefined>(new Date());
+  const [submittedData, setSubmittedData] = React.useState<FormData | null>(null);
 
-  const { control, watch, setValue, handleSubmit, formState: { errors } } = form;
+  const { control, setValue, handleSubmit, formState: { errors } } = form;
   const { fields, append, remove } = useFieldArray({
     control,
     name: "items",
@@ -83,7 +85,7 @@ export default function EditableForm() {
   ];
 
   const calculateTotals = () => {
-    const items = watch("items");
+    const items = form.getValues("items");
     let totalQty = 0;
     let grandTotal = 0;
     items.forEach((item) => {
@@ -98,91 +100,136 @@ export default function EditableForm() {
     if (selectedItem) {
       setValue(`items.${index}.description`, selectedItem.description);
       setValue(`items.${index}.price`, selectedItem.price);
-      setValue(`items.${index}.total`, selectedItem.price * watch(`items.${index}.qty`));
+      const qty = form.getValues(`items.${index}.qty`);
+      setValue(`items.${index}.total`, selectedItem.price * qty);
     }
   };
 
   const { totalQty, grandTotal } = calculateTotals();
 
+  //const onSubmit = (data: FormData) => {
+    //console.log(data);
+  //};
+
   const onSubmit = (data: FormData) => {
-    console.log(data);
-  };
+    toast({
+      title: "You submitted the following values:",
+      description: (
+        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
+        </pre>
+      ),
+    })
+  }
 
   const handleAddRow = () => {
     append({ code: "", description: "", price: 0, qty: 1, total: 0 }, { shouldFocus: false });
   };
 
+
+  
+
   return (
+
+    
     <Form {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-4">
         {/* Invoice Number (Read Only) */}
         <Card className="mb-6">
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Invoice No */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Invoice No</label>
-            <Input readOnly value="INV-00123" className="mt-1 border-gray-300" />
-          </div>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Invoice No */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Invoice No</label>
+                <Input readOnly value={form.getValues("invoiceNumber")} className="mt-1 border-gray-300" />
+              </div>
 
-          {/* Invoice Date */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Invoice Date</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className="w-full justify-start text-left font-normal mt-1"
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {invoiceDate ? format(invoiceDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={invoiceDate}
-                  onSelect={setInvoiceDate}
-                  initialFocus
+              {/* Invoice Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Invoice Date</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className="w-full justify-start text-left font-normal mt-1"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {invoiceDate ? format(invoiceDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={invoiceDate}
+                      onSelect={setInvoiceDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Payment Terms */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Payment Terms</label>
+                <FormField
+                  control={control}
+                  name="paymentTerms"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Select onValueChange={field.onChange}>
+                          <SelectTrigger className="w-full mt-1 border-gray-300">
+                            <SelectValue placeholder="Select Terms" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="30 Days">30 Days</SelectItem>
+                            <SelectItem value="45 Days">45 Days</SelectItem>
+                            <SelectItem value="60 Days">60 Days</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage>{errors.paymentTerms?.message}</FormMessage>
+                    </FormItem>
+                  )}
                 />
-              </PopoverContent>
-            </Popover>
-          </div>
+              </div>
 
-          {/* Payment Terms */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Payment Terms</label>
-            <Select>
-              <SelectTrigger className="w-full mt-1 border-gray-300">
-                <SelectValue placeholder="Select Terms" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="30">30 Days</SelectItem>
-                <SelectItem value="45">45 Days</SelectItem>
-                <SelectItem value="60">60 Days</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              {/* Invoice Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Invoice Type</label>
+                <FormField
+                  control={control}
+                  name="invoiceType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Select onValueChange={field.onChange}>
+                          <SelectTrigger className="w-full mt-1 border-gray-300">
+                            <SelectValue placeholder="Select Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Credit">Credit</SelectItem>
+                            <SelectItem value="Cash">Cash</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage>{errors.invoiceType?.message}</FormMessage>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Invoice Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Invoice Type</label>
-            <Select>
-              <SelectTrigger className="w-full mt-1 border-gray-300">
-                <SelectValue placeholder="Select Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="credit">Credit</SelectItem>
-                <SelectItem value="cash">Cash</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
         {/* Existing Items Table */}
         {fields.map((item, index) => (
           <div key={item.id} className="grid grid-cols-12 gap-4 items-end w-full pb-0">
+            <div className="col-span-1">
+              {index === 0 && <FormLabel>S.No</FormLabel>}
+              <Input readOnly value={index + 1} className="border-gray-300" />
+            </div>
+
             <div className="col-span-2">
               {index === 0 && <FormLabel>Item Code</FormLabel>}
               <FormField
@@ -209,15 +256,13 @@ export default function EditableForm() {
                         </SelectContent>
                       </Select>
                     </FormControl>
-                    <FormMessage>
-                      {errors.items?.[index]?.code?.message}
-                    </FormMessage>
+                    <FormMessage>{errors.items?.[index]?.code?.message}</FormMessage>
                   </FormItem>
                 )}
               />
             </div>
 
-            <div className="col-span-5">
+            <div className="col-span-4">
               {index === 0 && <FormLabel>Description</FormLabel>}
               <FormField
                 control={control}
@@ -227,7 +272,7 @@ export default function EditableForm() {
                     <FormControl>
                       <Input {...field} readOnly className="border-gray-300"/>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>{errors.items?.[index]?.description?.message}</FormMessage>
                   </FormItem>
                 )}
               />
@@ -241,27 +286,15 @@ export default function EditableForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        className="border-gray-300"
-                        onChange={(e) => {
-                          const price = parseFloat(e.target.value);
-                          field.onChange(price);
-                          setValue(
-                            `items.${index}.total`,
-                            price * watch(`items.${index}.qty`)
-                          );
-                        }}
-                      />
+                      <Input type="number" {...field} readOnly className="border-gray-300"/>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>{errors.items?.[index]?.price?.message}</FormMessage>
                   </FormItem>
                 )}
               />
             </div>
 
-            <div className="col-span-1.5">
+            <div className="col-span-1">
               {index === 0 && <FormLabel>Qty</FormLabel>}
               <FormField
                 control={control}
@@ -272,18 +305,16 @@ export default function EditableForm() {
                       <Input
                         type="number"
                         {...field}
-                        className="border-gray-300"
                         onChange={(e) => {
-                          const qty = parseInt(e.target.value);
+                          const qty = parseInt(e.target.value, 10) || 0;
                           field.onChange(qty);
-                          setValue(
-                            `items.${index}.total`,
-                            watch(`items.${index}.price`) * qty
-                          );
+                          const price = form.getValues(`items.${index}.price`);
+                          setValue(`items.${index}.total`, price * qty);
                         }}
+                        className="border-gray-300"
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>{errors.items?.[index]?.qty?.message}</FormMessage>
                   </FormItem>
                 )}
               />
@@ -297,48 +328,52 @@ export default function EditableForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input {...field} readOnly className="border-gray-300"/>
+                      <Input type="number" {...field} readOnly className="border-gray-300" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>{errors.items?.[index]?.total?.message}</FormMessage>
                   </FormItem>
                 )}
               />
             </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => remove(index)}
-              className="col-span-1"
-            >
-              <Trash className="h-4 w-4 text-red-500" />
-            </Button>
+            <div className="col-span-1 flex justify-end">
+              {index === 0 && <FormLabel>Delete</FormLabel>}
+              <Button variant="destructive" type="button" onClick={() => remove(index)}>
+                <Trash className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         ))}
 
-        {/* Totals Section */}
+        <div className="flex justify-between items-center mt-4">
+          <Button variant="outline" type="button" onClick={handleAddRow}>
+            Add Row
+          </Button>
+        </div>
+
         <Separator className="my-4" />
+
         <div className="grid grid-cols-12 gap-4 items-end">
-          <div className="col-span-6"></div>
-          <div className="col-span-2 text-right font-semibold">Total Qty</div>
-          <div className="col-span-1.5">
-            <Input readOnly value={totalQty} className="border-gray-300 font-bold"/>
+          <div className="col-span-1"></div>
+          <div className="col-span-2"></div>
+          <div className="col-span-4"></div>
+          <div className="col-span-1.5"></div>
+
+          {/* Total Quantity */}
+          <div className="col-span-1">
+            <div className="font-bold border p-2">{totalQty}</div>
           </div>
-          <div className="col-span-1.5 text-right font-semibold">Grand Total</div>
+
+          {/* Grand Total */}
           <div className="col-span-2">
-            <Input readOnly value={grandTotal} className="border-gray-300 font-bold"/>
+            <div className="font-bold border p-2">{grandTotal}</div>
           </div>
         </div>
 
-        <Button type="button" variant="secondary" onClick={handleAddRow} className="mt-4">
-          Add Row
-        </Button>
-        <Button type="submit" className="mt-4 ml-4">
+        <Button type="submit" className="mt-6">
           Submit
         </Button>
       </form>
     </Form>
   );
 }
-
-
