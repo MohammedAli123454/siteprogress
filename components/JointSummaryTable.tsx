@@ -30,16 +30,16 @@ import ChartComponent from './BarChartComponent';
 import valveData from '@/app/valvedata.json'; // Import the valve data
 
 interface DataItem {
-  MOC: string;
-  'SIZE (INCHES)': number;
-  'PIPE SCHEDULE': string;
-  THKNESS: string;
-  'SHOP JOINTS': number;
-  'SHOP INCH DIA': number;
-  'FIELD JOINTS': number;
-  'FIELD INCH DIA': number;
-  'TOTAL JOINTS': number;
-  'TOTAL INCH DIA': number;
+  moc: string;
+  sizeInches: number | null;
+  pipeSchedule: string | null;
+  thickness: number | null;
+  shopJoints: number | null;
+  shopInchDia: number | null;
+  fieldJoints: number | null;
+  fieldInchDia: number | null;
+  totalJoints: number | null;
+  totalInchDia: number | null;
 }
 
 interface ValveDataItem {
@@ -75,22 +75,21 @@ export function JointSummaryTable({ data, moc }: JointSummaryTableProps) {
   const [valveDialogOpen, setValveDialogOpen] = useState(false); // State for valve dialog
   const [showFullValveInfo, setShowFullValveInfo] = useState(false);
 
-  const filteredData = moc ? data.filter((item) => item.MOC === moc) : data;
+  const filteredData = moc ? data.filter((item) => item.moc === moc) : data;
   const filteredValveData = moc ? valveData.filter((item) => item.MOC === moc) : [];
 
-  const totalShopJoints = filteredData.reduce((sum, item) => sum + item['SHOP JOINTS'], 0);
-  const totalFieldJoints = filteredData.reduce((sum, item) => sum + item['FIELD JOINTS'], 0);
+  const totalShopJoints = filteredData.reduce((sum, item) => sum + (item.sizeInches ?? 0), 0);
+  const totalFieldJoints = filteredData.reduce((sum, item) => sum + (item.fieldJoints ?? 0), 0);
   const totalJoints = totalShopJoints + totalFieldJoints;
 
-  const totalShopInchDia = filteredData.reduce((sum, item) => sum + item['SHOP INCH DIA'], 0);
-  const totalFieldInchDia = filteredData.reduce((sum, item) => sum + item['FIELD INCH DIA'], 0);
+  const totalShopInchDia = filteredData.reduce((sum, item) => sum + (item.shopInchDia ?? 0), 0);
+  const totalFieldInchDia = filteredData.reduce((sum, item) => sum + (item.fieldInchDia ?? 0), 0);
   const totalInchDia = totalShopInchDia + totalFieldInchDia;
-
 
 
    // Get the MOC Name based on the MOC passed as props
    const mocName = useMemo(() => {
-    const foundMOC = data.find(item => item.MOC === moc);
+    const foundMOC = data.find(item => item.moc === moc);
     return foundMOC ? (foundMOC as any)['MOC NAME'] : 'Unknown MOC';
   }, [data, moc]);
   ;
@@ -163,15 +162,15 @@ const generateValveRow = (label: string, key: keyof ValveDataItem, isFirstRow: b
         <div className="w-full overflow-x-auto">
           <Table className="w-full min-w-max">
             <TableBody>
-              {generateRow('SIZE (INCHES)', 'SIZE (INCHES)', undefined, 'Total')}
-              {generateRow('PIPE SCHEDULE', 'PIPE SCHEDULE')}
-              {generateRow('THKNESS', 'THKNESS')}
-              {generateRow('SHOP JOINTS', 'SHOP JOINTS', totalShopJoints)}
-              {generateRow('SHOP INCH DIA', 'SHOP INCH DIA', totalShopInchDia)}
-              {generateRow('FIELD JOINTS', 'FIELD JOINTS', totalFieldJoints)}
-              {generateRow('FIELD INCH DIA', 'FIELD INCH DIA', totalFieldInchDia)}
-              {generateRow('TOTAL JOINTS', 'TOTAL JOINTS', totalJoints)}
-              {generateRow('TOTAL INCH DIA', 'TOTAL INCH DIA', totalInchDia)}
+            {generateRow('SIZE (INCHES)', 'sizeInches', undefined, 'Total')}
+              {generateRow('PIPE SCHEDULE', 'pipeSchedule')}
+              {generateRow('THKNESS', 'thickness')}
+              {generateRow('SHOP JOINTS', 'shopJoints', totalShopJoints)}
+              {generateRow('SHOP INCH DIA', 'shopInchDia', totalShopInchDia)}
+              {generateRow('FIELD JOINTS', 'fieldJoints', totalFieldJoints)}
+              {generateRow('FIELD INCH DIA', 'fieldInchDia', totalFieldInchDia)}
+              {generateRow('TOTAL JOINTS', 'totalJoints', totalJoints)}
+              {generateRow('TOTAL INCH DIA', 'totalInchDia', totalInchDia)}
             </TableBody>
           </Table>
         </div>
@@ -298,7 +297,6 @@ const generateValveRow = (label: string, key: keyof ValveDataItem, isFirstRow: b
     </Card>
   </DialogContent>
 </Dialog>
-
 
 
 

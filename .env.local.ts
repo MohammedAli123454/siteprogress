@@ -1,1 +1,0 @@
-DATABASE_URL=postgresql://azcsmohdali1:f1NauxJ0RikY@ep-morning-snowflake-15132543-pooler.ap-southeast-1.aws.neon.tech/projectsprogress?sslmode=require

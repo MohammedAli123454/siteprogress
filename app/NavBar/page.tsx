@@ -22,6 +22,7 @@ export default function Navbar({}: Props) {
                 <Button onClick={() => router.push('/Scope')} variant='secondary' className={buttonClasses}>Scope</Button>
                 <Button onClick={() => router.push('/CarFeatures')} variant='secondary' className={buttonClasses}>Car Features</Button>
                 <Button onClick={() => router.push('/EditableTable')} variant='secondary' className={buttonClasses}>Editable Table</Button>
+                <Button onClick={() => router.push('/PushData')} variant='secondary' className={buttonClasses}>Push Json Data</Button>
             </div>
         </div>
     )

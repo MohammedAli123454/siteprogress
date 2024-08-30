@@ -70,8 +70,6 @@ export default function EditableForm() {
     mode: "onSubmit",
   });
   const [invoiceDate, setInvoiceDate] = React.useState<Date | undefined>(new Date());
-  const [submittedData, setSubmittedData] = React.useState<FormData | null>(null);
-
   const { control, setValue, handleSubmit, formState: { errors } } = form;
   const { fields, append, remove } = useFieldArray({
     control,
@@ -107,10 +105,6 @@ export default function EditableForm() {
 
   const { totalQty, grandTotal } = calculateTotals();
 
-  //const onSubmit = (data: FormData) => {
-    //console.log(data);
-  //};
-
   const onSubmit = (data: FormData) => {
     toast({
       title: "You submitted the following values:",
@@ -119,32 +113,23 @@ export default function EditableForm() {
           <code className="text-white">{JSON.stringify(data, null, 2)}</code>
         </pre>
       ),
-    })
-  }
+    });
+  };
 
   const handleAddRow = () => {
     append({ code: "", description: "", price: 0, qty: 1, total: 0 }, { shouldFocus: false });
   };
 
-
-  
-
   return (
-
-    
     <Form {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-4">
-        {/* Invoice Number (Read Only) */}
         <Card className="mb-6">
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Invoice No */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">Invoice No</label>
                 <Input readOnly value={form.getValues("invoiceNumber")} className="mt-1 border-gray-300" />
               </div>
-
-              {/* Invoice Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">Invoice Date</label>
                 <Popover>
@@ -167,8 +152,6 @@ export default function EditableForm() {
                   </PopoverContent>
                 </Popover>
               </div>
-
-              {/* Payment Terms */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">Payment Terms</label>
                 <FormField
@@ -193,8 +176,6 @@ export default function EditableForm() {
                   )}
                 />
               </div>
-
-              {/* Invoice Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">Invoice Type</label>
                 <FormField
@@ -222,14 +203,19 @@ export default function EditableForm() {
           </CardContent>
         </Card>
 
-        {/* Existing Items Table */}
         {fields.map((item, index) => (
           <div key={item.id} className="grid grid-cols-12 gap-4 items-end w-full pb-0">
             <div className="col-span-1">
               {index === 0 && <FormLabel>S.No</FormLabel>}
-              <Input readOnly value={index + 1} className="border-gray-300" />
+              <div className="relative">
+                <Input 
+                  readOnly 
+                  value={index + 1} 
+                  className="w-14 border-gray-300 bg-gray-100 text-gray-600" 
+                />
+                <Separator orientation="vertical" className="absolute right-0 top-0 h-full border-gray-400"/>
+              </div>
             </div>
-
             <div className="col-span-2">
               {index === 0 && <FormLabel>Item Code</FormLabel>}
               <FormField
@@ -262,7 +248,7 @@ export default function EditableForm() {
               />
             </div>
 
-            <div className="col-span-4">
+            <div className="col-span-3">
               {index === 0 && <FormLabel>Description</FormLabel>}
               <FormField
                 control={control}
@@ -270,7 +256,7 @@ export default function EditableForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input {...field} readOnly className="border-gray-300"/>
+                      <Input {...field} className="border-gray-300" />
                     </FormControl>
                     <FormMessage>{errors.items?.[index]?.description?.message}</FormMessage>
                   </FormItem>
@@ -278,7 +264,7 @@ export default function EditableForm() {
               />
             </div>
 
-            <div className="col-span-1.5">
+            <div className="col-span-2">
               {index === 0 && <FormLabel>Price</FormLabel>}
               <FormField
                 control={control}
@@ -286,7 +272,17 @@ export default function EditableForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input type="number" {...field} readOnly className="border-gray-300"/>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) => {
+                          const price = parseFloat(e.target.value);
+                          const qty = form.getValues(`items.${index}.qty`);
+                          setValue(`items.${index}.total`, price * qty);
+                          field.onChange(e);
+                        }}
+                        className="border-gray-300"
+                      />
                     </FormControl>
                     <FormMessage>{errors.items?.[index]?.price?.message}</FormMessage>
                   </FormItem>
@@ -306,10 +302,10 @@ export default function EditableForm() {
                         type="number"
                         {...field}
                         onChange={(e) => {
-                          const qty = parseInt(e.target.value, 10) || 0;
-                          field.onChange(qty);
+                          const qty = parseInt(e.target.value, 10);
                           const price = form.getValues(`items.${index}.price`);
-                          setValue(`items.${index}.total`, price * qty);
+                          setValue(`items.${index}.total`, qty * price);
+                          field.onChange(e);
                         }}
                         className="border-gray-300"
                       />
@@ -328,7 +324,7 @@ export default function EditableForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input type="number" {...field} readOnly className="border-gray-300" />
+                      <Input {...field} readOnly className="border-gray-300 bg-gray-100 text-gray-600" />
                     </FormControl>
                     <FormMessage>{errors.items?.[index]?.total?.message}</FormMessage>
                   </FormItem>
@@ -336,44 +332,45 @@ export default function EditableForm() {
               />
             </div>
 
-            <div className="col-span-1 flex justify-end">
-              {index === 0 && <FormLabel>Delete</FormLabel>}
-              <Button variant="destructive" type="button" onClick={() => remove(index)}>
-                <Trash className="w-4 h-4" />
+            <div className="col-span-1 text-right">
+              {index === 0 && <FormLabel>&nbsp;</FormLabel>}
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => remove(index)}
+                className="h-8 w-8 p-0"
+              >
+                <Trash className="h-4 w-4" />
               </Button>
             </div>
           </div>
         ))}
 
-        <div className="flex justify-between items-center mt-4">
-          <Button variant="outline" type="button" onClick={handleAddRow}>
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-6 col-start-7">
+            <Separator />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-1 col-start-9 font-semibold border p-2">{totalQty}</div>
+          <div className="col-span-2 font-semibold border p-2">{grandTotal}</div>
+        </div>
+
+        <div className="flex justify-between pt-6">
+          <Button
+            type="button"
+            onClick={handleAddRow}
+            className="border border-dashed border-gray-300"
+          >
             Add Row
           </Button>
+          <Button type="submit">Submit</Button>
         </div>
-
-        <Separator className="my-4" />
-
-        <div className="grid grid-cols-12 gap-4 items-end">
-          <div className="col-span-1"></div>
-          <div className="col-span-2"></div>
-          <div className="col-span-4"></div>
-          <div className="col-span-1.5"></div>
-
-          {/* Total Quantity */}
-          <div className="col-span-1">
-            <div className="font-bold border p-2">{totalQty}</div>
-          </div>
-
-          {/* Grand Total */}
-          <div className="col-span-2">
-            <div className="font-bold border p-2">{grandTotal}</div>
-          </div>
-        </div>
-
-        <Button type="submit" className="mt-6">
-          Submit
-        </Button>
       </form>
     </Form>
   );
 }
+
+
