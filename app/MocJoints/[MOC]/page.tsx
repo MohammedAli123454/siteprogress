@@ -1,212 +1,127 @@
-'use client'
+"use client";
 
 import { useQuery } from '@tanstack/react-query';
-import { Table,TableHead, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { eq, sql } from 'drizzle-orm';
-import { jointsDetail } from '@/app/configs/schema';
 import { db } from '@/app/configs/db';
-import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import ChartComponent from '@/components/BarChartComponent';
-
-async function fetchPivotedData(moc: string) {
-  const rawData = await db
-    .select({
-      sizeInches: jointsDetail.sizeInches,
-      pipeSchedule: jointsDetail.pipeSchedule,
-      thickness: jointsDetail.thickness,
-      shopJoints: sql`SUM(${jointsDetail.shopJoints})`.as('shopJoints'),
-      shopInchDia: sql`SUM(${jointsDetail.shopInchDia})`.as('shopInchDia'),
-      fieldJoints: sql`SUM(${jointsDetail.fieldJoints})`.as('fieldJoints'),
-      fieldInchDia: sql`SUM(${jointsDetail.fieldInchDia})`.as('fieldInchDia'),
-      totalJoints: sql`SUM(${jointsDetail.totalJoints})`.as('totalJoints'),
-      totalInchDia: sql`SUM(${jointsDetail.totalInchDia})`.as('totalInchDia'),
-    })
-    .from(jointsDetail)
-    .where(eq(jointsDetail.moc, moc))
-    .groupBy(jointsDetail.sizeInches, jointsDetail.pipeSchedule, jointsDetail.thickness)
-    .orderBy(sql`${jointsDetail.sizeInches}::numeric ASC`)
-    .execute();
+import { sql, eq } from 'drizzle-orm';
+import { jointsDetail } from '@/app/configs/schema';
+import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import Link from 'next/link';
+import {Button} from "@/components/ui/button";
+import JointsSummary from '../_components/JointsSummary';
+import JointsDetail from '../_components/JointsDetail';
+import InchDiaDetail from '../_components/InchDiaDetail';
+import Charts from '../_components/Charts';
+import InchDiaSummary from '../_components/InchDiaSummary';
 
 
-   
 
-  const pivotedData = [
-    { Attribute: 'SIZE (INCHES)', Values: rawData.map(row => row.sizeInches) },
-    { Attribute: 'PIPE SCHEDULE', Values: rawData.map(row => row.pipeSchedule) },
-    { Attribute: 'THKNESS', Values: rawData.map(row => row.thickness) },
-    { Attribute: 'SHOP JOINTS', Values: rawData.map(row => row.shopJoints) },
-    { Attribute: 'SHOP INCH DIA', Values: rawData.map(row => row.shopInchDia) },
-    { Attribute: 'FIELD JOINTS', Values: rawData.map(row => row.fieldJoints) },
-    { Attribute: 'FIELD INCH DIA', Values: rawData.map(row => row.fieldInchDia) },
-    { Attribute: 'TOTAL JOINTS', Values: rawData.map(row => row.totalJoints) },
-    { Attribute: 'TOTAL INCH DIA', Values: rawData.map(row => row.totalInchDia) },
-  ];
+// Define the type for the data returned by the fetchInchDiaSummary function
+type InchDiaSummaryData = {
+  shopInchDia: number;
+  fieldInchDia: number;
+  totalInchDia: number;
+};
 
-  // Prepare chart data in the format needed for the charts
-  const jointsChartData = [
-    { metric: "Shop Joints", value: rawData.reduce((acc, row) => acc + (Number(row.shopJoints) || 0), 0) },
-    { metric: "Field Joints", value: rawData.reduce((acc, row) => acc + (Number(row.fieldJoints) || 0), 0) },
-    { metric: "Total Joints", value: rawData.reduce((acc, row) => acc + (Number(row.totalJoints) || 0), 0) },
-  ];
-
-  const inchDiaChartData = [
-    { metric: "Shop Inch Dia", value: rawData.reduce((acc, row) => acc + (Number(row.shopInchDia) || 0), 0) },
-    { metric: "Field Inch Dia", value: rawData.reduce((acc, row) => acc + (Number(row.fieldInchDia) || 0), 0) },
-    { metric: "Total Inch Dia", value: rawData.reduce((acc, row) => acc + (Number(row.totalInchDia) || 0), 0) },
-  ];
-
-  // Prepare summary data
-  const summary = {
-    overallJoints: {
-      shopJoints: jointsChartData[0].value,
-      fieldJoints: jointsChartData[1].value,
-      totalJoints: jointsChartData[2].value,
-    },
-    overallInchDia: {
-      shopInchDia: inchDiaChartData[0].value,
-      fieldInchDia: inchDiaChartData[1].value,
-      totalInchDia: inchDiaChartData[2].value,
-    },
-  };
-
-  return {
-    pivotedData,
-    jointsChartData,
-    inchDiaChartData,
-    summary,
-  };
-}
-
-const chartConfig = {
-  value: {
-    label: "value",
-    color: "hsl(var(--chart-2))",
-  },
-  label: {
-    color: "hsl(var(--background))",
-  },
-} satisfies ChartConfig;
-
-
-// This is your page component, which fetches data and renders it
 export default function MOCJoints({ params }: { params: { MOC: string } }) {
+  const [currentComponent, setCurrentComponent] = useState('InchDiaSummary');
   const moc = params.MOC;
 
-  // Use React Query to fetch data
+  async function fetchInchDiaSummary(moc: string): Promise<InchDiaSummaryData> {
+    const result = await db
+      .select({
+        shopInchDia: sql<number>`SUM(${jointsDetail.shopInchDia})`.as('shopInchDia'),
+        fieldInchDia: sql<number>`SUM(${jointsDetail.fieldInchDia})`.as('fieldInchDia'),
+        totalInchDia: sql<number>`SUM(${jointsDetail.shopInchDia}) + SUM(${jointsDetail.fieldInchDia})`.as('totalInchDia'),
+      })
+      .from(jointsDetail)
+      .where(eq(jointsDetail.moc, moc))
+      .execute();
+
+    const [data] = result;
+    return data;
+  }
+
+  // Use React Query to fetch the data
   const { data, isLoading, error } = useQuery({
-    queryKey: ['pivotedData', moc],
-    queryFn: () => fetchPivotedData(moc),
+    queryKey: ['inchDiaSummary', moc],
+    queryFn: () => fetchInchDiaSummary(moc),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
   });
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+  if (isLoading) return <div>Loading...</div>;
+  if (error || !data) return <div>Error fetching data</div>;
 
-  if (error) {
-    return <div>Error fetching data</div>;
-  }
+  // Mapping button clicks to components
+  const renderContent = () => {
+    switch (currentComponent) {
+      case 'JointsSummary':
+        return <JointsSummary moc={params.MOC} />;
+      case 'InchDiaSummary':
+        return (
+          <div className="flex items-center justify-center min-h-screen">
+            <Card className="max-w-md w-full mx-auto">
+              <CardHeader>
+                <CardTitle className="text-center font-bold text-sm">MOC NO - {moc.toUpperCase()}</CardTitle>
+                <CardTitle className="text-center font-bold text-sm">PIPING METALLURGY UPGRADE</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between px-6 py-2">
+                  <span>SHOP INCH DIA FABRICATION</span>
+                  <span>{data.shopInchDia}</span>
+                </div>
+                <div className="flex justify-between px-6 py-2">
+                  <span>FIELD INCH DIA FABRICATION</span>
+                  <span>{data.fieldInchDia}</span>
+                </div>
+                <div className="flex justify-between font-bold px-6 py-2 border-t-2 border-black">
+                  <span>TOTAL INCH DIA</span>
+                  <span>{data.totalInchDia}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      case 'JointsDetail':
+        return <JointsDetail moc={params.MOC} />;
+      case 'InchDiaDetail':
+        return <InchDiaDetail moc={params.MOC} />;
+      case 'Charts':
+        return <Charts moc={params.MOC} />;
+      default:
+        return <InchDiaSummary moc={params.MOC} />;
+    }
+  };
 
-  const { pivotedData, jointsChartData, inchDiaChartData,summary } = data!;
+  const buttonClasses = 'px-3 py-2 text-sm bg-transparent text-black border-none disabled:opacity-50 hover:bg-blue-500 hover:text-white';
 
   return (
-    <div className="m-4">
-      <Card className="w-full">
-        <CardHeader className="flex justify-between items-center">
-          <CardTitle className="text-center">
-            {moc ? `${moc} JOINT SUMMARY` : 'JOINT SUMMARY'}
-          </CardTitle>
-        </CardHeader>
-        <Separator />
-        <CardContent className="overflow-auto">
-          <div className="w-full overflow-x-auto">
-            <Table className="w-full min-w-max">
-              <TableBody>
-                {pivotedData.map((row, rowIndex) => (
-                  <TableRow key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-gray-100' : 'bg-white'}>
-                    <TableCell className="font-semibold px-1 py-1">{row.Attribute}</TableCell>
-                    {row.Values.map((value, index) => (
-                      <TableCell className="px-2 py-1" key={index}>{String(value)}</TableCell>
-                    ))}
-
-<TableCell className="px-2 py-1">
-          {row.Attribute === 'SHOP JOINTS' && jointsChartData.find(data => data.metric === 'Shop Joints')?.value}
-          {row.Attribute === 'FIELD JOINTS' && jointsChartData.find(data => data.metric === 'Field Joints')?.value}
-          {row.Attribute === 'TOTAL JOINTS' && jointsChartData.find(data => data.metric === 'Total Joints')?.value}
-          {row.Attribute === 'SHOP INCH DIA' && inchDiaChartData.find(data => data.metric === 'Shop Inch Dia')?.value}
-          {row.Attribute === 'FIELD INCH DIA' && inchDiaChartData.find(data => data.metric === 'Field Inch Dia')?.value}
-          {row.Attribute === 'TOTAL INCH DIA' && inchDiaChartData.find(data => data.metric === 'Total Inch Dia')?.value}
-        </TableCell>
-
-
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="flex flex-col md:flex-row justify-center md:justify-between my-4">
-        <div className="w-full md:w-1/2 lg:w-1/2 p-1">
-          <ChartComponent
-            data={jointsChartData}
-            title="Total Joints Chart"
-            description="Bar chart representing total joints"
-            chartConfig={chartConfig}
-            className="flex-1"
-          />
-        </div>
-        <div className="w-full md:w-1/2 lg:w-1/2 p-1">
-          <ChartComponent
-            data={inchDiaChartData}
-            title="Total Inch Chart"
-            description="Bar chart representing total joints"
-            chartConfig={chartConfig}
-            className="flex-1"
-          />
-        </div>
+    <div className="grid grid-cols-5 h-screen">
+      {/* Sidebar */}
+      <div className="col-span-1 bg-gray-200 p-4 flex flex-col space-y-2">
+        <Link href='/' className='font-semibold text-neutral-700'>Home</Link>
+        <Button onClick={() => setCurrentComponent('JointsSummary')} className={buttonClasses}>
+          Joints Summary
+        </Button>
+        <Button onClick={() => setCurrentComponent('InchDiaSummary')} className={buttonClasses}>
+          Inch Dia Summary
+        </Button>
+        <Button onClick={() => setCurrentComponent('JointsDetail')} className={buttonClasses}>
+          Joints Detail
+        </Button>
+        <Button onClick={() => setCurrentComponent('InchDiaDetail')} className={buttonClasses}>
+          Inch Dia Detail
+        </Button>
+        <Button onClick={() => setCurrentComponent('Charts')} className={buttonClasses}>
+          Charts
+        </Button>
       </div>
 
-      <Table className="w-full">
-    <TableBody>
-      <TableRow className="h-8 bg-gray-200 font-bold text-lg">
-        <TableCell className="px-2 py-2">Summary</TableCell>
-        <TableCell className="px-2 py-2">Shop Joints</TableCell>
-        <TableCell className="px-2 py-2">Field Joints</TableCell>
-        <TableCell className="px-2 py-2">Total</TableCell>
-      </TableRow>
-
-      <TableRow>
-        <TableCell className="font-semibold px-2 py-1">Overall Joints</TableCell>
-        <TableCell className="px-2 py-2">{summary.overallJoints.shopJoints}</TableCell>
-        <TableCell className="px-2 py-2">{summary.overallJoints.fieldJoints}</TableCell>
-        <TableCell className="px-2 py-1">{summary.overallJoints.totalJoints}</TableCell>
-      </TableRow>
-      <TableRow>
-        <TableCell className="font-semibold px-2 py-1">Overall Inch Dia</TableCell>
-        <TableCell className="px-2 py-2">{summary.overallInchDia.shopInchDia}</TableCell>
-        <TableCell className="px-2 py-2">{summary.overallInchDia.fieldInchDia}</TableCell>
-        <TableCell className="px-2 py-2">{summary.overallInchDia.totalInchDia}</TableCell>
-      </TableRow>
-    </TableBody>
-  </Table>
+      {/* Main Content */}
+      <div className="col-span-4 p-4">
+        {renderContent()}
+      </div>
     </div>
   );
 }
