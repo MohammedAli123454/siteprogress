@@ -2,13 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import { db } from '@/app/configs/db';
 import { sql, eq } from 'drizzle-orm';
 import { jointsDetail } from '@/app/configs/schema';
-
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableRow, TableCell } from '@/components/ui/table';
+import { Loader } from 'lucide-react';
 
-export default function InchDiaDetail({ moc }: { moc: string }) {
-  function fetchInchDiaDetail(moc: string) {
+export default function InchDiaDetail({ moc, selectedSidebar }: { moc: string; selectedSidebar: 'singleMoc' | 'allMocs' }) {
+  function fetchInchDiaDetail(moc: string, selectedSidebar: 'singleMoc' | 'allMocs') {
+    const whereClause = selectedSidebar === 'singleMoc' ? eq(jointsDetail.moc, moc) : sql`1 = 1`; // Fetch data for all MOCs if 'allMocs' is selected
     return db
       .select({
         sizeInches: jointsDetail.sizeInches,
@@ -19,7 +20,7 @@ export default function InchDiaDetail({ moc }: { moc: string }) {
         totalInchDia: sql`SUM(${jointsDetail.totalJoints})`.as('totalJoints'),
       })
       .from(jointsDetail)
-      .where(eq(jointsDetail.moc, moc))
+      .where(whereClause)
       .groupBy(jointsDetail.sizeInches, jointsDetail.pipeSchedule, jointsDetail.thickness)
       .orderBy(sql`${jointsDetail.sizeInches}::numeric ASC`)
       .execute()
@@ -40,12 +41,18 @@ export default function InchDiaDetail({ moc }: { moc: string }) {
   // Use React Query to fetch the data
   const { data, isLoading, error } = useQuery({
     queryKey: ['inchDiaDetail', moc],
-    queryFn: () => fetchInchDiaDetail(moc),
+    queryFn: () => fetchInchDiaDetail(moc,selectedSidebar),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
   });
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader className="animate-spin text-gray-500" size={32} />
+      </div>
+    );
+  }
   if (error || !data) return <div>Error fetching data</div>;
 
   const { pivotedData } = data;

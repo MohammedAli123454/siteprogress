@@ -2,8 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { db } from '@/app/configs/db';
 import { sql, eq } from 'drizzle-orm';
 import { jointsDetail } from '@/app/configs/schema';
-
 import ChartComponent from '@/components/BarChartComponent';
+import { Loader } from 'lucide-react';
+import { PieChartComponent } from '@/components/PieChartComponent';
+
 
 // Define the type for chart data
 type ChartDataItem = {
@@ -11,9 +13,10 @@ type ChartDataItem = {
   value: number;
 };
 
-export default function Charts({ moc }: { moc: string }) {
+export default function Charts({ moc, selectedSidebar }: { moc: string; selectedSidebar: 'singleMoc' | 'allMocs' }) {
   // Fetch data function
-  async function fetchChartData(moc: string) {
+  async function fetchChartData(moc: string, selectedSidebar: 'singleMoc' | 'allMocs') {
+    const whereClause = selectedSidebar === 'singleMoc' ? eq(jointsDetail.moc, moc) : sql`1 = 1`; // Fetch data for all MOCs if 'allMocs' is selected
     const rawData = await db
       .select({
         shopJoints: sql`SUM(${jointsDetail.shopJoints})`.as('shopJoints'),
@@ -24,7 +27,7 @@ export default function Charts({ moc }: { moc: string }) {
         totalInchDia: sql`SUM(${jointsDetail.totalInchDia})`.as('totalInchDia'),
       })
       .from(jointsDetail)
-      .where(eq(jointsDetail.moc, moc))
+      .where(whereClause)
       .groupBy(jointsDetail.sizeInches, jointsDetail.pipeSchedule, jointsDetail.thickness)
       .execute();
 
@@ -46,13 +49,19 @@ export default function Charts({ moc }: { moc: string }) {
 
   // Use React Query to fetch the data
   const { data, isLoading, error } = useQuery({
-    queryKey: ['chartData', moc],
-    queryFn: () => fetchChartData(moc),
+    queryKey: ['chartData', moc],  // Removed selectedSidebar from queryKey
+    queryFn: () => fetchChartData(moc, selectedSidebar), // Pass selectedSidebar as a parameter
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
   });
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader className="animate-spin text-gray-500" size={32} />
+      </div>
+    );
+  }
   if (error || !data) return <div>Error fetching data</div>;
 
   const { jointsChartData, inchDiaChartData } = data;
@@ -70,7 +79,7 @@ export default function Charts({ moc }: { moc: string }) {
   return (
     <div className="flex flex-col md:flex-row justify-center md:justify-between my-4">
       <div className="w-full md:w-1/2 lg:w-1/2 p-1">
-        <ChartComponent
+        <PieChartComponent
           data={jointsChartData}
           title="Total Joints Chart"
           description="Bar chart representing total joints"
@@ -79,7 +88,7 @@ export default function Charts({ moc }: { moc: string }) {
         />
       </div>
       <div className="w-full md:w-1/2 lg:w-1/2 p-1">
-        <ChartComponent
+        <PieChartComponent
           data={inchDiaChartData}
           title="Total Inch Dia Chart"
           description="Bar chart representing total inch diameter"
