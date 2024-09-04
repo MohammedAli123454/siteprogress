@@ -1,5 +1,5 @@
-"use client";
 
+"use client";
 import { useQuery } from '@tanstack/react-query';
 import { db } from '@/app/configs/db';
 import { sql, eq } from 'drizzle-orm';
@@ -36,7 +36,7 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
   }
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['inchDiaSummary', moc],
+    queryKey: ['inchDiaSummary', moc,selectedSidebar],
     queryFn: () => fetchInchDiaSummary(moc),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,

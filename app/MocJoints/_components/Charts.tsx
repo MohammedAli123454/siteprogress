@@ -1,11 +1,10 @@
+"use client"
 import { useQuery } from '@tanstack/react-query';
 import { db } from '@/app/configs/db';
 import { sql, eq } from 'drizzle-orm';
 import { jointsDetail } from '@/app/configs/schema';
-import ChartComponent from '@/components/BarChartComponent';
 import { Loader } from 'lucide-react';
 import { PieChartComponent } from '@/components/PieChartComponent';
-
 
 // Define the type for chart data
 type ChartDataItem = {
@@ -49,7 +48,7 @@ export default function Charts({ moc, selectedSidebar }: { moc: string; selected
 
   // Use React Query to fetch the data
   const { data, isLoading, error } = useQuery({
-    queryKey: ['chartData', moc],  // Removed selectedSidebar from queryKey
+    queryKey: ['chartData', moc,selectedSidebar],  // Removed selectedSidebar from queryKey
     queryFn: () => fetchChartData(moc, selectedSidebar), // Pass selectedSidebar as a parameter
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
@@ -66,6 +65,11 @@ export default function Charts({ moc, selectedSidebar }: { moc: string; selected
 
   const { jointsChartData, inchDiaChartData } = data;
 
+  const totalJointsValue = jointsChartData.find(item => item.metric === "Total Joints")?.value || 0;
+  const totalInchDiaValue = inchDiaChartData.find(item => item.metric === "Total Inch Dia")?.value || 0;
+
+  
+
   const chartConfig = {
     value: {
       label: "value",
@@ -81,21 +85,28 @@ export default function Charts({ moc, selectedSidebar }: { moc: string; selected
       <div className="w-full md:w-1/2 lg:w-1/2 p-1">
         <PieChartComponent
           data={jointsChartData}
-          title="Total Joints Chart"
-          description="Bar chart representing total joints"
+          title="Total joints"
+          description=""
           chartConfig={chartConfig}
+          totalValue={totalJointsValue}
+          totalLabel="Total Joints"
           className="flex-1"
         />
       </div>
       <div className="w-full md:w-1/2 lg:w-1/2 p-1">
         <PieChartComponent
           data={inchDiaChartData}
-          title="Total Inch Dia Chart"
-          description="Bar chart representing total inch diameter"
+          title="Total inch diameter"
+          description=""
           chartConfig={chartConfig}
+          totalValue={totalInchDiaValue}
+          totalLabel="Total Inch Dia"
           className="flex-1"
         />
       </div>
     </div>
   );
 }
+
+
+
