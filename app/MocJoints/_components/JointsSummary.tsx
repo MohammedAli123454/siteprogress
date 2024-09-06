@@ -4,6 +4,7 @@ import { sql, eq } from 'drizzle-orm';
 import { jointsDetail } from '@/app/configs/schema';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Loader } from 'lucide-react';
+import { fetchMocName } from '@/components/commoncomponents/fetchMocName';
 
 // Define the type for the data returned by the fetchInchDiaSummary function
 type JointsSummaryData = {
@@ -35,15 +36,22 @@ export default function JointsSummary({ moc, selectedSidebar }: { moc: string; s
 
   // Use React Query to fetch the data
   const { data, isLoading, error } = useQuery({
-    queryKey: ['jointsSummary', moc],  // Removed selectedSidebar from queryKey
+    queryKey: ['jointsSummary', moc,selectedSidebar],  // Removed selectedSidebar from queryKey
     queryFn: () => fetchInchDiaSummary(moc, selectedSidebar),  // Pass selectedSidebar as a parameter
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
   });
 
+
+  const { data: mocName, isLoading: isMocNameLoading, error: mocNameError } = useQuery({
+    queryKey: ['mocName', moc],
+    queryFn: () => fetchMocName(moc),
+    staleTime: Infinity, // MOC names rarely change
+  });
+
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex items-center h-64">
         <Loader className="animate-spin text-gray-500" size={32} />
       </div>
     );
@@ -51,27 +59,28 @@ export default function JointsSummary({ moc, selectedSidebar }: { moc: string; s
   if (error || !data) return <div>Error fetching data</div>;  // Added a check for undefined data
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Card className="max-w-md w-full mx-auto">
-        <CardHeader>
-          <CardTitle className="text-center font-bold text-sm">MOC NO - {moc.toUpperCase()}</CardTitle>
-          <CardTitle className="text-center font-bold text-sm">PIPING METALLURGY UPGRADE</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-between px-6 py-2">
-            <span>SHOP JOINTS FABRICATION</span>
-            <span>{data.shopJoints}</span>  {/* Data is guaranteed to be defined here */}
-          </div>
-          <div className="flex justify-between px-6 py-2">
-            <span>FIELD JOINTS FABRICATION</span>
-            <span>{data.fieldJoints}</span>
-          </div>
-          <div className="flex justify-between font-bold px-6 py-2 border-t-2 border-black">
-            <span>TOTAL JOINTS</span>
-            <span>{data.totalJoints}</span>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+ 
+    <Card className="max-w-2xl mt-4 ml-4">
+    <CardHeader>
+      <CardTitle className="text-center font-bold text-sm">MOC NO - {moc.toUpperCase()}</CardTitle>
+      <CardTitle className="text-center font-bold text-sm">{mocName}</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="flex justify-between px-6 py-2">
+        <span>SHOP JOINTS FABRICATION</span>
+        <span>{data.shopJoints}</span>  {/* Data is guaranteed to be defined here */}
+      </div>
+      <div className="flex justify-between px-6 py-2">
+        <span>FIELD JOINTS FABRICATION</span>
+        <span>{data.fieldJoints}</span>
+      </div>
+      <div className="flex justify-between font-bold px-6 py-2 border-t-2 border-black">
+        <span>TOTAL JOINTS</span>
+        <span>{data.totalJoints}</span>
+      </div>
+    </CardContent>
+  </Card>
+  
+  
   );
 }

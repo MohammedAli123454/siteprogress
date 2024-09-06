@@ -1,4 +1,3 @@
-
 "use client";
 import { useQuery } from '@tanstack/react-query';
 import { db } from '@/app/configs/db';
@@ -6,13 +5,14 @@ import { sql, eq } from 'drizzle-orm';
 import { jointsDetail } from '@/app/configs/schema';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { useState } from 'react';
-import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import JointsSummary from '../_components/JointsSummary';
 import JointsDetail from '../_components/JointsDetail';
 import InchDiaDetail from '../_components/InchDiaDetail';
 import Charts from '../_components/Charts';
 import InchDiaSummary from '../_components/InchDiaSummary';
+import { Separator } from '@/components/ui/separator';
+
 
 export default function MOCJoints({ params }: { params: { MOC: string } }) {
   const [currentComponent, setCurrentComponent] = useState('InchDiaSummary');
@@ -36,7 +36,7 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
   }
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['inchDiaSummary', moc,selectedSidebar],
+    queryKey: ['inchDiaSummary', moc, selectedSidebar],
     queryFn: () => fetchInchDiaSummary(moc),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
@@ -47,8 +47,6 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
 
   const renderContent = () => {
     switch (currentComponent) {
-      //case 'JointsSummary':
-       // return <JointsSummary moc={params.MOC} selectedSidebar={selectedSidebar} />;
       case 'InchDiaSummary':
         return (
           <div className="flex items-center justify-center min-h-screen">
@@ -74,8 +72,8 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
             </Card>
           </div>
         );
-        case 'JointsSummary':
-       return <JointsSummary moc={params.MOC} selectedSidebar={selectedSidebar} />;
+      case 'JointsSummary':
+        return <JointsSummary moc={params.MOC} selectedSidebar={selectedSidebar} />;
       case 'JointsDetail':
         return <JointsDetail moc={params.MOC} selectedSidebar={selectedSidebar} />;
       case 'InchDiaDetail':
@@ -90,18 +88,18 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
   const buttonClasses = 'px-3 py-2 text-sm bg-transparent text-black border-none disabled:opacity-50 hover:bg-blue-500 hover:text-white';
 
   return (
-    <div className="grid grid-cols-5 h-screen">
+    <div className="grid grid-cols-5 h-screen p-4 gap-4">
       {/* Sidebar */}
-      <div className="col-span-1 bg-gray-200 p-4 flex flex-col space-y-2">
+      <div className="col-span-1  bg-gray-100 shadow-lg rounded-lg p-4 flex flex-col space-y-4">
         {/* Single MOC Data Section */}
         <div className="mb-6">
-          <div className="text-lg font-bold mb-2">Selected MOC Data</div>
+          <div className="text-lg font-bold mb-4 text-center">Single MOC Data Menu</div>
           <Button
             onClick={() => {
               setSelectedSidebar('singleMoc');
               setCurrentComponent('JointsSummary');
             }}
-            className={`${buttonClasses} w-full text-left`}
+            className={`${buttonClasses} w-full`}
           >
             Joints Summary
           </Button>
@@ -110,7 +108,7 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
               setSelectedSidebar('singleMoc');
               setCurrentComponent('InchDiaSummary');
             }}
-            className={`${buttonClasses} w-full text-left`}
+            className={`${buttonClasses} w-full`}
           >
             Inch Dia Summary
           </Button>
@@ -119,7 +117,7 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
               setSelectedSidebar('singleMoc');
               setCurrentComponent('JointsDetail');
             }}
-            className={`${buttonClasses} w-full text-left`}
+            className={`${buttonClasses} w-full`}
           >
             Joints Detail
           </Button>
@@ -128,7 +126,7 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
               setSelectedSidebar('singleMoc');
               setCurrentComponent('InchDiaDetail');
             }}
-            className={`${buttonClasses} w-full text-left`}
+            className={`${buttonClasses} w-full`}
           >
             Inch Dia Detail
           </Button>
@@ -137,21 +135,23 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
               setSelectedSidebar('singleMoc');
               setCurrentComponent('Charts');
             }}
-            className={`${buttonClasses} w-full text-left`}
+            className={`${buttonClasses} w-full`}
           >
             Charts
           </Button>
         </div>
-  
+
+        <Separator className="my-5 w-2" />
+
         {/* All MOCs Data Section */}
         <div>
-          <div className="text-lg font-bold mb-2">All MOC’s Data – Overall Scope</div>
+          <div className="text-lg font-bold mb-4 text-center">Overall Data Menu</div>
           <Button
             onClick={() => {
               setSelectedSidebar('allMocs');
               setCurrentComponent('JointsSummary');
             }}
-            className={`${buttonClasses} w-full text-left`}
+            className={`${buttonClasses} w-full`}
           >
             Joints Summary
           </Button>
@@ -160,7 +160,7 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
               setSelectedSidebar('allMocs');
               setCurrentComponent('JointsDetail');
             }}
-            className={`${buttonClasses} w-full text-left`}
+            className={`${buttonClasses} w-full`}
           >
             Joints Detail
           </Button>
@@ -169,7 +169,7 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
               setSelectedSidebar('allMocs');
               setCurrentComponent('InchDiaSummary');
             }}
-            className={`${buttonClasses} w-full text-left`}
+            className={`${buttonClasses} w-full`}
           >
             Inch Dia Summary
           </Button>
@@ -178,7 +178,7 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
               setSelectedSidebar('allMocs');
               setCurrentComponent('InchDiaDetail');
             }}
-            className={`${buttonClasses} w-full text-left`}
+            className={`${buttonClasses} w-full`}
           >
             Inch Dia Detail
           </Button>
@@ -187,18 +187,17 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
               setSelectedSidebar('allMocs');
               setCurrentComponent('Charts');
             }}
-            className={`${buttonClasses} w-full text-left`}
+            className={`${buttonClasses} w-full`}
           >
             Charts
           </Button>
         </div>
       </div>
-  
+
       {/* Main Content */}
-      <div className="col-span-4 p-4">
+      <div className="col-span-4  bg-gray-50 shadow-lg rounded-lg p-2">
         {renderContent()}
       </div>
     </div>
   );
-  
 }

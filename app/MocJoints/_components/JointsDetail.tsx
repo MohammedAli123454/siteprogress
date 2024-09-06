@@ -42,7 +42,7 @@ export default function JointsDetail({ moc, selectedSidebar }: { moc: string; se
 
   // Use React Query to fetch the data
   const { data, isLoading, error } = useQuery({
-    queryKey: ['jointsDetail', moc],
+    queryKey: ['jointsDetail', moc,selectedSidebar],
     queryFn: () => fetchJointsDetail(moc,selectedSidebar),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,

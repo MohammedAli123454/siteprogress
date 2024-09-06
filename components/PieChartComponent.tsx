@@ -1,8 +1,7 @@
-"use client";
 import * as React from "react";
 import { TrendingUp } from "lucide-react";
 import { Label, Pie, PieChart, Cell } from "recharts";
-import { Separator } from "@/components/ui/separator"
+import { Separator } from "@/components/ui/separator";
 
 import {
   Card,
@@ -43,13 +42,13 @@ export function PieChartComponent({
   return (
     <Card className={`flex flex-col ${className}`}>
       <CardHeader className="items-center pb-0">
-        <CardTitle>{title}</CardTitle>
+        <CardTitle className="font-bold text-[16px] text-center">{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px]"
+          className="mx-auto aspect-square max-h-[300px]" // Increased max height
         >
           <PieChart>
             <ChartTooltip
@@ -60,7 +59,8 @@ export function PieChartComponent({
               data={data}
               dataKey="value"
               nameKey="metric"
-              innerRadius={60}
+              innerRadius={60} // Increased inner radius
+              outerRadius={100} // Added outer radius for a larger pie
               strokeWidth={5}
             >
               <Label
@@ -100,26 +100,24 @@ export function PieChartComponent({
         </ChartContainer>
       </CardContent>
 
-      <Separator className="mb-2"/>
+      <Separator className="mb-2" />
 
       <CardFooter className="flex-col gap-2 text-sm items-start">
-  <div className="flex flex-col gap-4">
-    {data.map((entry, index) => (
-      <div
-        key={`legend-${index}`}
-        className="flex items-center gap-2 leading-none"
-      >
-        <span
-          className="h-4 w-4"
-          style={{ backgroundColor: colors[index % colors.length] }}
-        ></span>
-        {entry.metric}: {entry.value.toLocaleString()}
-      </div>
-    ))}
-  </div>
-</CardFooter>
-
-
+        <div className="flex flex-col gap-4">
+          {data.map((entry, index) => (
+            <div
+              key={`legend-${index}`}
+              className="flex items-center gap-2 leading-none"
+            >
+              <span
+                className="h-4 w-4"
+                style={{ backgroundColor: colors[index % colors.length] }}
+              ></span>
+              {entry.metric}: {entry.value.toLocaleString()}
+            </div>
+          ))}
+        </div>
+      </CardFooter>
     </Card>
   );
 }
