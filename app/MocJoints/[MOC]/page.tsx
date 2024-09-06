@@ -1,202 +1,198 @@
-"use client";
+'use client';
+
 import { useQuery } from '@tanstack/react-query';
 import { db } from '@/app/configs/db';
 import { sql, eq } from 'drizzle-orm';
 import { jointsDetail } from '@/app/configs/schema';
+import { Loader } from 'lucide-react';
+import { PieChartComponent } from '@/components/PieChartComponent';
+import { fetchMocName } from '@/components/commoncomponents/fetchMocName';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
-import { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import JointsSummary from '../_components/JointsSummary';
-import JointsDetail from '../_components/JointsDetail';
-import InchDiaDetail from '../_components/InchDiaDetail';
-import Charts from '../_components/Charts';
-import InchDiaSummary from '../_components/InchDiaSummary';
-import { Separator } from '@/components/ui/separator';
 
+// Define the type for the data returned by the fetchInchDiaSummary function
+type JointsSummaryData = {
+  shopJoints: number;
+  fieldJoints: number;
+  totalJoints: number;
+  shopInchDia: number;
+  fieldInchDia: number;
+  totalInchDia: number;
+};
+
+// Define the type for chart data
+type ChartDataItem = {
+  metric: string;
+  value: number;
+};
+
+// Fetch chart data for a specific MOC
+const fetchChartData = async (moc: string) => {
+  const rawData = await db
+    .select({
+      shopJoints: sql`SUM(${jointsDetail.shopJoints})`.as('shopJoints'),
+      shopInchDia: sql`SUM(${jointsDetail.shopInchDia})`.as('shopInchDia'),
+      fieldJoints: sql`SUM(${jointsDetail.fieldJoints})`.as('fieldJoints'),
+      fieldInchDia: sql`SUM(${jointsDetail.fieldInchDia})`.as('fieldInchDia'),
+      totalJoints: sql`SUM(${jointsDetail.shopJoints}) + SUM(${jointsDetail.fieldJoints})`.as('totalJoints'),
+      totalInchDia: sql`SUM(${jointsDetail.shopInchDia}) + SUM(${jointsDetail.fieldInchDia})`.as('totalInchDia'),
+    })
+    .from(jointsDetail)
+    .where(eq(jointsDetail.moc, moc))
+    .execute();
+
+  return {
+    jointsChartData: [
+      { metric: "Shop Joints", value: Number(rawData[0]?.shopJoints || 0) },
+      { metric: "Field Joints", value: Number(rawData[0]?.fieldJoints || 0) },
+      { metric: "Total Joints", value: Number(rawData[0]?.totalJoints || 0) },
+    ],
+    inchDiaChartData: [
+      { metric: "Shop Inch Dia", value: Number(rawData[0]?.shopInchDia || 0) },
+      { metric: "Field Inch Dia", value: Number(rawData[0]?.fieldInchDia || 0) },
+      { metric: "Total Inch Dia", value: Number(rawData[0]?.totalInchDia || 0) },
+    ],
+  };
+};
+
+// Fetch full-scope chart data (without MOC filtering)
+const fetchFullScopeChartData = async () => {
+  const rawData = await db
+    .select({
+      shopJoints: sql`SUM(${jointsDetail.shopJoints})`.as('shopJoints'),
+      shopInchDia: sql`SUM(${jointsDetail.shopInchDia})`.as('shopInchDia'),
+      fieldJoints: sql`SUM(${jointsDetail.fieldJoints})`.as('fieldJoints'),
+      fieldInchDia: sql`SUM(${jointsDetail.fieldInchDia})`.as('fieldInchDia'),
+      totalJoints: sql`SUM(${jointsDetail.shopJoints}) + SUM(${jointsDetail.fieldJoints})`.as('totalJoints'),
+      totalInchDia: sql`SUM(${jointsDetail.shopInchDia}) + SUM(${jointsDetail.fieldInchDia})`.as('totalInchDia'),
+    })
+    .from(jointsDetail)
+    .execute();
+
+  return {
+    jointsChartData: [
+      { metric: "Shop Joints", value: Number(rawData[0]?.shopJoints || 0) },
+      { metric: "Field Joints", value: Number(rawData[0]?.fieldJoints || 0) },
+      { metric: "Total Joints", value: Number(rawData[0]?.totalJoints || 0) },
+    ],
+    inchDiaChartData: [
+      { metric: "Shop Inch Dia", value: Number(rawData[0]?.shopInchDia || 0) },
+      { metric: "Field Inch Dia", value: Number(rawData[0]?.fieldInchDia || 0) },
+      { metric: "Total Inch Dia", value: Number(rawData[0]?.totalInchDia || 0) },
+    ],
+  };
+};
 
 export default function MOCJoints({ params }: { params: { MOC: string } }) {
-  const [currentComponent, setCurrentComponent] = useState('InchDiaSummary');
-  const [selectedSidebar, setSelectedSidebar] = useState<'singleMoc' | 'allMocs'>('singleMoc');
-
   const moc = params.MOC;
 
-  async function fetchInchDiaSummary(moc: string) {
-    const result = await db
-      .select({
-        shopInchDia: sql<number>`SUM(${jointsDetail.shopInchDia})`.as('shopInchDia'),
-        fieldInchDia: sql<number>`SUM(${jointsDetail.fieldInchDia})`.as('fieldInchDia'),
-        totalInchDia: sql<number>`SUM(${jointsDetail.shopInchDia}) + SUM(${jointsDetail.fieldInchDia})`.as('totalInchDia'),
-      })
-      .from(jointsDetail)
-      .where(eq(jointsDetail.moc, moc))
-      .execute();
+  // Fetch MOC Name
+  const { data: mocName, isLoading: isMocNameLoading, error: mocNameError } = useQuery({
+    queryKey: ['mocName', moc],
+    queryFn: () => fetchMocName(moc),
+    staleTime: Infinity,
+  });
 
-    const [data] = result;
-    return data;
-  }
-
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['inchDiaSummary', moc, selectedSidebar],
-    queryFn: () => fetchInchDiaSummary(moc),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+  // Fetch chart data for selected MOC
+  const { data: chartData, isLoading: chartLoading, error: chartError } = useQuery({
+    queryKey: ['chartData', moc],
+    queryFn: () => fetchChartData(moc),
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error || !data) return <div>Error fetching data</div>;
+  // Fetch chart data for the full scope
+  const { data: fullScopeChartData, isLoading: fullScopeLoading, error: fullScopeError } = useQuery({
+    queryKey: ['fullScopeChartData'],
+    queryFn: fetchFullScopeChartData,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
 
-  const renderContent = () => {
-    switch (currentComponent) {
-      case 'InchDiaSummary':
-        return (
-          <div className="flex items-center justify-center min-h-screen">
-            <Card className="max-w-md w-full mx-auto">
-              <CardHeader>
-                <CardTitle className="text-center font-bold text-sm">MOC NO - {moc.toUpperCase()}</CardTitle>
-                <CardTitle className="text-center font-bold text-sm">PIPING METALLURGY UPGRADE</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex justify-between px-6 py-2">
-                  <span>SHOP INCH DIA FABRICATION</span>
-                  <span>{data.shopInchDia}</span>
-                </div>
-                <div className="flex justify-between px-6 py-2">
-                  <span>FIELD INCH DIA FABRICATION</span>
-                  <span>{data.fieldInchDia}</span>
-                </div>
-                <div className="flex justify-between font-bold px-6 py-2 border-t-2 border-black">
-                  <span>TOTAL INCH DIA</span>
-                  <span>{data.totalInchDia}</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        );
-      case 'JointsSummary':
-        return <JointsSummary moc={params.MOC} selectedSidebar={selectedSidebar} />;
-      case 'JointsDetail':
-        return <JointsDetail moc={params.MOC} selectedSidebar={selectedSidebar} />;
-      case 'InchDiaDetail':
-        return <InchDiaDetail moc={params.MOC} selectedSidebar={selectedSidebar} />;
-      case 'Charts':
-        return <Charts moc={params.MOC} selectedSidebar={selectedSidebar} />;
-      default:
-        return <InchDiaSummary moc={params.MOC} />;
-    }
+  if (chartLoading || isMocNameLoading || fullScopeLoading) {
+    return (
+      <div className="flex items-center h-64">
+        <Loader className="animate-spin text-gray-500" size={32} />
+      </div>
+    );
+  }
+
+  if (chartError || mocNameError || fullScopeError || !chartData || !fullScopeChartData) {
+    return <div>Error fetching data</div>;
+  }
+
+  // Total values for chart components
+  const totalJointsValue = chartData.jointsChartData.find(item => item.metric === "Total Joints")?.value || 0;
+  const totalInchDiaValue = chartData.inchDiaChartData.find(item => item.metric === "Total Inch Dia")?.value || 0;
+
+  const totalFullJointsValue = fullScopeChartData.jointsChartData.find(item => item.metric === "Total Joints")?.value || 0;
+  const totalFullInchDiaValue = fullScopeChartData.inchDiaChartData.find(item => item.metric === "Total Inch Dia")?.value || 0;
+
+  // Dynamic chart titles based on selected sidebar
+  const chartTitleJoints = mocName ? mocName : 'Undefined';
+  const chartTitleInchDia = mocName ? mocName : 'Undefined';
+
+  const chartConfig = {
+    value: { label: "value", color: "hsl(var(--chart-2))" },
+    label: { color: "hsl(var(--background))" },
   };
 
-  const buttonClasses = 'px-3 py-2 text-sm bg-transparent text-black border-none disabled:opacity-50 hover:bg-blue-500 hover:text-white';
-
   return (
-    <div className="grid grid-cols-5 h-screen p-4 gap-4">
-      {/* Sidebar */}
-      <div className="col-span-1  bg-gray-100 shadow-lg rounded-lg p-4 flex flex-col space-y-4">
-        {/* Single MOC Data Section */}
-        <div className="mb-6">
-          <div className="text-lg font-bold mb-4 text-center">Single MOC Data Menu</div>
-          <Button
-            onClick={() => {
-              setSelectedSidebar('singleMoc');
-              setCurrentComponent('JointsSummary');
-            }}
-            className={`${buttonClasses} w-full`}
-          >
-            Joints Summary
-          </Button>
-          <Button
-            onClick={() => {
-              setSelectedSidebar('singleMoc');
-              setCurrentComponent('InchDiaSummary');
-            }}
-            className={`${buttonClasses} w-full`}
-          >
-            Inch Dia Summary
-          </Button>
-          <Button
-            onClick={() => {
-              setSelectedSidebar('singleMoc');
-              setCurrentComponent('JointsDetail');
-            }}
-            className={`${buttonClasses} w-full`}
-          >
-            Joints Detail
-          </Button>
-          <Button
-            onClick={() => {
-              setSelectedSidebar('singleMoc');
-              setCurrentComponent('InchDiaDetail');
-            }}
-            className={`${buttonClasses} w-full`}
-          >
-            Inch Dia Detail
-          </Button>
-          <Button
-            onClick={() => {
-              setSelectedSidebar('singleMoc');
-              setCurrentComponent('Charts');
-            }}
-            className={`${buttonClasses} w-full`}
-          >
-            Charts
-          </Button>
+    <div className="flex flex-col items-center justify-center min-h-screen space-y-8 p-4">
+      {/* Selected MOC Data Section */}
+     
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+        {/* Joints Chart */}
+        <div className="p-1">
+          <PieChartComponent
+            data={chartData.jointsChartData}
+            title={chartTitleJoints}
+            description={moc}
+            chartConfig={chartConfig}
+            totalValue={totalJointsValue}
+            totalLabel="Total Joints"
+          />
         </div>
-
-        <Separator className="my-5 w-2" />
-
-        {/* All MOCs Data Section */}
-        <div>
-          <div className="text-lg font-bold mb-4 text-center">Overall Data Menu</div>
-          <Button
-            onClick={() => {
-              setSelectedSidebar('allMocs');
-              setCurrentComponent('JointsSummary');
-            }}
-            className={`${buttonClasses} w-full`}
-          >
-            Joints Summary
-          </Button>
-          <Button
-            onClick={() => {
-              setSelectedSidebar('allMocs');
-              setCurrentComponent('JointsDetail');
-            }}
-            className={`${buttonClasses} w-full`}
-          >
-            Joints Detail
-          </Button>
-          <Button
-            onClick={() => {
-              setSelectedSidebar('allMocs');
-              setCurrentComponent('InchDiaSummary');
-            }}
-            className={`${buttonClasses} w-full`}
-          >
-            Inch Dia Summary
-          </Button>
-          <Button
-            onClick={() => {
-              setSelectedSidebar('allMocs');
-              setCurrentComponent('InchDiaDetail');
-            }}
-            className={`${buttonClasses} w-full`}
-          >
-            Inch Dia Detail
-          </Button>
-          <Button
-            onClick={() => {
-              setSelectedSidebar('allMocs');
-              setCurrentComponent('Charts');
-            }}
-            className={`${buttonClasses} w-full`}
-          >
-            Charts
-          </Button>
+        {/* Inch Dia Chart */}
+        <div className="p-1">
+          <PieChartComponent
+            data={chartData.inchDiaChartData}
+            title={chartTitleInchDia}
+            description={moc}
+            chartConfig={chartConfig}
+            totalValue={totalInchDiaValue}
+            totalLabel="Total Inch Dia"
+          />
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="col-span-4  bg-gray-50 shadow-lg rounded-lg p-2">
-        {renderContent()}
+      {/* Divider */}
+      <div className="w-full border-t-4 border-gray-400 my-4" />
+
+      {/* Full Scope Data Section */}
+   
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+        {/* Joints Chart */}
+        <div className="p-1">
+          <PieChartComponent
+            data={fullScopeChartData.jointsChartData}
+            title="Complete Scope"
+            description="Total Joints"
+            chartConfig={chartConfig}
+            totalValue={totalFullJointsValue}
+            totalLabel="Total Joints"
+          />
+        </div>
+        {/* Inch Dia Chart */}
+        <div className="p-1">
+          <PieChartComponent
+            data={fullScopeChartData.inchDiaChartData}
+            title="Complete Scope"
+            description="Total Inch Dia"
+            chartConfig={chartConfig}
+            totalValue={totalFullInchDiaValue}
+            totalLabel="Total Inch Dia"
+          />
+        </div>
       </div>
     </div>
   );
