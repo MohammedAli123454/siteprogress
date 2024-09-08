@@ -29,7 +29,6 @@ const fetchMOCData = async (): Promise<DataType[]> => {
     .leftJoin(jointsDetail, eq(mocDetail.moc, jointsDetail.moc))
     .groupBy(mocDetail.moc, mocDetail.mocName);
 
-  // Directly cast the result if database guarantees types
   return result as DataType[];
 };
 
@@ -39,39 +38,10 @@ export default function InchDiaDetailByMOC() {
     queryFn: fetchMOCData,
   });
 
-  const { grandTotalShopJoints, grandTotalFieldJoints, grandTotalTotalJoints } = useMemo(() => {
-    const grandTotals = data.reduce(
-      (totals, item) => ({
-        grandTotalShopJoints: totals.grandTotalShopJoints + item.SHOP_JOINTS,
-        grandTotalFieldJoints: totals.grandTotalFieldJoints + item.FIELD_JOINTS,
-        grandTotalTotalJoints: totals.grandTotalTotalJoints + item.TOTAL_JOINTS,
-      }),
-      { grandTotalShopJoints: 0, grandTotalFieldJoints: 0, grandTotalTotalJoints: 0 }
-    );
-    return grandTotals;
-  }, [data]);
-
-  const renderTableRows = () => {
-    return data.map((item, index) => (
-      <TableRow key={index} className="flex w-full box-border">
-        <TableCell className="px-2 py-3 min-w-[60px] box-border text-center">{index + 1}</TableCell>
-        <TableCell className="px-2 py-3 min-w-[150px] box-border text-center">{item.MOC}</TableCell>
-        <TableCell className="px-2 py-3 min-w-[600px] box-border">{item.MOC_NAME}</TableCell>
-        <TableCell className="px-2 py-3 min-w-[175px] box-border text-center">{item.SHOP_JOINTS}</TableCell>
-        <TableCell className="px-2 py-3 min-w-[175px] box-border text-center">{item.FIELD_JOINTS}</TableCell>
-        <TableCell className="px-2 py-3 min-w-[175px] box-border text-center">{item.TOTAL_JOINTS}</TableCell>
-      </TableRow>
-    ));
-  };
-
-  const renderGrandTotalRow = () => (
-    <TableRow className="font-bold bg-gray-100">
-      <TableCell colSpan={2}>Grand Total</TableCell>
-      <TableCell>{grandTotalShopJoints}</TableCell>
-      <TableCell>{grandTotalFieldJoints}</TableCell>
-      <TableCell>{grandTotalTotalJoints}</TableCell>
-    </TableRow>
-  );
+  const grandTotalShopJoints = data.reduce((total, item) => total + Number(item.SHOP_JOINTS), 0);
+  const grandTotalFieldJoints = data.reduce((total, item) => total + Number(item.FIELD_JOINTS), 0);
+  const grandTotalTotalJoints = data.reduce((total, item) => total + Number(item.TOTAL_JOINTS), 0);
+  
 
   return (
     <Card>
@@ -82,24 +52,45 @@ export default function InchDiaDetailByMOC() {
         {isLoading ? (
           <p>Loading...</p>
         ) : (
-          <div className="overflow-x-auto mx-4"> {/* Added margin for better spacing */}
-            <Table className="w-full min-w-full">
-              <TableHead>
-                <TableRow className="flex w-full box-border font-bold text-lg bg-gray-200">
-                  <TableCell className="font-semibold min-w-[60px] px-2 py-3 box-border text-center">Sr.No</TableCell>
-                  <TableCell className="font-semibold min-w-[150px] px-2 py-3 box-border text-center">MOC</TableCell>
-                  <TableCell className="font-semibold min-w-[600px] px-2 py-3 box-border">MOC Name</TableCell>
-                  <TableCell className="font-semibold min-w-[175px] px-2 py-3 box-border text-center">Shop Joints</TableCell>
-                  <TableCell className="font-semibold min-w-[175px] px-2 py-3 box-border text-center">Field Joints</TableCell>
-                  <TableCell className="font-semibold min-w-[175px] px-2 py-3 box-border text-center">Total Joints</TableCell>
+          <div className="overflow-x-auto mx-4">
+          <Table className="w-full min-w-full">
+            <TableHead>
+              <TableRow className="flex w-full box-border font-bold text-lg bg-gray-200">
+                <TableCell className="font-semibold min-w-[60px] px-2 py-2 box-border text-center">Sr.No</TableCell>
+                <TableCell className="font-semibold min-w-[150px] px-2 py-2 box-border text-center">MOC</TableCell>
+                <TableCell className="font-semibold min-w-[600px] px-2 py-2 box-border">MOC Name</TableCell>
+                <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Shop Joints</TableCell>
+                <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Field Joints</TableCell>
+                <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Total Joints</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data.map((item, index) => (
+                <TableRow key={index} className={`flex w-full box-border ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}>
+                  <TableCell className="px-2 py-2 min-w-[60px] box-border text-center">{index + 1}</TableCell>
+                  <TableCell className="px-2 py-2 min-w-[150px] box-border text-center">{item.MOC}</TableCell>
+                  <TableCell className="px-2 py-2 min-w-[600px] box-border">{item.MOC_NAME}</TableCell>
+                  <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.SHOP_JOINTS}</TableCell>
+                  <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.FIELD_JOINTS}</TableCell>
+                  <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.TOTAL_JOINTS}</TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {renderTableRows()}
-                {renderGrandTotalRow()}
-              </TableBody>
-            </Table>
-          </div>
+              ))}
+<TableRow className="flex w-full box-border font-bold bg-gray-300">
+  <TableCell className="px-2 py-2 min-w-[210px] box-border"></TableCell> {/* Blank cell for Sr.No with min-width */}
+  <TableCell className="px-2 py-2 min-w-[450px] box-border"></TableCell> {/* Blank cell for MOC with min-width */}
+  <TableCell className="px-2 py-2 min-w-[150px] box-border text-right">Grand Total</TableCell> {/* Grand Total label */}
+  <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{grandTotalShopJoints}</TableCell>
+  <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{grandTotalFieldJoints}</TableCell>
+  <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{grandTotalTotalJoints}</TableCell>
+</TableRow>
+
+
+            </TableBody>
+          </Table>
+        </div>
+        
+
+        
         )}
       </CardContent>
     </Card>
