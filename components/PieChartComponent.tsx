@@ -1,8 +1,8 @@
 import * as React from "react";
+import { Button } from "@/components/ui/button"; // Importing your button component
 import { TrendingUp } from "lucide-react";
 import { Label, Pie, PieChart, Cell } from "recharts";
 import { Separator } from "@/components/ui/separator";
-
 import {
   Card,
   CardContent,
@@ -27,6 +27,7 @@ interface PieChartComponentProps {
   totalLabel?: string; // Optional: to customize the label under the total value
   className?: string;
   colors?: string[]; // Optional: to customize pie chart colors
+  onButtonClick?: () => void; // New prop to handle button click event
 }
 
 export function PieChartComponent({
@@ -38,6 +39,7 @@ export function PieChartComponent({
   totalLabel = "Total",
   className = "",
   colors = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"], // Default colors
+  onButtonClick, // Accessing the click event handler via props
 }: PieChartComponentProps) {
   return (
     <Card className={`flex flex-col ${className}`}>
@@ -102,22 +104,32 @@ export function PieChartComponent({
 
       <Separator className="mb-2" />
 
-      <CardFooter className="flex-col gap-2 text-sm items-start">
-        <div className="flex flex-col gap-4">
-          {data.map((entry, index) => (
-            <div
-              key={`legend-${index}`}
-              className="flex items-center gap-2 leading-none"
-            >
-              <span
-                className="h-4 w-4"
-                style={{ backgroundColor: colors[index % colors.length] }}
-              ></span>
-              {entry.metric}: {entry.value.toLocaleString()}
-            </div>
-          ))}
-        </div>
-      </CardFooter>
+      <CardFooter className="flex justify-between items-center gap-2 text-sm">
+  <div className="flex flex-col gap-4">
+    {data.map((entry, index) => (
+      <div
+        key={`legend-${index}`}
+        className="flex items-center gap-2 leading-none"
+      >
+        <span
+          className="h-4 w-4"
+          style={{ backgroundColor: colors[index % colors.length] }}
+        ></span>
+        {entry.metric}: {entry.value.toLocaleString()}
+      </div>
+    ))}
+  </div>
+
+  {/* Add the command button here */}
+  <Button
+    onClick={onButtonClick}
+    className="bg-blue-400 text-white hover:bg-blue-500"
+  >
+    Get More Detail
+  </Button>
+</CardFooter>
+
+
     </Card>
   );
 }

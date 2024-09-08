@@ -8,6 +8,9 @@ import { Loader } from 'lucide-react';
 import { PieChartComponent } from '@/components/PieChartComponent';
 import { fetchMocName } from '@/components/commoncomponents/fetchMocName';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
+import TotalJointsByMOCC from '@/components/TotalJointsByMOCC';
+
+
 
 // Define the type for the data returned by the fetchInchDiaSummary function
 type JointsSummaryData = {
@@ -85,12 +88,20 @@ const fetchFullScopeChartData = async () => {
 export default function MOCJoints({ params }: { params: { MOC: string } }) {
   const moc = params.MOC;
 
+  const handleButtonClick = () => {
+    //console.log("Button clicked! Handle logic here.");
+    <TotalJointsByMOCC/>
+  };
+
+
   // Fetch MOC Name
   const { data: mocName, isLoading: isMocNameLoading, error: mocNameError } = useQuery({
     queryKey: ['mocName', moc],
     queryFn: () => fetchMocName(moc),
     staleTime: Infinity,
   });
+
+
 
   // Fetch chart data for selected MOC
   const { data: chartData, isLoading: chartLoading, error: chartError } = useQuery({
@@ -150,6 +161,7 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
             chartConfig={chartConfig}
             totalValue={totalJointsValue}
             totalLabel="Total Joints"
+            onButtonClick={handleButtonClick} // Passing the click handler
           />
         </div>
         {/* Inch Dia Chart */}
@@ -161,6 +173,7 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
             chartConfig={chartConfig}
             totalValue={totalInchDiaValue}
             totalLabel="Total Inch Dia"
+            onButtonClick={handleButtonClick} // Passing the click handler
           />
         </div>
       </div>
@@ -180,6 +193,7 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
             chartConfig={chartConfig}
             totalValue={totalFullJointsValue}
             totalLabel="Total Joints"
+            onButtonClick={handleButtonClick} // Passing the click handler
           />
         </div>
         {/* Inch Dia Chart */}
@@ -191,6 +205,7 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
             chartConfig={chartConfig}
             totalValue={totalFullInchDiaValue}
             totalLabel="Total Inch Dia"
+            onButtonClick={handleButtonClick} // Passing the click handler
           />
         </div>
       </div>
