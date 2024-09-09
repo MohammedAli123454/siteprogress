@@ -7,12 +7,11 @@ import { jointsDetail } from '@/app/configs/schema';
 import { Loader } from 'lucide-react';
 import { PieChartComponent } from '@/components/PieChartComponent';
 import { fetchMocName } from '@/components/commoncomponents/fetchMocName';
-import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
 import TotalJointsByMOCC from '@/components/TotalJointsByMOCC';
+import { useState } from 'react';
 
-
-
-// Define the type for the data returned by the fetchInchDiaSummary function
+// Define the types
 type JointsSummaryData = {
   shopJoints: number;
   fieldJoints: number;
@@ -22,15 +21,20 @@ type JointsSummaryData = {
   totalInchDia: number;
 };
 
-// Define the type for chart data
 type ChartDataItem = {
   metric: string;
   value: number;
 };
 
-// Fetch chart data for a specific MOC
-const fetchChartData = async (moc: string) => {
-  const rawData = await db
+// Define the structure of the data returned by the fetch function
+interface ChartData {
+  jointsChartData: ChartDataItem[];
+  inchDiaChartData: ChartDataItem[];
+}
+
+// Fetch chart data, optionally filtered by MOC
+const fetchChartData = async (moc?: string): Promise<ChartData> => {
+  const rawDataQuery = db
     .select({
       shopJoints: sql`SUM(${jointsDetail.shopJoints})`.as('shopJoints'),
       shopInchDia: sql`SUM(${jointsDetail.shopInchDia})`.as('shopInchDia'),
@@ -39,86 +43,54 @@ const fetchChartData = async (moc: string) => {
       totalJoints: sql`SUM(${jointsDetail.shopJoints}) + SUM(${jointsDetail.fieldJoints})`.as('totalJoints'),
       totalInchDia: sql`SUM(${jointsDetail.shopInchDia}) + SUM(${jointsDetail.fieldInchDia})`.as('totalInchDia'),
     })
-    .from(jointsDetail)
-    .where(eq(jointsDetail.moc, moc))
-    .execute();
+    .from(jointsDetail);
+
+  if (moc) {
+    rawDataQuery.where(eq(jointsDetail.moc, moc));
+  }
+
+  const rawData = await rawDataQuery.execute();
 
   return {
     jointsChartData: [
-      { metric: "Shop Joints", value: Number(rawData[0]?.shopJoints || 0) },
-      { metric: "Field Joints", value: Number(rawData[0]?.fieldJoints || 0) },
-      { metric: "Total Joints", value: Number(rawData[0]?.totalJoints || 0) },
+      { metric: 'Shop Joints', value: Number(rawData[0]?.shopJoints || 0) },
+      { metric: 'Field Joints', value: Number(rawData[0]?.fieldJoints || 0) },
+      { metric: 'Total Joints', value: Number(rawData[0]?.totalJoints || 0) },
     ],
     inchDiaChartData: [
-      { metric: "Shop Inch Dia", value: Number(rawData[0]?.shopInchDia || 0) },
-      { metric: "Field Inch Dia", value: Number(rawData[0]?.fieldInchDia || 0) },
-      { metric: "Total Inch Dia", value: Number(rawData[0]?.totalInchDia || 0) },
-    ],
-  };
-};
-
-// Fetch full-scope chart data (without MOC filtering)
-const fetchFullScopeChartData = async () => {
-  const rawData = await db
-    .select({
-      shopJoints: sql`SUM(${jointsDetail.shopJoints})`.as('shopJoints'),
-      shopInchDia: sql`SUM(${jointsDetail.shopInchDia})`.as('shopInchDia'),
-      fieldJoints: sql`SUM(${jointsDetail.fieldJoints})`.as('fieldJoints'),
-      fieldInchDia: sql`SUM(${jointsDetail.fieldInchDia})`.as('fieldInchDia'),
-      totalJoints: sql`SUM(${jointsDetail.shopJoints}) + SUM(${jointsDetail.fieldJoints})`.as('totalJoints'),
-      totalInchDia: sql`SUM(${jointsDetail.shopInchDia}) + SUM(${jointsDetail.fieldInchDia})`.as('totalInchDia'),
-    })
-    .from(jointsDetail)
-    .execute();
-
-  return {
-    jointsChartData: [
-      { metric: "Shop Joints", value: Number(rawData[0]?.shopJoints || 0) },
-      { metric: "Field Joints", value: Number(rawData[0]?.fieldJoints || 0) },
-      { metric: "Total Joints", value: Number(rawData[0]?.totalJoints || 0) },
-    ],
-    inchDiaChartData: [
-      { metric: "Shop Inch Dia", value: Number(rawData[0]?.shopInchDia || 0) },
-      { metric: "Field Inch Dia", value: Number(rawData[0]?.fieldInchDia || 0) },
-      { metric: "Total Inch Dia", value: Number(rawData[0]?.totalInchDia || 0) },
+      { metric: 'Shop Inch Dia', value: Number(rawData[0]?.shopInchDia || 0) },
+      { metric: 'Field Inch Dia', value: Number(rawData[0]?.fieldInchDia || 0) },
+      { metric: 'Total Inch Dia', value: Number(rawData[0]?.totalInchDia || 0) },
     ],
   };
 };
 
 export default function MOCJoints({ params }: { params: { MOC: string } }) {
   const moc = params.MOC;
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleButtonClick = () => {
-    //console.log("Button clicked! Handle logic here.");
-    <TotalJointsByMOCC/>
-  };
-
-
-  // Fetch MOC Name
-  const { data: mocName, isLoading: isMocNameLoading, error: mocNameError } = useQuery({
+  // Query for MOC name
+  const { data: mocName, isLoading: isMocNameLoading } = useQuery<string>({
     queryKey: ['mocName', moc],
     queryFn: () => fetchMocName(moc),
     staleTime: Infinity,
   });
 
-
-
-  // Fetch chart data for selected MOC
-  const { data: chartData, isLoading: chartLoading, error: chartError } = useQuery({
+  // Query for specific MOC chart data
+  const { data: chartData, isLoading: chartLoading } = useQuery<ChartData>({
     queryKey: ['chartData', moc],
     queryFn: () => fetchChartData(moc),
     staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
   });
 
-  // Fetch chart data for the full scope
-  const { data: fullScopeChartData, isLoading: fullScopeLoading, error: fullScopeError } = useQuery({
+  // Query for full scope chart data
+  const { data: fullScopeChartData, isLoading: fullScopeLoading } = useQuery<ChartData>({
     queryKey: ['fullScopeChartData'],
-    queryFn: fetchFullScopeChartData,
+    queryFn: () => fetchChartData(),
     staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
   });
 
+  // Error and loading states
   if (chartLoading || isMocNameLoading || fullScopeLoading) {
     return (
       <div className="flex items-center h-64">
@@ -127,54 +99,39 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
     );
   }
 
-  if (chartError || mocNameError || fullScopeError || !chartData || !fullScopeChartData) {
-    return <div>Error fetching data</div>;
-  }
+  // Memoized chart data
+  const totalJointsValue = chartData?.jointsChartData.find(item => item.metric === 'Total Joints')?.value || 0;
+  const totalInchDiaValue = chartData?.inchDiaChartData.find(item => item.metric === 'Total Inch Dia')?.value || 0;
 
-  // Total values for chart components
-  const totalJointsValue = chartData.jointsChartData.find(item => item.metric === "Total Joints")?.value || 0;
-  const totalInchDiaValue = chartData.inchDiaChartData.find(item => item.metric === "Total Inch Dia")?.value || 0;
+  const totalFullJointsValue = fullScopeChartData?.jointsChartData.find(item => item.metric === 'Total Joints')?.value || 0;
+  const totalFullInchDiaValue = fullScopeChartData?.inchDiaChartData.find(item => item.metric === 'Total Inch Dia')?.value || 0;
 
-  const totalFullJointsValue = fullScopeChartData.jointsChartData.find(item => item.metric === "Total Joints")?.value || 0;
-  const totalFullInchDiaValue = fullScopeChartData.inchDiaChartData.find(item => item.metric === "Total Inch Dia")?.value || 0;
-
-  // Dynamic chart titles based on selected sidebar
-  const chartTitleJoints = mocName ? mocName : 'Undefined';
-  const chartTitleInchDia = mocName ? mocName : 'Undefined';
-
-  const chartConfig = {
-    value: { label: "value", color: "hsl(var(--chart-2))" },
-    label: { color: "hsl(var(--background))" },
+  // Callback for button click
+  const handleButtonClick = () => {
+    setIsDialogOpen(true);
   };
+
+  const renderPieChart = (data: ChartDataItem[], title: string, totalValue: number, totalLabel: string) => (
+    <PieChartComponent
+      data={data}
+      title={title}
+      description={moc}
+      chartConfig={{ value: { label: 'value', color: 'hsl(var(--chart-2))' }, label: { color: 'hsl(var(--background))' } }}
+      totalValue={totalValue}
+      totalLabel={totalLabel}
+      onButtonClick={handleButtonClick}
+    />
+  );
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen space-y-8 p-4">
       {/* Selected MOC Data Section */}
-     
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-        {/* Joints Chart */}
         <div className="p-1">
-          <PieChartComponent
-            data={chartData.jointsChartData}
-            title={chartTitleJoints}
-            description={moc}
-            chartConfig={chartConfig}
-            totalValue={totalJointsValue}
-            totalLabel="Total Joints"
-            onButtonClick={handleButtonClick} // Passing the click handler
-          />
+          {chartData ? renderPieChart(chartData.jointsChartData, mocName || '', totalJointsValue, 'Total Joints') : 'No Data Available'}
         </div>
-        {/* Inch Dia Chart */}
         <div className="p-1">
-          <PieChartComponent
-            data={chartData.inchDiaChartData}
-            title={chartTitleInchDia}
-            description={moc}
-            chartConfig={chartConfig}
-            totalValue={totalInchDiaValue}
-            totalLabel="Total Inch Dia"
-            onButtonClick={handleButtonClick} // Passing the click handler
-          />
+          {chartData ? renderPieChart(chartData.inchDiaChartData, mocName || '', totalInchDiaValue, 'Total Inch Dia') : 'No Data Available'}
         </div>
       </div>
 
@@ -182,33 +139,35 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
       <div className="w-full border-t-4 border-gray-400 my-4" />
 
       {/* Full Scope Data Section */}
-   
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-        {/* Joints Chart */}
         <div className="p-1">
-          <PieChartComponent
-            data={fullScopeChartData.jointsChartData}
-            title="Complete Scope"
-            description="Total Joints"
-            chartConfig={chartConfig}
-            totalValue={totalFullJointsValue}
-            totalLabel="Total Joints"
-            onButtonClick={handleButtonClick} // Passing the click handler
-          />
+          {fullScopeChartData ? renderPieChart(fullScopeChartData.jointsChartData, 'Complete Scope', totalFullJointsValue, 'Total Joints') : 'No Data Available'}
         </div>
-        {/* Inch Dia Chart */}
         <div className="p-1">
-          <PieChartComponent
-            data={fullScopeChartData.inchDiaChartData}
-            title="Complete Scope"
-            description="Total Inch Dia"
-            chartConfig={chartConfig}
-            totalValue={totalFullInchDiaValue}
-            totalLabel="Total Inch Dia"
-            onButtonClick={handleButtonClick} // Passing the click handler
-          />
+          {fullScopeChartData ? renderPieChart(fullScopeChartData.inchDiaChartData, 'Complete Scope', totalFullInchDiaValue, 'Total Inch Dia') : 'No Data Available'}
         </div>
       </div>
+
+           {/* Dialog */}
+           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+  <DialogContent className="w-full h-[100vh] min-w-[100vw] min-h-[100vh] p-4 bg-white rounded shadow-lg flex flex-col">
+    {/* Custom Close Button */}
+    <div className="flex justify-end">
+      <button
+        onClick={() => setIsDialogOpen(false)}
+        className="px-3 py-2 bg-red-500 text-white rounded"
+      >
+        Close
+      </button>
+    </div>
+
+    {/* Adjust the table styling within the dialog */}
+    <div className="overflow-x-auto flex-grow">
+      <TotalJointsByMOCC />
+    </div>
+  </DialogContent>
+</Dialog>
+
     </div>
   );
 }
