@@ -42,10 +42,10 @@ const fetchMOCData = async (moc?: string): Promise<DataType[]> => {
   return result as DataType[];
 };
 
-export default function InchDiaDetailByMOC({ moc }: InchDiaDetailByMOCProps) {
+export default function TotalJointsByMOCC({ params }: { params: { TYPEP: string } }) {
   const { data = [], isLoading } = useQuery({
-    queryKey: ["mocData", moc],
-    queryFn: () => fetchMOCData(moc),  // Pass moc to the query function
+    queryKey: ["mocData"],
+    queryFn: () => fetchMOCData(),  // Pass moc to the query function
   });
 
   const grandTotalShopJoints = data.reduce((total, item) => total + Number(item.SHOP_JOINTS), 0);
@@ -55,7 +55,7 @@ export default function InchDiaDetailByMOC({ moc }: InchDiaDetailByMOCProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{moc ? `Inch Dia Detail for MOC ${moc}` : "Inch Dia Detail By All MOCs"}</CardTitle>
+    
       </CardHeader>
       <CardContent>
         {isLoading ? (

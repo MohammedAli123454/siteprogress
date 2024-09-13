@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"; // Importing your button compon
 import { TrendingUp } from "lucide-react";
 import { Label, Pie, PieChart, Cell } from "recharts";
 import { Separator } from "@/components/ui/separator";
+import Link from 'next/link';
 import {
   Card,
   CardContent,
@@ -21,31 +22,31 @@ import {
 interface PieChartComponentProps {
   data: { metric: string; value: number }[];
   title: string;
-  description: string;
+  moc: string;
   chartConfig: ChartConfig;
   totalValue: number;
-  totalLabel?: string; // Optional: to customize the label under the total value
+  Type?: string; // Optional: to customize the label under the total value
   className?: string;
   colors?: string[]; // Optional: to customize pie chart colors
-  onButtonClick?: () => void; // New prop to handle button click event
+  //onButtonClick?: () => void; // New prop to handle button click event
 }
 
 export function PieChartComponent({
   data,
   title,
-  description,
+  moc,
   chartConfig,
   totalValue,
-  totalLabel = "Total",
+  Type = "Total",
   className = "",
   colors = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"], // Default colors
-  onButtonClick, // Accessing the click event handler via props
+  //onButtonClick, // Accessing the click event handler via props
 }: PieChartComponentProps) {
   return (
     <Card className={`flex flex-col ${className}`}>
       <CardHeader className="items-center pb-0">
         <CardTitle className="font-bold text-[16px] text-center">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription>{moc}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
@@ -87,7 +88,7 @@ export function PieChartComponent({
                           y={(viewBox.cy || 0) + 24}
                           className="fill-muted-foreground"
                         >
-                          {totalLabel}
+                          {Type}
                         </tspan>
                       </text>
                     );
@@ -121,15 +122,18 @@ export function PieChartComponent({
   </div>
 
   {/* Add the command button here */}
-  <Button
-    onClick={onButtonClick}
-    className="bg-blue-400 text-white hover:bg-blue-500"
-  >
+
+  <Link href={`/WeldSummaryTable/${moc}/${Type}`}>
+  <Button className="bg-blue-400 text-white hover:bg-blue-500">
     Get More Detail
   </Button>
+</Link>
 </CardFooter>
 
 
     </Card>
   );
 }
+
+
+

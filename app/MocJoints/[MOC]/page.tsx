@@ -8,7 +8,7 @@ import { Loader } from 'lucide-react';
 import { PieChartComponent } from '@/components/PieChartComponent';
 import { fetchMocName } from '@/components/commoncomponents/fetchMocName';
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
-import TotalJointsByMOCC from '@/components/TotalJointsByMOCC';
+
 import { useState } from 'react';
 
 // Define the types
@@ -111,15 +111,14 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
     setIsDialogOpen(true);
   };
 
-  const renderPieChart = (data: ChartDataItem[], title: string, totalValue: number, totalLabel: string) => (
+  const renderPieChart = (data: ChartDataItem[], title: string, totalValue: number, totalLabel: string, mocValue: string) => (
     <PieChartComponent
       data={data}
       title={title}
-      description={moc}
+      moc={mocValue}
       chartConfig={{ value: { label: 'value', color: 'hsl(var(--chart-2))' }, label: { color: 'hsl(var(--background))' } }}
       totalValue={totalValue}
-      totalLabel={totalLabel}
-      onButtonClick={handleButtonClick}
+      Type={totalLabel}
     />
   );
 
@@ -128,10 +127,11 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
       {/* Selected MOC Data Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
         <div className="p-1">
-          {chartData ? renderPieChart(chartData.jointsChartData, mocName || '', totalJointsValue, 'Total Joints') : 'No Data Available'}
+        {chartData ? renderPieChart(chartData.jointsChartData, mocName || '', totalJointsValue, 'TotalJoints', moc) : 'No Data Available'}
+
         </div>
         <div className="p-1">
-          {chartData ? renderPieChart(chartData.inchDiaChartData, mocName || '', totalInchDiaValue, 'Total Inch Dia') : 'No Data Available'}
+        {chartData ? renderPieChart(chartData.inchDiaChartData, mocName || '', totalInchDiaValue, 'TotalInchDia', moc) : 'No Data Available'}
         </div>
       </div>
 
@@ -141,10 +141,10 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
       {/* Full Scope Data Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
         <div className="p-1">
-          {fullScopeChartData ? renderPieChart(fullScopeChartData.jointsChartData, 'Complete Scope', totalFullJointsValue, 'Total Joints') : 'No Data Available'}
+        {fullScopeChartData ? renderPieChart(fullScopeChartData.jointsChartData, 'Complete Scope', totalFullJointsValue, 'OverallJoints', '') : 'No Data Available'}
         </div>
         <div className="p-1">
-          {fullScopeChartData ? renderPieChart(fullScopeChartData.inchDiaChartData, 'Complete Scope', totalFullInchDiaValue, 'Total Inch Dia') : 'No Data Available'}
+        {fullScopeChartData ? renderPieChart(fullScopeChartData.inchDiaChartData, 'Complete Scope', totalFullInchDiaValue, 'OverallInchDia', '') : 'No Data Available'}
         </div>
       </div>
 
@@ -162,9 +162,7 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
     </div>
 
     {/* Adjust the table styling within the dialog */}
-    <div className="overflow-x-auto flex-grow">
-      <TotalJointsByMOCC />
-    </div>
+   
   </DialogContent>
 </Dialog>
 
