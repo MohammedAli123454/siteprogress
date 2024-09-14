@@ -49,7 +49,7 @@ const getQuery = async (moc: string | null, Type: string) => {
       .leftJoin(jointsDetail, eq(mocDetail.moc, jointsDetail.moc))
       .where(eq(mocDetail.moc, moc))
       .groupBy(mocDetail.moc, mocDetail.mocName);
-  } else if (!moc && Type === "OverallJoints") {
+  } else if (moc && Type === "OverallJoints") {
     query = db
       .select({
         MOC: mocDetail.moc,
@@ -61,7 +61,7 @@ const getQuery = async (moc: string | null, Type: string) => {
       .from(mocDetail)
       .leftJoin(jointsDetail, eq(mocDetail.moc, jointsDetail.moc))
       .groupBy(mocDetail.moc, mocDetail.mocName);
-  } else if (!moc && Type === "OverallInchDia") {
+  } else if (moc && Type === "OverallInchDia") {
     query = db
       .select({
         MOC: mocDetail.moc,
@@ -83,13 +83,16 @@ const getQuery = async (moc: string | null, Type: string) => {
 export default function WeldSummaryTable() {
   const params = useParams(); // Get the parameters from the URL
   console.log(params); // Inspect what's in params
-  const { moc, Type } = params as { moc: string; Type: string };
+  const moc = params?.params?.[0]; // Access the first parameter
+  const Type = params?.params?.[1]; // Access the second parameter
 
-  const mocValue = params.moc; // or params['moc'] if needed
-  const typeValue = params.type; // or params['type'] if needed
 
-  console.log("MOC Value:", mocValue);
-  console.log("Type Value:", typeValue);
+
+
+  console.log("Moc Value" +moc);
+  console.log("Type Value" +Type);
+
+
   // Call useQuery with moc and type, and handle loading state
   const { data = [], isLoading } = useQuery({
     queryKey: ["mocData", moc, Type], // Use moc and type as part of queryKey
@@ -97,17 +100,17 @@ export default function WeldSummaryTable() {
   });
 
   // Calculate totals based on the type (TotalJoints or TotalInchDia)
-  const grandTotalShopJoints = data.reduce((acc, item) => acc + (item.SHOP_JOINTS || 0), 0);
-  const grandTotalFieldJoints = data.reduce((acc, item) => acc + (item.FIELD_JOINTS || 0), 0);
-  const grandTotalTotalJoints = data.reduce((acc, item) => acc + (item.TOTAL_JOINTS || 0), 0);
+  const grandTotalShopJoints = data.reduce((total, item) => total + Number(item.SHOP_JOINTS), 0);
+  const grandTotalFieldJoints = data.reduce((total, item) => total + Number(item.FIELD_JOINTS), 0);
+  const grandTotalTotalJoints = data.reduce((total, item) => total + Number(item.TOTAL_JOINTS), 0);
 
-  const grandTotalShopInchDia = data.reduce((acc, item) => acc + (item.SHOP_INCH_DIA || 0), 0);
-  const grandTotalFieldInchDia = data.reduce((acc, item) => acc + (item.FIELD_INCH_DIA || 0), 0);
-  const grandTotalTotalInchDia = data.reduce((acc, item) => acc + (item.TOTAL_INCH_DIA || 0), 0);
+  const grandTotalShopInchDia = data.reduce((acc, item) => acc + Number(item.SHOP_INCH_DIA), 0);
+  const grandTotalFieldInchDia = data.reduce((acc, item) => acc + Number(item.FIELD_INCH_DIA), 0);
+  const grandTotalTotalInchDia = data.reduce((acc, item) => acc + Number(item.TOTAL_INCH_DIA), 0);
 
   return (
-    <Card className="w-full mx-auto">
-      <CardHeader className="text-center">
+    <Card>
+      <CardHeader>
         <CardTitle className="text-lg">
           {Type === 'TotalJoints' ? 'Total Joints Summary' : 'Total Inch Dia Summary'}
         </CardTitle>
@@ -117,37 +120,39 @@ export default function WeldSummaryTable() {
           <p>Loading...</p>
         ) : (
           data.length > 0 && (
-            <div className="overflow-auto">
-              <Table>
+            <div className="overflow-auto mx-4">
+              <Table className="w-full table-fixed">
                 <TableHead>
-                  <TableRow className="bg-gray-200">
-                    <TableCell className="px-2 py-2 min-w-[60px] box-border">MOC</TableCell>
-                    <TableCell className="px-2 py-2 min-w-[150px] box-border text-center">MOC Name</TableCell>
+                <TableRow className="flex w-full box-border font-bold text-lg bg-gray-200">
+                  <TableCell className="font-semibold min-w-[60px] px-2 py-2 box-border text-center">Sr.No</TableCell>
+                  <TableCell className="font-semibold min-w-[150px] px-2 py-2 box-border text-center">MOC</TableCell>
+                  <TableCell className="font-semibold min-w-[600px] px-2 py-2 box-border">MOC Name</TableCell>
                     {Type === 'TotalJoints' ? (
                       <>
-                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">Shop Joints</TableCell>
-                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">Field Joints</TableCell>
-                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">Total Joints</TableCell>
+                       <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Shop Joints</TableCell>
+                  <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Field Joints</TableCell>
+                  <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Total Joints</TableCell>
                       </>
                     ) : (
                       <>
-                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">Shop Inch Dia</TableCell>
-                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">Field Inch Dia</TableCell>
-                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">Total Inch Dia</TableCell>
+                        <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Shop Inch Dia</TableCell>
+                        <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Field Inch Dia</TableCell>
+                        <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Total Inch Dia</TableCell>
                       </>
                     )}
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {data.map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="px-2 py-2 min-w-[60px] box-border">{item.MOC}</TableCell>
-                      <TableCell className="px-2 py-2 min-w-[150px] box-border text-center">{item.MOC_NAME}</TableCell>
+                   <TableRow key={index} className={`flex w-full box-border ${index % 2 === 0 ? "bg-gray-100" : "bg-white"}`}>
+                   <TableCell className="px-2 py-2 min-w-[60px] box-border text-center">{index + 1}</TableCell>
+                   <TableCell className="px-2 py-2 min-w-[150px] box-border text-center">{item.MOC}</TableCell>
+                   <TableCell className="px-2 py-2 min-w-[600px] box-border">{item.MOC_NAME}</TableCell>
                       {Type === 'TotalJoints' ? (
                         <>
                           <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.SHOP_JOINTS}</TableCell>
-                          <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.FIELD_JOINTS}</TableCell>
-                          <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.TOTAL_JOINTS}</TableCell>
+                    <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.FIELD_JOINTS}</TableCell>
+                    <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.TOTAL_JOINTS}</TableCell>
                         </>
                       ) : (
                         <>
@@ -158,14 +163,15 @@ export default function WeldSummaryTable() {
                       )}
                     </TableRow>
                   ))}
-                  <TableRow className="font-bold">
-                    <TableCell className="px-2 py-2 min-w-[60px] box-border">Grand Total</TableCell>
-                    <TableCell className="px-2 py-2 min-w-[150px] box-border"></TableCell>
+                    <TableRow className="flex w-full box-border font-bold bg-gray-300">
+                  <TableCell className="px-2 py-2 min-w-[210px] box-border"></TableCell>
+                  <TableCell className="px-2 py-2 min-w-[450px] box-border"></TableCell>
+                  <TableCell className="px-2 py-2 min-w-[150px] box-border text-right">Grand Total</TableCell>
                     {Type === 'TotalJoints' ? (
                       <>
-                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{grandTotalShopJoints}</TableCell>
-                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{grandTotalFieldJoints}</TableCell>
-                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{grandTotalTotalJoints}</TableCell>
+                       <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{grandTotalShopJoints}</TableCell>
+                  <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{grandTotalFieldJoints}</TableCell>
+                  <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{grandTotalTotalJoints}</TableCell>
                       </>
                     ) : (
                       <>
@@ -183,4 +189,5 @@ export default function WeldSummaryTable() {
       </CardContent>
     </Card>
   );
+  
 }

@@ -141,10 +141,10 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
       {/* Full Scope Data Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
         <div className="p-1">
-        {fullScopeChartData ? renderPieChart(fullScopeChartData.jointsChartData, 'Complete Scope', totalFullJointsValue, 'OverallJoints', '') : 'No Data Available'}
+        {fullScopeChartData ? renderPieChart(fullScopeChartData.jointsChartData, mocName || '', totalFullJointsValue, 'OverallJoints', "all") : 'No Data Available'}
         </div>
         <div className="p-1">
-        {fullScopeChartData ? renderPieChart(fullScopeChartData.inchDiaChartData, 'Complete Scope', totalFullInchDiaValue, 'OverallInchDia', '') : 'No Data Available'}
+        {fullScopeChartData ? renderPieChart(fullScopeChartData.inchDiaChartData, mocName || '', totalFullInchDiaValue, 'OverallInchDia', "all") : 'No Data Available'}
         </div>
       </div>
 

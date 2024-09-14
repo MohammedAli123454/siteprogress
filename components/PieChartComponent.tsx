@@ -25,11 +25,12 @@ interface PieChartComponentProps {
   moc: string;
   chartConfig: ChartConfig;
   totalValue: number;
-  Type?: string; // Optional: to customize the label under the total value
+  Type: string; // Optional: to customize the label under the total value
   className?: string;
   colors?: string[]; // Optional: to customize pie chart colors
   //onButtonClick?: () => void; // New prop to handle button click event
 }
+
 
 export function PieChartComponent({
   data,
@@ -37,11 +38,15 @@ export function PieChartComponent({
   moc,
   chartConfig,
   totalValue,
-  Type = "Total",
+  Type,
   className = "",
   colors = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"], // Default colors
   //onButtonClick, // Accessing the click event handler via props
 }: PieChartComponentProps) {
+
+
+
+  //console.log("MOC Passed as Prop" +moc);
   return (
     <Card className={`flex flex-col ${className}`}>
       <CardHeader className="items-center pb-0">
@@ -122,6 +127,10 @@ export function PieChartComponent({
   </div>
 
   {/* Add the command button here */}
+
+
+  
+  
 
   <Link href={`/WeldSummaryTable/${moc}/${Type}`}>
   <Button className="bg-blue-400 text-white hover:bg-blue-500">
