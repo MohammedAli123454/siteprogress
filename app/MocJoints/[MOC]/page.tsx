@@ -123,49 +123,20 @@ export default function MOCJoints({ params }: { params: { MOC: string } }) {
   );
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen space-y-8 p-4">
-      {/* Selected MOC Data Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-        <div className="p-1">
-        {chartData ? renderPieChart(chartData.jointsChartData, mocName || '', totalJointsValue, 'TotalJoints', moc) : 'No Data Available'}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-screen w-full p-4">
+      {/* Chart 1: Selected MOC Joints Data */}
+      {chartData ? renderPieChart(chartData.jointsChartData, mocName || '', totalJointsValue, 'TotalJoints', moc) : 'No Data Available'}
 
-        </div>
-        <div className="p-1">
-        {chartData ? renderPieChart(chartData.inchDiaChartData, mocName || '', totalInchDiaValue, 'TotalInchDia', moc) : 'No Data Available'}
-        </div>
-      </div>
 
-      {/* Divider */}
-      <div className="w-full border-t-4 border-gray-400 my-4" />
+      {/* Chart 2: Selected MOC Inch Dia Data */}
+      {chartData ? renderPieChart(chartData.inchDiaChartData, mocName || '', totalInchDiaValue, 'TotalInchDia', moc) : 'No Data Available'}
 
-      {/* Full Scope Data Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-        <div className="p-1">
-        {fullScopeChartData ? renderPieChart(fullScopeChartData.jointsChartData, mocName || '', totalFullJointsValue, 'OverallJoints', "all") : 'No Data Available'}
-        </div>
-        <div className="p-1">
-        {fullScopeChartData ? renderPieChart(fullScopeChartData.inchDiaChartData, mocName || '', totalFullInchDiaValue, 'OverallInchDia', "all") : 'No Data Available'}
-        </div>
-      </div>
+      {/* Chart 3: Full Scope Joints Data */}
+      {fullScopeChartData ? renderPieChart(fullScopeChartData.jointsChartData, mocName || '', totalFullJointsValue, 'OverallJoints', "all") : 'No Data Available'}
 
-           {/* Dialog */}
-           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-  <DialogContent className="w-full h-[100vh] min-w-[100vw] min-h-[100vh] p-4 bg-white rounded shadow-lg flex flex-col">
-    {/* Custom Close Button */}
-    <div className="flex justify-end">
-      <button
-        onClick={() => setIsDialogOpen(false)}
-        className="px-3 py-2 bg-red-500 text-white rounded"
-      >
-        Close
-      </button>
-    </div>
-
-    {/* Adjust the table styling within the dialog */}
-   
-  </DialogContent>
-</Dialog>
-
+      {/* Chart 4: Full Scope Inch Dia Data */}
+      {fullScopeChartData ? renderPieChart(fullScopeChartData.inchDiaChartData, mocName || '', totalFullInchDiaValue, 'OverallInchDia', "all") : 'No Data Available'}
     </div>
   );
 }
+

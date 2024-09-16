@@ -44,105 +44,96 @@ export function PieChartComponent({
   //onButtonClick, // Accessing the click event handler via props
 }: PieChartComponentProps) {
 
-
-
-  //console.log("MOC Passed as Prop" +moc);
   return (
-    <Card className={`flex flex-col ${className}`}>
+    <Card className={`flex flex-col items-center ${className} p-4`}>
       <CardHeader className="items-center pb-0">
         <CardTitle className="font-bold text-[16px] text-center">{title}</CardTitle>
-        <CardDescription>{moc}</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 pb-0">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[300px]" // Increased max height
-        >
-          <PieChart>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
-            <Pie
-              data={data}
-              dataKey="value"
-              nameKey="metric"
-              innerRadius={60} // Increased inner radius
-              outerRadius={100} // Added outer radius for a larger pie
-              strokeWidth={5}
-            >
-              <Label
-                content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                    return (
-                      <text
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        <tspan
+
+      <CardContent className="flex flex-row justify-center items-center w-full pb-0">
+        {/* Left side: Pie chart */}
+        <div className="flex justify-center items-center w-1/2"> {/* Ensure pie chart takes 50% of the width */}
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-square w-full max-w-[250px] flex justify-center items-center" // Add fixed width and height
+          >
+            <PieChart width={250} height={250}> {/* Define specific chart width and height */}
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent hideLabel />}
+              />
+              <Pie
+                data={data}
+                dataKey="value"
+                nameKey="metric"
+                innerRadius={60} // Increase radius to ensure better visibility
+                outerRadius={80} // Increase outer radius for better size
+                strokeWidth={5}
+              >
+                <Label
+                  content={({ viewBox }) => {
+                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                      return (
+                        <text
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
+                          textAnchor="middle"
+                          dominantBaseline="middle"
                         >
-                          {totalValue.toLocaleString()}
-                        </tspan>
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
-                        >
-                          {Type}
-                        </tspan>
-                      </text>
-                    );
-                  }
-                }}
-              />
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ChartContainer>
+                          <tspan
+                            x={viewBox.cx}
+                            y={viewBox.cy}
+                            className="fill-foreground text-2xl font-bold"
+                          >
+                            {totalValue.toLocaleString()}
+                          </tspan>
+                          <tspan
+                            x={viewBox.cx}
+                            y={(viewBox.cy || 0) + 20}
+                            className="fill-muted-foreground text-sm"
+                          >
+                            {Type}
+                          </tspan>
+                        </text>
+                      );
+                    }
+                  }}
+                />
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                ))}
+              </Pie>
+            </PieChart>
+          </ChartContainer>
+        </div>
+
+        {/* Right side: Legends and button */}
+        <div className="flex flex-col justify-center items-start w-1/2 pl-8"> {/* Add padding and 50% width */}
+          <div className="flex flex-col gap-3">
+            {data.map((entry, index) => (
+              <div
+                key={`legend-${index}`}
+                className="flex items-center gap-2 leading-none"
+              >
+                <span
+                  className="h-4 w-4"
+                  style={{ backgroundColor: colors[index % colors.length] }}
+                ></span>
+                <span className="text-sm">{entry.metric}: {entry.value.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Button below the legends */}
+          <div className="mt-4">
+            <Link href={`/WeldSummaryTable/${moc}/${Type}`}>
+              <Button className="bg-blue-400 text-white hover:bg-blue-500">
+                Get More Detail
+              </Button>
+            </Link>
+          </div>
+        </div>
       </CardContent>
-
-      <Separator className="mb-2" />
-
-      <CardFooter className="flex justify-between items-center gap-2 text-sm">
-  <div className="flex flex-col gap-4">
-    {data.map((entry, index) => (
-      <div
-        key={`legend-${index}`}
-        className="flex items-center gap-2 leading-none"
-      >
-        <span
-          className="h-4 w-4"
-          style={{ backgroundColor: colors[index % colors.length] }}
-        ></span>
-        {entry.metric}: {entry.value.toLocaleString()}
-      </div>
-    ))}
-  </div>
-
-  {/* Add the command button here */}
-
-
-  
-  
-
-  <Link href={`/WeldSummaryTable/${moc}/${Type}`}>
-  <Button className="bg-blue-400 text-white hover:bg-blue-500">
-    Get More Detail
-  </Button>
-</Link>
-</CardFooter>
-
-
     </Card>
   );
 }
-
-
-
