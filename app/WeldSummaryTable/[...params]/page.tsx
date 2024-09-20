@@ -115,7 +115,7 @@ export default function WeldSummaryTable() {
             <div className="overflow-auto mx-4">
               <Table className="w-full table-fixed">
                 <TableHead>
-                  <TableRow className="flex w-full box-border font-bold text-lg bg-gray-200">
+                  <TableRow className="flex w-full box-border font-bold text-lg">
                     <TableCell className="font-semibold min-w-[60px] px-2 py-2 box-border text-center">Sr.No</TableCell>
                     <TableCell className="font-semibold min-w-[150px] px-2 py-2 box-border text-center">MOC</TableCell>
                     <TableCell className="font-semibold min-w-[600px] px-2 py-2 box-border">MOC Name</TableCell>
@@ -136,7 +136,7 @@ export default function WeldSummaryTable() {
                 </TableHead>
                 <TableBody>
                   {data.map((item, index) => (
-                    <TableRow key={index} className={`flex w-full box-border ${index % 2 === 0 ? "bg-gray-100" : "bg-white"}`}>
+                    <TableRow key={index} className="flex w-full box-border">
                       <TableCell className="px-2 py-2 min-w-[60px] box-border text-center">{index + 1}</TableCell>
                       <TableCell className="px-2 py-2 min-w-[150px] box-border text-center">{item.MOC}</TableCell>
                       <TableCell className="px-2 py-2 min-w-[600px] box-border">{item.MOC_NAME}</TableCell>
@@ -156,7 +156,7 @@ export default function WeldSummaryTable() {
                     </TableRow>
                   ))}
 
-                  <TableRow className="flex w-full box-border font-bold bg-gray-300">
+                  <TableRow className="flex w-full box-border font-bold">
                     <TableCell className="px-2 py-2 min-w-[210px] box-border"></TableCell>
                     <TableCell className="px-2 py-2 min-w-[450px] box-border"></TableCell>
                     <TableCell className="px-2 py-2 min-w-[150px] box-border text-right">Grand Total</TableCell>
