@@ -1,65 +1,141 @@
-import React from 'react';
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Link from 'next/link';
-import { db } from '../configs/db';
-import { jointsDetail, mocDetail } from '../configs/schema';
-import { sql,eq } from 'drizzle-orm';
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+import { db } from '@/app/configs/db';
+import { sql } from 'drizzle-orm';
+import { jointsDetail, mocDetail } from '@/app/configs/schema';
+import { Loader } from 'lucide-react';
+import { PieChartComponent } from '@/components/PieChartComponent';
+import { Switch } from '@/components/ui/switch'; // Import ShadCN's Switch component
+import { useState } from 'react'; // Import useState for handling toggle state
 
 // Define the types
-type MocDetailType = {
+type MocDataType = {
   moc: string;
   mocName: string;
-  totalInchDia: number;
+  shopJoints: number;
+  fieldJoints: number;
   totalJoints: number;
+  shopInchDia?: number; // Add inch dia fields
+  fieldInchDia?: number;
+  totalInchDia?: number;
 };
 
-// Fetch data directly in the component
-const fetchMocDetails = async (): Promise<MocDetailType[]> => {
-  // Use Drizzle's query-building functions
-  const mocData = await db
+// Fetch joint data for all MOCs
+const fetchAllMocsJointsData = async (isInchDia: boolean): Promise<MocDataType[]> => {
+  const rawData = await db
     .select({
       moc: mocDetail.moc,
       mocName: mocDetail.mocName,
-      totalInchDia: sql`SUM(${jointsDetail.totalInchDia})`.as('totalInchDia'),
-      totalJoints: sql`SUM(${jointsDetail.totalJoints})`.as('totalJoints')
+      ...(isInchDia
+        ? {
+            // Inch Dia columns when the switch is toggled
+            shopJoints: sql`SUM(${jointsDetail.shopInchDia})`.as('shopInchDia'),
+            fieldJoints: sql`SUM(${jointsDetail.fieldInchDia})`.as('fieldInchDia'),
+            totalJoints: sql`SUM(${jointsDetail.shopInchDia}) + SUM(${jointsDetail.fieldInchDia})`.as('totalInchDia'),
+          }
+        : {
+            // Joints columns (default)
+            shopJoints: sql`SUM(${jointsDetail.shopJoints})`.as('shopJoints'),
+            fieldJoints: sql`SUM(${jointsDetail.fieldJoints})`.as('fieldJoints'),
+            totalJoints: sql`SUM(${jointsDetail.shopJoints}) + SUM(${jointsDetail.fieldJoints})`.as('totalJoints'),
+          }),
     })
     .from(mocDetail)
-    .innerJoin(jointsDetail, eq(mocDetail.moc, jointsDetail.moc))
+    .innerJoin(jointsDetail, sql`${mocDetail.moc} = ${jointsDetail.moc}`)
     .groupBy(mocDetail.moc, mocDetail.mocName)
     .execute();
 
-  // Cast the result to MocDetailType
-  return mocData as MocDetailType[];
+  return rawData as MocDataType[];
 };
 
-export default async function MocDetail() {
-  // Fetch the MOC details
-  const mocDetails = await fetchMocDetails();
+export default function MOCJointsCharts() {
+  const [isInchDia, setIsInchDia] = useState(true); // Set default to true for Inch Dia
+
+  // Fetch data based on toggle state
+  const { data: mocData, isLoading: isDataLoading } = useQuery<MocDataType[]>({
+    queryKey: ['allMocsJointsData', isInchDia],
+    queryFn: () => fetchAllMocsJointsData(isInchDia),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Error and loading states
+  if (isDataLoading) {
+    return (
+      <div className="flex items-center h-64">
+        <Loader className="animate-spin text-gray-500" size={32} />
+      </div>
+    );
+  }
+
+  // Ensure mocData is always defined, fallback to an empty array if undefined
+  const safeMocData = mocData ?? [];
+
+  // Calculate summary data for "Overall Joints" or "Inch Dia"
+  const overallShopValue = safeMocData.reduce((sum, moc) => sum + Number(moc.shopJoints || 0), 0);
+  const overallFieldValue = safeMocData.reduce((sum, moc) => sum + Number(moc.fieldJoints || 0), 0);
+  const overallTotalValue = overallShopValue + overallFieldValue;
+
+  const overallChartData = [
+    { metric: isInchDia ? 'Shop Inch Dia' : 'Shop Joints', value: overallShopValue },
+    { metric: isInchDia ? 'Field Inch Dia' : 'Field Joints', value: overallFieldValue },
+    { metric: isInchDia ? 'Total Inch Dia' : 'Total Joints', value: overallTotalValue },
+  ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-      {mocDetails.map((mocDetail, index) => (
-        <Card key={index} className="transition-transform transform hover:border-blue-500 hover:scale-105 hover:shadow-md">
-          <CardHeader className="flex justify-between items-center p-4">
-            <div className="flex-1">
-              <CardTitle>{mocDetail.moc}</CardTitle>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-h-screen w-full p-4">
+      {/* Overall Joints or Inch Dia Pie Chart */}
+      <div className="relative space-y-4">
+        {/* Toggle Switch in top-left corner */}
+        <div className="absolute top-4 left-0 p-2">
+          <label className="flex items-center space-x-2">
+            <Switch checked={isInchDia} onCheckedChange={() => setIsInchDia(!isInchDia)} />
+            <span className="text-sm">{isInchDia ? 'Inch Dia' : 'Joints'}</span>
+          </label>
+        </div>
+        <PieChartComponent
+          data={overallChartData}
+          title={isInchDia ? 'Overall Inch Dia' : 'Overall Joints'}
+          moc="Overall"
+          totalValue={overallTotalValue}
+          chartConfig={{
+            value: { label: 'value', color: 'hsl(var(--chart-2))' },
+            label: { color: 'hsl(var(--background))' },
+          }}
+          Type={isInchDia ? 'Overall Inch Dia' : 'Overall Joints'}
+        />
+      </div>
+
+      {/* Loop through each MOC data and render the corresponding Pie chart */}
+      {safeMocData.length > 0 ? (
+        safeMocData.map((moc) => {
+          const chartData = [
+            { metric: isInchDia ? 'Shop Inch Dia' : 'Shop Joints', value: Number(moc.shopJoints || 0) },
+            { metric: isInchDia ? 'Field Inch Dia' : 'Field Joints', value: Number(moc.fieldJoints || 0) },
+            { metric: isInchDia ? 'Total Inch Dia' : 'Total Joints', value: Number(moc.totalJoints || 0) },
+          ];
+
+          const totalValue = Number(moc.shopJoints || 0) + Number(moc.fieldJoints || 0);
+
+          return (
+            <div key={moc.moc} className="space-y-4">
+              <PieChartComponent
+                data={chartData}
+                title={moc.mocName}
+                moc={moc.moc}
+                totalValue={totalValue}
+                chartConfig={{
+                  value: { label: 'value', color: 'hsl(var(--chart-2))' },
+                  label: { color: 'hsl(var(--background))' },
+                }}
+                Type={isInchDia ? 'Total Inch Dia' : 'Total Joints'}
+              />
             </div>
-            <div className="font-bold p-2 rounded flex-shrink-0">
-              {mocDetail.mocName}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between items-center mb-2">
-              <span>Total Inch Dia: {mocDetail.totalInchDia}</span>
-              <span>Total Joints: {mocDetail.totalJoints}</span>
-              <Link href={`/MocJoints/${mocDetail.moc}`}>
-                <Button variant="outline">View Details</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+          );
+        })
+      ) : (
+        <div className="text-center text-gray-500">No MOC data available</div>
+      )}
     </div>
   );
 }
