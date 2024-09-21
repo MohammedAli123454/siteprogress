@@ -36,7 +36,7 @@ const getQuery = async (moc: string | null, Type: string) => {
       .leftJoin(jointsDetail, eq(mocDetail.moc, jointsDetail.moc))
       .where(eq(mocDetail.moc, moc))
       .groupBy(mocDetail.moc, mocDetail.mocName);
-  } else if (moc && Type === "TotalInchDia") {
+  } else if (moc && Type === "InchDia") {
     query = db
       .select({
         MOC: mocDetail.moc,
@@ -49,7 +49,7 @@ const getQuery = async (moc: string | null, Type: string) => {
       .leftJoin(jointsDetail, eq(mocDetail.moc, jointsDetail.moc))
       .where(eq(mocDetail.moc, moc))
       .groupBy(mocDetail.moc, mocDetail.mocName);
-  } else if (Type === "OverallJoints") {
+  } else if (Type === "GrossJoints") {
     query = db
       .select({
         MOC: mocDetail.moc,
@@ -61,7 +61,7 @@ const getQuery = async (moc: string | null, Type: string) => {
       .from(mocDetail)
       .leftJoin(jointsDetail, eq(mocDetail.moc, jointsDetail.moc))
       .groupBy(mocDetail.moc, mocDetail.mocName);
-  } else if (Type === "OverallInchDia") {
+  } else if (Type === "GrossInchDia") {
     query = db
       .select({
         MOC: mocDetail.moc,
@@ -85,101 +85,121 @@ export default function WeldSummaryTable() {
   const moc = params?.params?.[0]; // Access the first parameter
   const Type = params?.params?.[1]; // Access the second parameter
 
+
+  console.log("selected moc" +moc);
+
+  console.log("selected Type" +Type);
+
   // Fetch data using useQuery hook
   const { data = [], isLoading } = useQuery({
     queryKey: ["mocData", moc, Type],
     queryFn: () => getQuery(moc, Type),
   });
 
-  // Calculate totals based on the type
-  const grandTotalShopJoints = data.reduce((total, item) => total + Number(item.SHOP_JOINTS), 0);
-  const grandTotalFieldJoints = data.reduce((total, item) => total + Number(item.FIELD_JOINTS), 0);
-  const grandTotalTotalJoints = grandTotalShopJoints + grandTotalFieldJoints;
+   // Precompute totals
+   const totals = data.reduce(
+    (acc, item) => {
+      if (Type.includes("Joints")) {
+        acc.shopTotal += Number(item.SHOP_JOINTS || 0);
+        acc.fieldTotal += Number(item.FIELD_JOINTS || 0);
+        acc.grandTotal += acc.shopTotal + acc.fieldTotal;
+      } else {
+        acc.shopInchTotal += Number(item.SHOP_INCH_DIA || 0);
+        acc.fieldInchTotal += Number(item.FIELD_INCH_DIA || 0);
+        acc.grandInchTotal += Number(item.TOTAL_INCH_DIA || 0);
+      }
+      return acc;
+    },
+    {
+      shopTotal: 0,
+      fieldTotal: 0,
+      grandTotal: 0,
+      shopInchTotal: 0,
+      fieldInchTotal: 0,
+      grandInchTotal: 0,
+    }
+  );
 
-  const grandTotalShopInchDia = data.reduce((acc, item) => acc + Number(item.SHOP_INCH_DIA), 0);
-  const grandTotalFieldInchDia = data.reduce((acc, item) => acc + Number(item.FIELD_INCH_DIA), 0);
-  const grandTotalTotalInchDia = data.reduce((acc, item) => acc + Number(item.TOTAL_INCH_DIA), 0);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">
-          {Type === 'TotalJoints' || Type === 'OverallJoints' ? 'Total Joints Summary' : 'Total Inch Dia Summary'}
+          {Type.includes("Joints") ? "Total Joints Summary" : "Total Inch Dia Summary"}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
           <p>Loading...</p>
         ) : (
-          data.length > 0 && (
-            <div className="overflow-auto mx-4">
-              <Table className="w-full table-fixed">
-                <TableHead>
-                  <TableRow className="flex w-full box-border font-bold text-lg">
-                    <TableCell className="font-semibold min-w-[60px] px-2 py-2 box-border text-center">Sr.No</TableCell>
-                    <TableCell className="font-semibold min-w-[150px] px-2 py-2 box-border text-center">MOC</TableCell>
-                    <TableCell className="font-semibold min-w-[600px] px-2 py-2 box-border">MOC Name</TableCell>
-                    {Type === 'TotalJoints' || Type === 'OverallJoints' ? (
+          <div className="overflow-auto mx-4">
+            <Table className="w-full table-fixed">
+              <TableHead>
+                <TableRow className="flex w-full box-border font-bold text-lg">
+                  <TableCell className="font-semibold min-w-[60px] px-2 py-2 box-border text-center">Sr.No</TableCell>
+                  <TableCell className="font-semibold min-w-[150px] px-2 py-2 box-border text-center">MOC</TableCell>
+                  <TableCell className="font-semibold min-w-[600px] px-2 py-2 box-border">MOC Name</TableCell>
+                  {Type.includes("Joints") ? (
+                    <>
+                      <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Shop Joints</TableCell>
+                      <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Field Joints</TableCell>
+                      <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Total Joints</TableCell>
+                    </>
+                  ) : (
+                    <>
+                      <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Shop Inch Dia</TableCell>
+                      <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Field Inch Dia</TableCell>
+                      <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Total Inch Dia</TableCell>
+                    </>
+                  )}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {data.map((item, index) => (
+                  <TableRow key={index} className="flex w-full box-border">
+                    <TableCell className="px-2 py-2 min-w-[60px] box-border text-center">{index + 1}</TableCell>
+                    <TableCell className="px-2 py-2 min-w-[150px] box-border text-center">{item.MOC}</TableCell>
+                    <TableCell className="px-2 py-2 min-w-[600px] box-border">{item.MOC_NAME}</TableCell>
+                    {Type.includes("Joints") ? (
                       <>
-                        <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Shop Joints</TableCell>
-                        <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Field Joints</TableCell>
-                        <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Total Joints</TableCell>
+                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.SHOP_JOINTS}</TableCell>
+                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.FIELD_JOINTS}</TableCell>
+                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.TOTAL_JOINTS}</TableCell>
                       </>
                     ) : (
                       <>
-                        <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Shop Inch Dia</TableCell>
-                        <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Field Inch Dia</TableCell>
-                        <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Total Inch Dia</TableCell>
+                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.SHOP_INCH_DIA}</TableCell>
+                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.FIELD_INCH_DIA}</TableCell>
+                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.TOTAL_INCH_DIA}</TableCell>
                       </>
                     )}
                   </TableRow>
-                </TableHead>
-                <TableBody>
-                  {data.map((item, index) => (
-                    <TableRow key={index} className="flex w-full box-border">
-                      <TableCell className="px-2 py-2 min-w-[60px] box-border text-center">{index + 1}</TableCell>
-                      <TableCell className="px-2 py-2 min-w-[150px] box-border text-center">{item.MOC}</TableCell>
-                      <TableCell className="px-2 py-2 min-w-[600px] box-border">{item.MOC_NAME}</TableCell>
-                      {Type === "TotalJoints" || Type === "OverallJoints" ? (
-                        <>
-                          <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.SHOP_JOINTS}</TableCell>
-                          <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.FIELD_JOINTS}</TableCell>
-                          <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.TOTAL_JOINTS}</TableCell>
-                        </>
-                      ) : (
-                        <>
-                          <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.SHOP_INCH_DIA}</TableCell>
-                          <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.FIELD_INCH_DIA}</TableCell>
-                          <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{item.TOTAL_INCH_DIA}</TableCell>
-                        </>
-                      )}
-                    </TableRow>
-                  ))}
-
-                  <TableRow className="flex w-full box-border font-bold">
-                    <TableCell className="px-2 py-2 min-w-[210px] box-border"></TableCell>
-                    <TableCell className="px-2 py-2 min-w-[450px] box-border"></TableCell>
-                    <TableCell className="px-2 py-2 min-w-[150px] box-border text-right">Grand Total</TableCell>
-                    {Type === 'TotalJoints' || Type === 'OverallJoints' ? (
-                      <>
-                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{grandTotalShopJoints}</TableCell>
-                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{grandTotalFieldJoints}</TableCell>
-                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{grandTotalTotalJoints}</TableCell>
-                      </>
-                    ) : (
-                      <>
-                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{grandTotalShopInchDia}</TableCell>
-                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{grandTotalFieldInchDia}</TableCell>
-                        <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{grandTotalTotalInchDia}</TableCell>
-                      </>
-                    )}
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-          )
+                ))}
+                {/* Grand totals */}
+                <TableRow className="flex w-full box-border font-bold">
+                  <TableCell className="px-2 py-2 min-w-[210px] box-border"></TableCell>
+                  <TableCell className="px-2 py-2 min-w-[450px] box-border"></TableCell>
+                  <TableCell className="px-2 py-2 min-w-[150px] box-border text-right">Grand Total</TableCell>
+                  {Type.includes("Joints") ? (
+                    <>
+                      <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{totals.shopTotal}</TableCell>
+                      <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{totals.fieldTotal}</TableCell>
+                      <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{totals.grandTotal}</TableCell>
+                    </>
+                  ) : (
+                    <>
+                      <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{totals.shopInchTotal}</TableCell>
+                      <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{totals.fieldInchTotal}</TableCell>
+                      <TableCell className="px-2 py-2 min-w-[175px] box-border text-center">{totals.grandInchTotal}</TableCell>
+                    </>
+                  )}
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>
   );
 }
+

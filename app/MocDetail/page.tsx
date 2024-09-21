@@ -9,6 +9,7 @@ import { PieChartComponent } from '@/components/PieChartComponent';
 import { Switch } from '@/components/ui/switch'; // Import ShadCN's Switch component
 import { useState } from 'react'; // Import useState for handling toggle state
 
+
 // Define the types
 type MocDataType = {
   moc: string;
@@ -95,14 +96,15 @@ export default function MOCJointsCharts() {
         </div>
         <PieChartComponent
           data={overallChartData}
-          title={isInchDia ? 'Overall Inch Dia' : 'Overall Joints'}
+          pieChartTitle={isInchDia ? 'Overall Inch Dia' : 'Overall Joints'}
           moc="Overall"
           totalValue={overallTotalValue}
           chartConfig={{
             value: { label: 'value', color: 'hsl(var(--chart-2))' },
             label: { color: 'hsl(var(--background))' },
           }}
-          Type={isInchDia ? 'Overall Inch Dia' : 'Overall Joints'}
+          chartCenterMessage={isInchDia ? 'Overall Inch Dia' : 'Overall Joints'}
+          Type={isInchDia ? 'GrossInchDia' : 'GrossJoints'}
         />
       </div>
 
@@ -118,19 +120,31 @@ export default function MOCJointsCharts() {
           const totalValue = Number(moc.shopJoints || 0) + Number(moc.fieldJoints || 0);
 
           return (
+            
             <div key={moc.moc} className="space-y-4">
               <PieChartComponent
                 data={chartData}
-                title={moc.mocName}
+                pieChartTitle={moc.mocName}
                 moc={moc.moc}
                 totalValue={totalValue}
                 chartConfig={{
                   value: { label: 'value', color: 'hsl(var(--chart-2))' },
                   label: { color: 'hsl(var(--background))' },
                 }}
-                Type={isInchDia ? 'Total Inch Dia' : 'Total Joints'}
+                chartCenterMessage={isInchDia ? 'Total Inch Dia' : 'Total Joints'}
+                Type={isInchDia ? 'InchDia' : 'TotalJoints'}
               />
             </div>
+
+
+
+
+
+
+
+
+
+
           );
         })
       ) : (

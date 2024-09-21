@@ -6,7 +6,7 @@ import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "
 
 interface ChartComponentProps {
   data: { metric: string; value: number }[];
-  title: string;
+  chartHeading: string;
   description: string;
   chartConfig: ChartConfig;
   className?: string;
@@ -14,7 +14,7 @@ interface ChartComponentProps {
 
 export default function ChartComponent({
   data,
-  title,
+  chartHeading,
   description,
   chartConfig,
   className = '',
@@ -22,7 +22,7 @@ export default function ChartComponent({
   return (
     <Card className={`p-4 w-full ${className}`}>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle>{chartHeading}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>

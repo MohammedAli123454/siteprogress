@@ -21,11 +21,12 @@ import {
 
 interface PieChartComponentProps {
   data: { metric: string; value: number }[];
-  title: string;
+  pieChartTitle: string;
   moc: string;
   chartConfig: ChartConfig;
   totalValue: number;
-  Type: string; // Optional: to customize the label under the total value
+  chartCenterMessage: string; // Optional: to customize the label under the total value
+  Type: string;
   className?: string;
   colors?: string[]; // Optional: to customize pie chart colors
   //onButtonClick?: () => void; // New prop to handle button click event
@@ -34,10 +35,11 @@ interface PieChartComponentProps {
 
 export function PieChartComponent({
   data,
-  title,
+  pieChartTitle,
   moc,
   chartConfig,
   totalValue,
+  chartCenterMessage,
   Type,
   className = "",
   colors = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"], // Default colors
@@ -47,7 +49,7 @@ export function PieChartComponent({
   return (
     <Card>
     <CardHeader className="items-center pb-0">
-      <CardTitle className="text-center text-[16px] font-bold">{title}</CardTitle>
+      <CardTitle className="text-center text-[16px] font-bold">{pieChartTitle}</CardTitle>
     </CardHeader>
   
     <CardContent className="flex justify-between items-center w-full pb-0">
@@ -71,7 +73,7 @@ export function PieChartComponent({
                           {totalValue.toLocaleString()}
                         </tspan>
                         <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 20} className="text-sm fill-muted-foreground">
-                          {Type}
+                          {chartCenterMessage}
                         </tspan>
                       </text>
                     );
@@ -100,13 +102,22 @@ export function PieChartComponent({
         </div>
   
         {/* Button below the legends */}
+
+
+
+
         <div className="mt-4">
-          <Link href={`/WeldSummaryTable/${moc}/${Type}`}>
-            <Button className="text-white bg-blue-400 hover:bg-blue-500">
-              Get More Detail
-            </Button>
-          </Link>
-        </div>
+<Link href={`/WeldSummaryTable/${moc}/${Type}`}>
+  <Button className="text-white bg-blue-400 hover:bg-blue-500">
+    Get More Detail
+  </Button>
+</Link>
+</div>
+
+
+
+
+
       </div>
     </CardContent>
   </Card>
