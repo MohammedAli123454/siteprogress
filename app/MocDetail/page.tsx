@@ -97,14 +97,14 @@ export default function MOCJointsCharts() {
         <PieChartComponent
           data={overallChartData}
           pieChartTitle={isInchDia ? 'Overall Inch Dia' : 'Overall Joints'}
-          moc="Overall"
+          moc="*"
           totalValue={overallTotalValue}
           chartConfig={{
             value: { label: 'value', color: 'hsl(var(--chart-2))' },
             label: { color: 'hsl(var(--background))' },
           }}
           chartCenterMessage={isInchDia ? 'Overall Inch Dia' : 'Overall Joints'}
-          Type={isInchDia ? 'GrossInchDia' : 'GrossJoints'}
+          Type={isInchDia ? 'InchDia' : 'Joints'}
         />
       </div>
 
@@ -132,7 +132,7 @@ export default function MOCJointsCharts() {
                   label: { color: 'hsl(var(--background))' },
                 }}
                 chartCenterMessage={isInchDia ? 'Total Inch Dia' : 'Total Joints'}
-                Type={isInchDia ? 'InchDia' : 'TotalJoints'}
+                Type={isInchDia ? 'InchDia' : 'Joints'}
               />
             </div>
 
