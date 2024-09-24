@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableCell, TableRow, TableHead, TableBody } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
 import { db } from "@/app/configs/db";
 import { mocDetail, jointsDetail } from "@/app/configs/schema";
 import { sql, eq } from "drizzle-orm";
@@ -21,16 +22,16 @@ type DataType = {
 };
 
 type MicroDetailType = {
-  SIZE_INCHES: number;
-  PIPE_SCHEDULE: string;
+  SIZE_INCHES: string;
   THKNESS: number;
   SHOP_JOINTS: number;
-  SHOP_INCH_DIA: number;
   FIELD_JOINTS: number;
-  FIELD_INCH_DIA: number;
   TOTAL_JOINTS: number;
+  SHOP_INCH_DIA: number;
+  FIELD_INCH_DIA: number;
   TOTAL_INCH_DIA: number;
 };
+
 // Query function to fetch data
 const getQuery = async (moc: string, Type: string) => {
   let query;
@@ -68,35 +69,51 @@ const getQuery = async (moc: string, Type: string) => {
 };
 
 // Query function for micro details
-const getMicroDetails = async (moc: string) => {
-  const query = db
-    .select({
-      SIZE_INCHES: jointsDetail.sizeInches,
-      PIPE_SCHEDULE: jointsDetail.pipeSchedule,
-      THKNESS: jointsDetail.thickness,
-      SHOP_JOINTS: sql`SUM(${jointsDetail.shopJoints})`.as("SHOP_JOINTS"),
-      FIELD_JOINTS: sql`SUM(${jointsDetail.fieldJoints})`.as("FIELD_JOINTS"),
-      TOTAL_JOINTS: sql`SUM(${jointsDetail.totalJoints})`.as("TOTAL_JOINTS"),
+const getMicroDetails = async (moc: string, Type: string) => {
+  let query;
 
-      SHOP_INCH_DIA: sql`SUM(${jointsDetail.shopInchDia})`.as("SHOP_INCH_DIA"),
-      FIELD_INCH_DIA: sql`SUM(${jointsDetail.fieldInchDia})`.as("FIELD_INCH_DIA"),
-      TOTAL_INCH_DIA: sql`SUM(${jointsDetail.totalInchDia})`.as("TOTAL_INCH_DIA"),
-    })
-    .from(jointsDetail)
-    .where(moc === '*' ? sql`TRUE` : eq(jointsDetail.moc, moc))
-    .groupBy(jointsDetail.sizeInches, jointsDetail.pipeSchedule, jointsDetail.thickness);
+  if (Type === "Joints") {
+    query = db
+      .select({
+        SIZE_INCHES: jointsDetail.sizeInches,
+        THKNESS: jointsDetail.thickness,
+        SHOP_JOINTS: sql`SUM(${jointsDetail.shopJoints})`.as("SHOP_JOINTS"),
+        FIELD_JOINTS: sql`SUM(${jointsDetail.fieldJoints})`.as("FIELD_JOINTS"),
+        TOTAL_JOINTS: sql`SUM(${jointsDetail.totalJoints})`.as("TOTAL_JOINTS"),
+      })
+      .from(jointsDetail)
+      .where(moc === '*' ? sql`TRUE` : eq(jointsDetail.moc, moc))
+      .groupBy(jointsDetail.sizeInches, jointsDetail.thickness)
+      .orderBy(sql`CAST(${jointsDetail.sizeInches} AS NUMERIC) DESC`);
+    // Order by descending size
+  } else if (Type === "InchDia") {
+    query = db
+      .select({
+        SIZE_INCHES: jointsDetail.sizeInches,
+        THKNESS: jointsDetail.thickness,
+        SHOP_INCH_DIA: sql`SUM(${jointsDetail.shopInchDia})`.as("SHOP_INCH_DIA"),
+        FIELD_INCH_DIA: sql`SUM(${jointsDetail.fieldInchDia})`.as("FIELD_INCH_DIA"),
+        TOTAL_INCH_DIA: sql`SUM(${jointsDetail.totalInchDia})`.as("TOTAL_INCH_DIA"),
+      })
+      .from(jointsDetail)
+      .where(moc === '*' ? sql`TRUE` : eq(jointsDetail.moc, moc))
+      .groupBy(jointsDetail.sizeInches, jointsDetail.thickness)
+      .orderBy(sql`CAST(${jointsDetail.sizeInches} AS NUMERIC) DESC`);
+    // Order by descending size
+  }
 
   const result = await query;
-  console.log(result); // Log the result to see the actual query output
-  return result;
+  return result as MicroDetailType[];
 };
-
-
 
 // React component to display the table
 export default function WeldSummaryTable() {
-  const [showMicroDetail, setShowMicroDetail] = useState(false);
-  
+  const [showMicroDetail, setShowMicroDetail] = useState(false); // Default is false to show the Moc Wise Detail Table
+
+  const handleToggle = () => {
+    setShowMicroDetail(!showMicroDetail);
+  }; // Close parenthesis for handleToggle function
+
   const params = useParams(); // Get the parameters from the URL
   const moc = params?.params?.[0]; // Access the first parameter
   const Type = params?.params?.[1]; // Access the second parameter
@@ -107,11 +124,10 @@ export default function WeldSummaryTable() {
     queryFn: () => getQuery(moc, Type),
   });
 
-
   // Fetch micro detail data
   const { data: microData = [], isLoading: isMicroLoading, isError: isMicroError } = useQuery({
     queryKey: ["microData", moc],
-    queryFn: () => getMicroDetails(moc),
+    queryFn: () => getMicroDetails(moc, Type),
     enabled: showMicroDetail,
   });
 
@@ -154,15 +170,15 @@ export default function WeldSummaryTable() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">
-          {Type.includes("Joints") ? "Total Joints Summary" : "Total Inch Dia Summary"}
-        </CardTitle>
-      </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : (
+        <div className="flex mb-4 items-center justify-end">
+          <label className="flex items-center space-x-2">
+            <Switch checked={showMicroDetail} onCheckedChange={handleToggle} />
+            <span className="text-sm">{showMicroDetail ? 'Detail By MOC' : 'Details By Size'}</span>
+          </label>
+        </div>
+
+        {!showMicroDetail ? ( // Show Moc Wise Detail Table by default
           <div className="overflow-auto mx-4">
             <Table className="w-full table-fixed">
               <TableHead>
@@ -207,8 +223,16 @@ export default function WeldSummaryTable() {
                   </TableRow>
                 ))}
                 {/* Footer Row */}
-                <TableRow className="flex w-full box-border font-semibold text-md bg-slate-200">
-                  <TableCell colSpan={3} className="min-w-[60px] px-2 py-2 box-border text-center">Total</TableCell>
+
+
+
+                <TableRow className="flex w-full box-border font-bold">
+                  <TableCell className="px-2 py-2 min-w-[210px] box-border"></TableCell>
+                  <TableCell className="px-2 py-2 min-w-[450px] box-border"></TableCell>
+                  <TableCell className="px-2 py-2 min-w-[150px] box-border text-right">Grand Total</TableCell>
+
+
+
                   {Type.includes("Joints") ? (
                     <>
                       <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{totals.gshopJoints}</TableCell>
@@ -226,56 +250,60 @@ export default function WeldSummaryTable() {
               </TableBody>
             </Table>
           </div>
-        )}
 
-        {/* Micro Details Toggle */}
-        <div className="text-center mt-4">
-          <button
-            className="px-3 py-2 text-sm bg-blue-500 text-white rounded"
-            onClick={() => setShowMicroDetail(!showMicroDetail)}
-          >
-            {showMicroDetail ? "Hide Micro Details" : "Show Micro Details"}
-          </button>
-        </div>
-
-        {/* Micro Details Table */}
-        {showMicroDetail && (
+        ) : ( // Show Micro Detail Table
           <div className="mt-4">
             <Table className="w-full table-fixed">
               <TableHead>
                 <TableRow className="flex w-full box-border font-bold text-lg">
                   <TableCell className="min-w-[60px] px-2 py-2 box-border text-center">Sr.No</TableCell>
                   <TableCell className="min-w-[150px] px-2 py-2 box-border text-center">Size (Inches)</TableCell>
-                  <TableCell className="min-w-[150px] px-2 py-2 box-border text-center">Pipe Schedule</TableCell>
                   <TableCell className="min-w-[150px] px-2 py-2 box-border text-center">Thickness</TableCell>
-                  <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">Shop Joints</TableCell>
-                  <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">Shop Inch Dia</TableCell>
-                  <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">Field Joints</TableCell>
-                  <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">Field Inch Dia</TableCell>
-                  <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">Total Joints</TableCell>
-                  <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">Total Inch Dia</TableCell>
+
+                  {/* Conditional Columns based on Type */}
+                  {Type.includes("Joints") ? (
+                    <>
+                      <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">Shop Joints</TableCell>
+                      <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">Field Joints</TableCell>
+                      <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">Total Joints</TableCell>
+                    </>
+                  ) : Type === "InchDia" ? (
+                    <>
+                      <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">Shop Inch Dia</TableCell>
+                      <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">Field Inch Dia</TableCell>
+                      <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">Total Inch Dia</TableCell>
+                    </>
+                  ) : null}
                 </TableRow>
               </TableHead>
               <TableBody>
-              {microData.map((item, index) => (
-  <TableRow key={index} className="flex w-full box-border">
-    <TableCell className="min-w-[60px] px-2 py-2 box-border text-center">{index + 1}</TableCell>
-    <TableCell className="min-w-[150px] px-2 py-2 box-border text-center">{item.SIZE_INCHES || 0}</TableCell>
-    <TableCell className="min-w-[150px] px-2 py-2 box-border text-center">{item.PIPE_SCHEDULE || ''}</TableCell>
-    <TableCell className="min-w-[150px] px-2 py-2 box-border text-center">{item.THKNESS || 0}</TableCell>
-      <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.SHOP_JOINTS ? Number(item.SHOP_JOINTS) : 0}</TableCell>
-      <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.FIELD_JOINTS ? Number(item.FIELD_JOINTS) : 0}</TableCell>
-      <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.TOTAL_JOINTS ? Number(item.TOTAL_JOINTS) : 0}</TableCell>
-      <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.SHOP_INCH_DIA ? Number(item.SHOP_INCH_DIA) : 0}</TableCell>
-      <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.FIELD_INCH_DIA ? Number(item.FIELD_INCH_DIA) : 0}</TableCell>
-      <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.TOTAL_INCH_DIA ? Number(item.TOTAL_INCH_DIA) : 0}</TableCell>
-  </TableRow>
-))}
+                {microData.map((item, index) => (
+                  <TableRow key={index} className="flex w-full box-border">
+                    <TableCell className="min-w-[60px] px-2 py-2 box-border text-center">{index + 1}</TableCell>
+                    <TableCell className="min-w-[150px] px-2 py-2 box-border text-center">{item.SIZE_INCHES || 0}</TableCell>
+                    <TableCell className="min-w-[150px] px-2 py-2 box-border text-center">{item.THKNESS || 0}</TableCell>
 
+                    {/* Conditional Columns based on Type */}
+                    {Type.includes("Joints") ? (
+                      <>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.SHOP_JOINTS ? Number(item.SHOP_JOINTS) : 0}</TableCell>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.FIELD_JOINTS ? Number(item.FIELD_JOINTS) : 0}</TableCell>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.TOTAL_JOINTS ? Number(item.TOTAL_JOINTS) : 0}</TableCell>
+                      </>
+                    ) : Type === "InchDia" ? (
+                      <>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.SHOP_INCH_DIA ? Number(item.SHOP_INCH_DIA) : 0}</TableCell>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.FIELD_INCH_DIA ? Number(item.FIELD_INCH_DIA) : 0}</TableCell>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.TOTAL_INCH_DIA ? Number(item.TOTAL_INCH_DIA) : 0}</TableCell>
+                      </>
+                    ) : null}
+                  </TableRow>
+                ))}
 
               </TableBody>
             </Table>
           </div>
+
         )}
       </CardContent>
     </Card>

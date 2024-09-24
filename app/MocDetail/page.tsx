@@ -136,15 +136,6 @@ export default function MOCJointsCharts() {
               />
             </div>
 
-
-
-
-
-
-
-
-
-
           );
         })
       ) : (
