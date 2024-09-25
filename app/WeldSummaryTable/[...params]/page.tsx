@@ -13,96 +13,77 @@ import { useParams } from "next/navigation";
 type DataType = {
   MOC: string;
   MOC_NAME: string;
-  SHOP_JOINTS?: number;
-  FIELD_JOINTS?: number;
-  TOTAL_JOINTS?: number;
-  SHOP_INCH_DIA?: number;
-  FIELD_INCH_DIA?: number;
-  TOTAL_INCH_DIA?: number;
+  shopJoints?: number;
+  fieldJoints?: number;
+  totalJoints?: number;
+  shopInchDia?: number;
+  fieldInchDia?: number;
+  totalInchDia?: number;
 };
 
 type MicroDetailType = {
   SIZE_INCHES: string;
   THKNESS: number;
-  SHOP_JOINTS: number;
-  FIELD_JOINTS: number;
-  TOTAL_JOINTS: number;
-  SHOP_INCH_DIA: number;
-  FIELD_INCH_DIA: number;
-  TOTAL_INCH_DIA: number;
+  shopJoints: number;
+  fieldJoints: number;
+  totalJoints: number;
+  shopInchDia: number;
+  fieldInchDia: number;
+  totalInchDia: number;
 };
 
 // Query function to fetch data
 const getQuery = async (moc: string, Type: string) => {
-  let query;
+  const baseQuery = db
+    .select({
+      MOC: mocDetail.moc,
+      MOC_NAME: mocDetail.mocName,
+      ...(Type === "Joints"
+        ? {
+            shopJoints: sql`SUM(${jointsDetail.shopJoints})`,
+            fieldJoints: sql`SUM(${jointsDetail.fieldJoints})`,
+            totalJoints: sql`SUM(${jointsDetail.totalJoints})`,
+          }
+        : {
+            shopInchDia: sql`SUM(${jointsDetail.shopInchDia})`,
+            fieldInchDia: sql`SUM(${jointsDetail.fieldInchDia})`,
+            totalInchDia: sql`SUM(${jointsDetail.totalInchDia})`,
+          }),
+    })
+    .from(mocDetail)
+    .leftJoin(jointsDetail, eq(mocDetail.moc, jointsDetail.moc))
+    .where(moc === "*" ? sql`TRUE` : eq(mocDetail.moc, moc))
+    .groupBy(mocDetail.moc, mocDetail.mocName);
 
-  if (Type === "Joints") {
-    query = db
-      .select({
-        MOC: mocDetail.moc,
-        MOC_NAME: mocDetail.mocName,
-        SHOP_JOINTS: sql`SUM(${jointsDetail.shopJoints})`.as("SHOP_JOINTS"),
-        FIELD_JOINTS: sql`SUM(${jointsDetail.fieldJoints})`.as("FIELD_JOINTS"),
-        TOTAL_JOINTS: sql`SUM(${jointsDetail.totalJoints})`.as("TOTAL_JOINTS"),
-      })
-      .from(mocDetail)
-      .leftJoin(jointsDetail, eq(mocDetail.moc, jointsDetail.moc))
-      .where(moc === '*' ? sql`TRUE` : eq(mocDetail.moc, moc))
-      .groupBy(mocDetail.moc, mocDetail.mocName);
-  } else if (Type === "InchDia") {
-    query = db
-      .select({
-        MOC: mocDetail.moc,
-        MOC_NAME: mocDetail.mocName,
-        SHOP_INCH_DIA: sql`SUM(${jointsDetail.shopInchDia})`.as("SHOP_INCH_DIA"),
-        FIELD_INCH_DIA: sql`SUM(${jointsDetail.fieldInchDia})`.as("FIELD_INCH_DIA"),
-        TOTAL_INCH_DIA: sql`SUM(${jointsDetail.totalInchDia})`.as("TOTAL_INCH_DIA"),
-      })
-      .from(mocDetail)
-      .leftJoin(jointsDetail, eq(mocDetail.moc, jointsDetail.moc))
-      .where(moc === '*' ? sql`TRUE` : eq(mocDetail.moc, moc))
-      .groupBy(mocDetail.moc, mocDetail.mocName);
-  }
-
-  const result = await query;
-  return result as DataType[];
+    const result = await baseQuery;
+    return result as DataType[];
+  
 };
 
 // Query function for micro details
 const getMicroDetails = async (moc: string, Type: string) => {
-  let query;
-
-  if (Type === "Joints") {
-    query = db
-      .select({
-        SIZE_INCHES: jointsDetail.sizeInches,
+  const baseQuery = db
+    .select({
+      SIZE_INCHES: jointsDetail.sizeInches,
         THKNESS: jointsDetail.thickness,
-        SHOP_JOINTS: sql`SUM(${jointsDetail.shopJoints})`.as("SHOP_JOINTS"),
-        FIELD_JOINTS: sql`SUM(${jointsDetail.fieldJoints})`.as("FIELD_JOINTS"),
-        TOTAL_JOINTS: sql`SUM(${jointsDetail.totalJoints})`.as("TOTAL_JOINTS"),
+
+        ...(Type === "Joints"
+          ? {
+              shopJoints: sql`SUM(${jointsDetail.shopJoints})`,
+              fieldJoints: sql`SUM(${jointsDetail.fieldJoints})`,
+              totalJoints: sql`SUM(${jointsDetail.totalJoints})`,
+            }
+          : {
+              shopInchDia: sql`SUM(${jointsDetail.shopInchDia})`,
+              fieldInchDia: sql`SUM(${jointsDetail.fieldInchDia})`,
+              totalInchDia: sql`SUM(${jointsDetail.totalInchDia})`,
+            }),
       })
       .from(jointsDetail)
       .where(moc === '*' ? sql`TRUE` : eq(jointsDetail.moc, moc))
       .groupBy(jointsDetail.sizeInches, jointsDetail.thickness)
       .orderBy(sql`CAST(${jointsDetail.sizeInches} AS NUMERIC) DESC`);
-    // Order by descending size
-  } else if (Type === "InchDia") {
-    query = db
-      .select({
-        SIZE_INCHES: jointsDetail.sizeInches,
-        THKNESS: jointsDetail.thickness,
-        SHOP_INCH_DIA: sql`SUM(${jointsDetail.shopInchDia})`.as("SHOP_INCH_DIA"),
-        FIELD_INCH_DIA: sql`SUM(${jointsDetail.fieldInchDia})`.as("FIELD_INCH_DIA"),
-        TOTAL_INCH_DIA: sql`SUM(${jointsDetail.totalInchDia})`.as("TOTAL_INCH_DIA"),
-      })
-      .from(jointsDetail)
-      .where(moc === '*' ? sql`TRUE` : eq(jointsDetail.moc, moc))
-      .groupBy(jointsDetail.sizeInches, jointsDetail.thickness)
-      .orderBy(sql`CAST(${jointsDetail.sizeInches} AS NUMERIC) DESC`);
-    // Order by descending size
-  }
-
-  const result = await query;
+  const result = await baseQuery;
   return result as MicroDetailType[];
 };
 
@@ -112,7 +93,7 @@ export default function WeldSummaryTable() {
 
   const handleToggle = () => {
     setShowMicroDetail(!showMicroDetail);
-  }; // Close parenthesis for handleToggle function
+  };
 
   const params = useParams(); // Get the parameters from the URL
   const moc = params?.params?.[0]; // Access the first parameter
@@ -135,38 +116,15 @@ export default function WeldSummaryTable() {
     console.error("Error fetching micro details");
   }
 
-  // Precompute totals
-  const totals = data.reduce(
-    (acc, item) => {
-      const shopJoints = Number(item.SHOP_JOINTS || 0);
-      const fieldJoints = Number(item.FIELD_JOINTS || 0);
-      const totalJoints = Number(item.TOTAL_JOINTS || 0);
-
-      const shopInchDia = Number(item.SHOP_INCH_DIA || 0);
-      const fieldInchDia = Number(item.FIELD_INCH_DIA || 0);
-      const totalInchDia = Number(item.TOTAL_INCH_DIA || 0);
-
-      if (Type.includes("Joints")) {
-        acc.gshopJoints += shopJoints;
-        acc.gfieldJoints += fieldJoints;
-        acc.gtotalJoints += totalJoints;
-      } else {
-        acc.gshopInchDia += shopInchDia;
-        acc.gfieldInchDia += fieldInchDia;
-        acc.gtotalInchDia += totalInchDia;
-      }
-
-      return acc;
-    },
-    {
-      gshopJoints: 0,
-      gfieldJoints: 0,
-      gtotalJoints: 0,
-      gshopInchDia: 0,
-      gfieldInchDia: 0,
-      gtotalInchDia: 0,
-    }
-  );
+  const totals = {
+    gshopJoints: data?.reduce((sum, item) => sum + Number(item.shopJoints || 0), 0),
+    gfieldJoints: data?.reduce((sum, item) => sum + Number(item.fieldJoints || 0), 0),
+    gtotalJoints: data?.reduce((sum, item) => sum + Number(item.totalJoints || 0), 0),
+    gshopInchDia: data?.reduce((sum, item) => sum + Number(item.shopInchDia || 0), 0),
+    gfieldInchDia: data?.reduce((sum, item) => sum + Number(item.fieldInchDia || 0), 0),
+    gtotalInchDia: data?.reduce((sum, item) => sum + Number(item.totalInchDia || 0), 0),
+  };
+  
 
   return (
     <Card>
@@ -209,29 +167,25 @@ export default function WeldSummaryTable() {
                     <TableCell className="min-w-[600px] px-2 py-2 box-border">{item.MOC_NAME}</TableCell>
                     {Type.includes("Joints") ? (
                       <>
-                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.SHOP_JOINTS || 0}</TableCell>
-                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.FIELD_JOINTS || 0}</TableCell>
-                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.TOTAL_JOINTS || 0}</TableCell>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.shopJoints || 0}</TableCell>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.fieldJoints || 0}</TableCell>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.totalJoints || 0}</TableCell>
                       </>
                     ) : (
                       <>
-                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.SHOP_INCH_DIA || 0}</TableCell>
-                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.FIELD_INCH_DIA || 0}</TableCell>
-                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.TOTAL_INCH_DIA || 0}</TableCell>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.shopInchDia || 0}</TableCell>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.fieldInchDia || 0}</TableCell>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.totalInchDia || 0}</TableCell>
                       </>
                     )}
                   </TableRow>
                 ))}
                 {/* Footer Row */}
 
-
-
                 <TableRow className="flex w-full box-border font-bold">
                   <TableCell className="px-2 py-2 min-w-[210px] box-border"></TableCell>
                   <TableCell className="px-2 py-2 min-w-[450px] box-border"></TableCell>
                   <TableCell className="px-2 py-2 min-w-[150px] box-border text-right">Grand Total</TableCell>
-
-
 
                   {Type.includes("Joints") ? (
                     <>
@@ -286,15 +240,15 @@ export default function WeldSummaryTable() {
                     {/* Conditional Columns based on Type */}
                     {Type.includes("Joints") ? (
                       <>
-                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.SHOP_JOINTS ? Number(item.SHOP_JOINTS) : 0}</TableCell>
-                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.FIELD_JOINTS ? Number(item.FIELD_JOINTS) : 0}</TableCell>
-                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.TOTAL_JOINTS ? Number(item.TOTAL_JOINTS) : 0}</TableCell>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.shopJoints ? Number(item.shopJoints) : 0}</TableCell>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.fieldJoints ? Number(item.fieldJoints) : 0}</TableCell>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.totalJoints ? Number(item.totalJoints) : 0}</TableCell>
                       </>
                     ) : Type === "InchDia" ? (
                       <>
-                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.SHOP_INCH_DIA ? Number(item.SHOP_INCH_DIA) : 0}</TableCell>
-                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.FIELD_INCH_DIA ? Number(item.FIELD_INCH_DIA) : 0}</TableCell>
-                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.TOTAL_INCH_DIA ? Number(item.TOTAL_INCH_DIA) : 0}</TableCell>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.shopInchDia ? Number(item.shopInchDia) : 0}</TableCell>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.fieldInchDia ? Number(item.fieldInchDia) : 0}</TableCell>
+                        <TableCell className="min-w-[175px] px-2 py-2 box-border text-center">{item.totalInchDia ? Number(item.totalInchDia) : 0}</TableCell>
                       </>
                     ) : null}
                   </TableRow>
@@ -309,3 +263,6 @@ export default function WeldSummaryTable() {
     </Card>
   );
 }
+
+
+
