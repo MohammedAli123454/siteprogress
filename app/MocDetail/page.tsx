@@ -64,7 +64,7 @@ export default function MOCJointsCharts() {
   if (isDataLoading) {
     return (
       <div className="flex items-center h-64">
-        <Loader className="animate-spin text-gray-500" size={32} />
+       <Loader color="blue" size={48} />;
       </div>
     );
   }
