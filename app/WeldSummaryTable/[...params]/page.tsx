@@ -10,6 +10,7 @@ import { sql, eq } from "drizzle-orm";
 import { useParams } from "next/navigation";
 import { Loader } from 'lucide-react';
 import { useMemo } from "react";
+import Navbar from "@/app/NavBar/page";
 
 type MocWiseDataType = {
   MOC: string;
@@ -107,6 +108,8 @@ export default function WeldSummaryTable() {
 
     queryKey: ["mocData", moc, Type],
     queryFn: () => mocWiseQuery(moc, Type),
+    
+  
   });
 
   // Fetch micro detail data
@@ -280,7 +283,7 @@ export default function WeldSummaryTable() {
   // Helper function to render footer row
   const renderMicroTableFooterRow = (totals: any, Type: string) => (
 
-    <TableRow className="flex w-full box-border font-bold">
+    <TableRow className="sticky flex w-full box-border font-bold">
       <TableCell className="px-2 py-2 min-w-[60px] box-border"></TableCell>
       <TableCell className="px-2 py-2 min-w-[150px] box-border"></TableCell>
       <TableCell className="px-2 py-2 min-w-[150px] box-border text-right">Grand Total</TableCell>
@@ -333,9 +336,9 @@ export default function WeldSummaryTable() {
         {/* Conditionally Render Moc Wise Detail Table or Micro Detail Table */}
         {!showMicroDetail ? (
           // Moc Wise Detail Table (Default View)
-          <div className="overflow-auto mx-4">
-            <Table className="w-full table-fixed">
-              <TableHead>
+          <div className="overflow-auto max-h-[550px] mx-4 mt-2">
+          <Table className="w-full table-fixed">
+            <TableHead className="fixed">
                 {renderHeaders(Type)}
               </TableHead>
               <TableBody>
@@ -346,19 +349,21 @@ export default function WeldSummaryTable() {
           </div>
         ) : (
           // Micro Detail Table (Shown when toggled)
-          <div className="overflow-auto mx-4 mt-2">
-            <Table className="w-full table-fixed">
-              <TableHead>
+          <div className="overflow-auto max-h-[550px] mx-4 mt-2">
+          <Table className="w-full table-fixed">
+            <TableHead className="fixed">
                 {renderMicroTableHeaders(Type)}
-              </TableHead>
-              <TableBody>
-                {renderMicroTableRows(microData, Type)}
-                {renderMicroTableFooterRow(totals, Type)}
-              </TableBody>
-            </Table>
-          </div>
+            </TableHead>
+            <TableBody>
+              {renderMicroTableRows(microData, Type)}
+              {renderMicroTableFooterRow(totals, Type)}
+            </TableBody>
+          </Table>
+        </div>
+        
         )}
       </CardContent>
+
     </Card>
 
   );
