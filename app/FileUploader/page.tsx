@@ -3,6 +3,7 @@
 import { uploadFiles } from "@/app/actions/uploadFile";  // Adjust import as needed
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { AiOutlineClose, AiOutlineFilePdf } from "react-icons/ai";  // Icons
 
 // Define the type for form data
 interface FormData {
@@ -16,16 +17,23 @@ export default function FileUploader() {
   const { register, handleSubmit, reset } = useForm<FormData>();
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setSelectedFiles(Array.from(e.target.files));
+    const files = e.target.files;  // Extract files from the event
+  
+    if (files) {
+      // Ensure files is not null before using it
+      setSelectedFiles((prevFiles) => [...prevFiles, ...Array.from(files)]);
     }
   };
+  
 
   const handleRemoveFile = (fileToRemove: File) => {
     setSelectedFiles((prevFiles) => prevFiles.filter((file) => file !== fileToRemove));
   };
 
-  // Now the form data type matches with the submit handler
+  const handleRemoveAllFiles = () => {
+    setSelectedFiles([]);
+  };
+
   const onSubmit = async (data: FormData) => {
     if (selectedFiles.length > 0) {
       // Create a FormData object to send files and projectName
@@ -49,47 +57,76 @@ export default function FileUploader() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4 bg-gray-100 rounded-lg shadow-lg">
       {/* Project Name Field */}
-      <div>
-        <label>Project Name</label>
+      <div className="mb-4">
+        <label className="block text-lg font-semibold mb-2">Project Name</label>
         <input
           type="text"
-          {...register("projectName", { required: true })}  // Now it's typed properly
-          className="border border-gray-300 p-2 w-full"
+          {...register("projectName", { required: true })}
+          className="border border-gray-300 p-3 rounded w-full"
           placeholder="Enter project name"
         />
       </div>
 
       {/* File Input Field */}
-      <div>
-        <label>Select Files</label>
-        <input type="file" onChange={onFileChange} multiple className="border border-gray-300 p-2" />
+      <div className="mb-4">
+        <label className="block text-lg font-semibold mb-2">Select Files</label>
+        <input
+          type="file"
+          onChange={onFileChange}
+          multiple
+          className="hidden"
+          id="file-input"
+        />
+        <label
+          htmlFor="file-input"
+          className="cursor-pointer inline-block bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700"
+        >
+          Choose Files
+        </label>
       </div>
 
-      {/* Selected Files List */}
+      {/* Selected Files Grid */}
       {selectedFiles.length > 0 && (
         <div className="space-y-2">
-          <h3>Selected Files:</h3>
-          <ul>
+          <h3 className="font-semibold text-lg">Selected Files:</h3>
+          <div className="grid grid-cols-2 gap-4">
             {selectedFiles.map((file, index) => (
-              <li key={index} className="flex justify-between items-center">
-                <span>{file.name}</span>
+              <div key={index} className="bg-white p-4 rounded-lg shadow flex items-center justify-between">
+                <div className="flex items-center">
+                  {file.type === "application/pdf" && (
+                    <AiOutlineFilePdf className="text-red-500 text-xl mr-2" />
+                  )}
+                  <span>{file.name}</span>
+                </div>
                 <button
                   type="button"
                   onClick={() => handleRemoveFile(file)}
                   className="text-red-500 hover:text-red-700"
                 >
-                  Remove
+                  <AiOutlineClose className="text-xl" />
                 </button>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
+
+          {/* Remove All Files Button */}
+          <button
+            type="button"
+            onClick={handleRemoveAllFiles}
+            className="text-red-500 hover:text-red-700 mt-4"
+          >
+            Remove All Files
+          </button>
         </div>
       )}
 
       {/* Submit Button */}
-      <button type="submit" className="bg-blue-500 text-white p-2 rounded">
+      <button
+        type="submit"
+        className="w-full bg-green-500 text-white p-3 rounded-lg hover:bg-green-600"
+      >
         Upload Files
       </button>
     </form>
