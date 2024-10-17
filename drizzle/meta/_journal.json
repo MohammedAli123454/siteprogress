@@ -8,6 +8,20 @@
       "when": 1723925436075,
       "tag": "0000_sparkling_paladin",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1729103485312,
+      "tag": "0001_glamorous_steve_rogers",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1729189475455,
+      "tag": "0002_special_surge",
+      "breakpoints": true
     }
   ]
 }

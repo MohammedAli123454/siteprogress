@@ -1,0 +1,20 @@
+[
+    {
+      "CountryName": "United States",
+      "Details": {
+        "Population": 331002651,
+        "Currency": "USD",
+        "NationalLanguage": "English",
+        "GDP": 21137518
+      }
+    },
+    {
+      "CountryName": "India",
+      "Details": {
+        "Population": 1380004385,
+        "Currency": "INR",
+        "NationalLanguage": "Hindi",
+        "GDP": 2875142
+      }
+    }
+  ]

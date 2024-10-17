@@ -15,14 +15,14 @@ export default function Navbar({}: Props) {
             <Link href='/' className='font-semibold text-neutral-700'>Home</Link>
             <div className='flex items-center justify-center space-x-2'>
                 <Button onClick={() => router.push('/MocDetail')} variant='secondary' className={buttonClasses}>MOC Detail</Button>
-                <Button onClick={() => router.push('/AllMOCJoints')} variant='secondary' className={buttonClasses}>MOC Joints Detail</Button>
-                <Button onClick={() => router.push('/OverallJointsSummary')} variant='secondary' className={buttonClasses}>Overall Joints By Sizes</Button>
                 <Button onClick={() => router.push('/TotalJointsByMOC')} variant='secondary' className={buttonClasses}>Overall Joints By MOCs</Button>
                 <Button onClick={() => router.push('/AllMocMaterials')} variant='secondary' className={buttonClasses}>All MOC Materials</Button>
                 <Button onClick={() => router.push('/Scope')} variant='secondary' className={buttonClasses}>Scope</Button>
                 <Button onClick={() => router.push('/CarFeatures')} variant='secondary' className={buttonClasses}>Car Features</Button>
                 <Button onClick={() => router.push('/EditableTable')} variant='secondary' className={buttonClasses}>Editable Table</Button>
                 <Button onClick={() => router.push('/PushData')} variant='secondary' className={buttonClasses}>Push Json Data</Button>
+                <Button onClick={() => router.push('/PushCounties')} variant='secondary' className={buttonClasses}>Push Countries</Button>
+                <Button onClick={() => router.push('/FileUploader')} variant='secondary' className={buttonClasses}>Upload Images</Button>
             </div>
         </div>
     )

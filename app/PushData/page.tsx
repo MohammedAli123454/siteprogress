@@ -122,7 +122,7 @@ const PushDataComponent = () => {
 
       )}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-      <DialogContent aria-describedby="dialog-description">
+    
     <DialogHeader>
       <DialogTitle>Data Insertion Progress</DialogTitle>
 
@@ -144,7 +144,7 @@ const PushDataComponent = () => {
       )}
       <Button onClick={handleCloseDialog}>Close</Button>
     </DialogFooter>
-  </DialogContent>
+
 </Dialog>
 
     </div>
