@@ -3,7 +3,7 @@
 import { db } from "../configs/db";
 import { files as filesSchema } from "../configs/schema";
 import { put } from "@vercel/blob";
-import { useUploadProgressStore } from "../store/uploadProgressStore";  // Import Zustand store
+
 
 // Server action to upload files and save their URLs in the database under the specified project name
 export async function uploadFiles(formData: FormData) {
@@ -11,12 +11,10 @@ export async function uploadFiles(formData: FormData) {
   const uploadedFiles: { url: string }[] = [];  // Array to store uploaded file URLs
 
   const files = formData.getAll("files") as File[];  // Extract files from the FormData object
-  const totalFiles = files.length;  // Get the total number of files to upload
-
-  const setProgress = useUploadProgressStore.getState().setProgress;  // Access Zustand's setProgress method
+ 
+ 
 
   // Loop through each file and upload to Vercel Blob
-  let uploadedCount = 0;
   for (const file of files) {
     const stream = file.stream();  // Get the file stream for upload
 
@@ -33,16 +31,9 @@ export async function uploadFiles(formData: FormData) {
     await db.insert(filesSchema).values({
       project_name: projectName,  // Insert the project name
       url,  // Insert the file URL
+      fileName: file.name,
     });
-
-    // Increment uploaded count and calculate progress
-    uploadedCount += 1;
-    const progress = (uploadedCount / totalFiles) * 100;  // Calculate the progress as a percentage
-    setProgress(progress);  // Update the progress in the Zustand store
   }
-
-  // After all files are uploaded, reset the progress to 0 or 100 (optional)
-  setProgress(100);
 
   // Return an array of uploaded file URLs
   return uploadedFiles;

@@ -22,7 +22,8 @@ export default function Navbar({}: Props) {
                 <Button onClick={() => router.push('/EditableTable')} variant='secondary' className={buttonClasses}>Editable Table</Button>
                 <Button onClick={() => router.push('/PushData')} variant='secondary' className={buttonClasses}>Push Json Data</Button>
                 <Button onClick={() => router.push('/PushCounties')} variant='secondary' className={buttonClasses}>Push Countries</Button>
-                <Button onClick={() => router.push('/FileUploader')} variant='secondary' className={buttonClasses}>Upload Images</Button>
+                <Button onClick={() => router.push('/FileUploader')} variant='secondary' className={buttonClasses}>Upload Drawings</Button>
+                <Button onClick={() => router.push('/FileGetter')} variant='secondary' className={buttonClasses}>Show Drawings</Button>
             </div>
         </div>
     )

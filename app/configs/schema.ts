@@ -29,4 +29,5 @@ export const files = pgTable('files', {
   id: serial('id').primaryKey(),  // Primary key
   project_name: varchar('project_name').notNull(),
   url: varchar('url').notNull(),
+  fileName: varchar('fileName').notNull(),
 });
