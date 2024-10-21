@@ -1,182 +1,116 @@
 "use client";
-
-import { uploadFiles } from "@/app/actions/uploadFile";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { AiOutlineClose, AiOutlineFilePdf } from "react-icons/ai";
-import { Progress } from "@/components/ui/progress";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { AiOutlineFilePdf } from "react-icons/ai";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useToast } from "@/components/ui/use-toast"; // Assuming ShadCN has toast utility
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LoaderCircle } from "lucide-react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getUniqueProjectNames, getFilesByProjectName } from "@/app/actions-Database/getData";
 
-interface FormData {
-  projectName: string;
-}
+// Fetch unique project names
+const fetchUniqueProjectNames = async () => {
+  const names = await getUniqueProjectNames();
+  return names.map((name: { project_name: string }) => name.project_name);
+};
 
-export default function FileUploader() {
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
+// Fetch files by project name
+const fetchFilesByProjectName = async (projectName: string) => {
+  const files = await getFilesByProjectName(projectName);
+  return files;
+};
 
-  const { register, handleSubmit, reset } = useForm<FormData>();
-  const { toast } = useToast();
+export default function FileGetter() {
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      setSelectedFiles((prevFiles) => [...prevFiles, ...Array.from(files)]);
-    }
+  const { data: projectNames, isLoading: loadingProjects, error: projectError } = useQuery({
+    queryKey: ["uniqueProjectNames"],
+    queryFn: fetchUniqueProjectNames,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: files = [], isLoading: loadingFiles, error: fileError } = useQuery({
+    queryKey: ["filesByProjectName", selectedProject],
+    queryFn: () => fetchFilesByProjectName(selectedProject!),
+    enabled: !!selectedProject,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const handleProjectChange = (projectName: string) => {
+    setSelectedProject(projectName);
   };
 
-  const handleRemoveFile = (fileToRemove: File) => {
-    setSelectedFiles((prevFiles) => prevFiles.filter((file) => file !== fileToRemove));
-  };
+  if (loadingProjects || loadingFiles) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoaderCircle className="animate-spin" color="blue" size={48} />
+      </div>
+    );
+  }
 
-  const handleRemoveAllFiles = () => {
-    setSelectedFiles([]);
-  };
-
-  const onSubmit = async (data: FormData) => {
-    if (selectedFiles.length > 0) {
-      setIsUploading(true);
-      setUploadProgress(0);
-
-      const totalFiles = selectedFiles.length;
-      let uploadedCount = 0;
-
-      for (const file of selectedFiles) {
-        const formData = new FormData();
-        formData.append("projectName", data.projectName);
-        formData.append("files", file);
-
-        await uploadFiles(formData);
-
-        uploadedCount += 1;
-        setUploadProgress((uploadedCount / totalFiles) * 100);
-      }
-
-      toast({
-        title: "Success",
-        description: "All Selected Files Uploaded Successfully",
-      });
-
-      reset();
-      setIsUploading(false);
-      setSelectedFiles([]);
-    } else {
-      alert("Please select at least one file.");
-    }
-  };
+  if (projectError || fileError) {
+    return <p className="text-red-500">Error: {projectError?.message || fileError?.message}</p>;
+  }
 
   return (
-    <div className="flex gap-4 w-full mt-8 h-[calc(100vh-50px)]">
-      {/* First Card: Upload Form */}
-      <Card className="w-1/2 shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-center text-xl">Upload Files</CardTitle>
+    <div className="grid grid-cols-1 gap-2 max-w-6xl mx-auto mt-1">
+      {/* Project Selection Card */}
+      <Card className="shadow-md rounded-lg">
+        <CardHeader className="p-4 bg-gray-100 border-b">
+          <CardTitle className="text-lg font-semibold">Select Project</CardTitle>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="mb-4">
-              <label className="block text-lg font-semibold mb-2">Project Name</label>
-              <input
-                type="text"
-                {...register("projectName", { required: true })}
-                className="border border-gray-300 p-3 rounded w-full"
-                placeholder="Enter project name"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-lg font-semibold mb-2">Select Files to Upload</label>
-              <input
-                type="file"
-                onChange={onFileChange}
-                multiple
-                className="hidden"
-                id="file-input"
-              />
-              <label
-                htmlFor="file-input"
-                className="cursor-pointer flex items-center justify-center bg-blue-600 text-white p-4 rounded-lg hover:bg-blue-700"
-                style={{ width: '200px', height: '200px' }}
-              >
-                Select Files
-              </label>
-            </div>
-
-            {isUploading && (
-              <div className="mb-4">
-                <label className="block text-lg font-semibold mb-2">Upload Progress</label>
-                <Progress value={uploadProgress} />
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="w-full bg-green-500 text-white p-3 rounded-lg hover:bg-green-600"
-              disabled={isUploading}
-            >
-              {isUploading ? "Uploading..." : "Upload Files"}
-            </button>
-          </form>
+        <CardContent className="p-6">
+          <Select onValueChange={handleProjectChange} disabled={loadingProjects}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a project" />
+            </SelectTrigger>
+            <SelectContent>
+              {projectNames?.map((projectName: string) => (
+                <SelectItem key={projectName} value={projectName}>
+                  {projectName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 
-      {/* Second Card: Selected Files in Scroll Area */}
-      <Card className="w-1/2 shadow-lg flex flex-col">
-        <CardHeader>
-          <CardTitle className="text-center text-xl">Selected Files</CardTitle>
-        </CardHeader>
-
-        {/* CardContent should take remaining height and allow scrolling */}
-        <CardContent className="flex-1 p-0 overflow-hidden">
-          <ScrollArea className="h-full max-h-[calc(100vh-240px)]">
-            {selectedFiles.length > 0 ? (
+      {/* Files Display Card */}
+      {selectedProject && (
+        <Card className="shadow-md rounded-lg flex flex-col">
+          <CardHeader className="p-4 bg-gray-100 border-b">
+            <CardTitle className="text-lg font-semibold flex items-center">Files for Selected MOC {selectedProject}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 p-0 overflow-hidden">
+            <ScrollArea className="h-full max-h-[calc(100vh-240px)]">
               <div className="space-y-2 p-4">
-                <h3 className="font-semibold text-lg">Selected Files:</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {selectedFiles.map((file, index) => (
-                    <div
-                      key={index}
-                      className="bg-white p-4 rounded-lg shadow flex items-center justify-between"
-                    >
-                      <div className="flex items-center">
-                        {file.type === "application/pdf" && (
-                          <AiOutlineFilePdf className="text-red-500 text-xl mr-2" />
-                        )}
-                        <span>{file.name}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveFile(file)}
-                        className="text-red-500 hover:text-red-700"
+                {files.length === 0 ? (
+                  <p className="text-gray-500">No files found.</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-4">
+                    {files.map(({ url, fileName }: { url: string; fileName: string }, index) => (
+                      <div
+                        key={index}
+                        className="bg-white p-4 rounded-lg shadow flex items-center"
                       >
-                        <AiOutlineClose className="text-xl" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                        <AiOutlineFilePdf className="text-red-500 text-xl mr-2" />
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {fileName}
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : (
-              <p className="p-4">No files selected yet.</p>
-            )}
-          </ScrollArea>
-        </CardContent>
-
-        {/* Conditionally show footer if files are selected */}
-        {selectedFiles.length > 0 && (
-          <CardFooter className="p-4 flex justify-center">
-            <button
-              type="button"
-              onClick={handleRemoveAllFiles}
-              className="text-red-500 hover:text-red-700"
-            >
-              Remove All Selected Files
-            </button>
-          </CardFooter>
-        )}
-      </Card>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
