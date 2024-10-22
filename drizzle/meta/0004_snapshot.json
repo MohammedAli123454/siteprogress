@@ -1,0 +1,204 @@
+{
+  "id": "c573c24e-1e53-463f-9296-e72b49cecd79",
+  "prevId": "b7a8522e-a473-4432-af76-b731698e27a9",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.countries": {
+      "name": "countries",
+      "schema": "",
+      "columns": {
+        "country_name": {
+          "name": "country_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "details": {
+          "name": "details",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.files": {
+      "name": "files",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "project_name": {
+          "name": "project_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fileName": {
+          "name": "fileName",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.jointsDetail": {
+      "name": "jointsDetail",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "SIZE_INCHES": {
+          "name": "SIZE_INCHES",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PIPE_SCHEDULE": {
+          "name": "PIPE_SCHEDULE",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "THKNESS": {
+          "name": "THKNESS",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "SHOP_JOINTS": {
+          "name": "SHOP_JOINTS",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "SHOP_INCH_DIA": {
+          "name": "SHOP_INCH_DIA",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "FIELD_JOINTS": {
+          "name": "FIELD_JOINTS",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "FIELD_INCH_DIA": {
+          "name": "FIELD_INCH_DIA",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TOTAL_JOINTS": {
+          "name": "TOTAL_JOINTS",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TOTAL_INCH_DIA": {
+          "name": "TOTAL_INCH_DIA",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MOC": {
+          "name": "MOC",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "jointsDetail_MOC_mocDetail_MOC_fk": {
+          "name": "jointsDetail_MOC_mocDetail_MOC_fk",
+          "tableFrom": "jointsDetail",
+          "tableTo": "mocDetail",
+          "columnsFrom": [
+            "MOC"
+          ],
+          "columnsTo": [
+            "MOC"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.mocDetail": {
+      "name": "mocDetail",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "MOC": {
+          "name": "MOC",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "MOC_NAME": {
+          "name": "MOC_NAME",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "mocDetail_MOC_unique": {
+          "name": "mocDetail_MOC_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "MOC"
+          ]
+        }
+      }
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

@@ -2,6 +2,7 @@
 
 import { db } from "../configs/db";
 import { files as filesSchema } from "../configs/schema";
+import { mocDetail } from "../configs/schema";
 import { eq,sql } from "drizzle-orm";
 
 // Fetch unique project names
@@ -13,6 +14,17 @@ export async function getUniqueProjectNames() {
     .from(filesSchema);
 
   return projectNames;
+}
+
+
+export async function getallAwardedMocs() {
+  const allAwardedMocs = await db
+    .select({
+      mocName: sql`DISTINCT ${mocDetail.mocName}`.as<string>(),  // Explicitly cast as string
+    })
+    .from(mocDetail);
+
+  return allAwardedMocs;
 }
 
 // Fetch URLs by project name

@@ -9,8 +9,9 @@ import { put } from "@vercel/blob";
 export async function uploadFiles(formData: FormData) {
   const projectName = formData.get("projectName") as string;
   const uploadedFiles: { url: string }[] = [];  // Array to store uploaded file URLs
-
+  const category = formData.get("category") as string;
   const files = formData.getAll("files") as File[];  // Extract files from the FormData object
+
  
  
 
@@ -32,6 +33,7 @@ export async function uploadFiles(formData: FormData) {
       project_name: projectName,  // Insert the project name
       url,  // Insert the file URL
       fileName: file.name,
+      category: category,
     });
   }
 

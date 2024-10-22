@@ -30,4 +30,5 @@ export const files = pgTable('files', {
   project_name: varchar('project_name').notNull(),
   url: varchar('url').notNull(),
   fileName: varchar('fileName').notNull(),
+  category: varchar('category').notNull(),
 });
