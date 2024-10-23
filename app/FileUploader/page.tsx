@@ -12,13 +12,13 @@ import { getallAwardedMocs } from "@/app/actions-Database/getData";
 import { useQuery } from "@tanstack/react-query";
 import { uploadFiles } from "@/app/actions/uploadFile";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface FormData {
   projectName: string;
   category: string;
 }
 
-// Fetch unique project names
 const fetchMocNames = async () => {
   const names = await getallAwardedMocs();
   return names.map((name: { mocName: string }) => name.mocName);
@@ -28,9 +28,10 @@ export default function FileUploader() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
-  const { data: mocNames, isLoading: loadingMocs, error: mocError } = useQuery({
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  
+  const { data: mocNames, isLoading: loadingMocs } = useQuery({
     queryKey: ["mocNames"],
     queryFn: fetchMocNames,
     staleTime: 5 * 60 * 1000,
@@ -42,9 +43,7 @@ export default function FileUploader() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (files.length) {
-      setSelectedFiles(prevFiles => [...prevFiles, ...files]);
-    }
+    if (files.length) setSelectedFiles(prevFiles => [...prevFiles, ...files]);
   };
 
   const removeFile = (fileToRemove: File) => {
@@ -55,11 +54,20 @@ export default function FileUploader() {
 
   const onSubmit = async (data: FormData) => {
     if (selectedFiles.length === 0) {
-      alert("Please select at least one file.");
+      setDialogMessage("Please select at least one file.");
+      setDialogOpen(true);
       return;
     }
-    if (!selectedCategory) {
-      alert("Please select a drawing category.");
+
+    if (!data.projectName) {
+      setDialogMessage("Please select a project.");
+      setDialogOpen(true);
+      return;
+    }
+
+    if (!data.category) {
+      setDialogMessage("Please select a drawing category.");
+      setDialogOpen(true);
       return;
     }
 
@@ -72,7 +80,7 @@ export default function FileUploader() {
     for (const file of selectedFiles) {
       const formData = new FormData();
       formData.append("projectName", data.projectName);
-      formData.append("category", selectedCategory);
+      formData.append("category", data.category);
       formData.append("files", file);
 
       await uploadFiles(formData);
@@ -81,22 +89,33 @@ export default function FileUploader() {
       setUploadProgress((uploadedCount / totalFiles) * 100);
     }
 
-    toast({
-      title: "Success",
-      description: "All selected files uploaded successfully!",
-    });
-
-    reset();
     setIsUploading(false);
+    // Ensure that the success message shows up after all files have been uploaded
+    setDialogMessage("All selected files uploaded successfully!");
+    setDialogOpen(true);
+
+    // Reset form and selected files after the upload completes
+    reset();
     setSelectedFiles([]);
+        // Clear the Select fields
+        setValue('projectName', '');
+        setValue('category', '');
   };
-
-  const handleProjectChange = (value: string) => setValue("projectName", value);
-
-  const handleCategoryChange = (value: string) => setSelectedCategory(value);
 
   return (
     <div className="flex gap-8 w-full mt-12 h-[calc(100vh-80px)] justify-center items-start">
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Error</DialogTitle>
+          </DialogHeader>
+          <p>{dialogMessage}</p>
+          <DialogFooter>
+            <Button onClick={() => setDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* First Card: Upload Form */}
       <Card className="w-[45%] shadow-lg border border-gray-200 rounded-lg flex flex-col">
         <CardContent>
@@ -105,7 +124,7 @@ export default function FileUploader() {
               {/* Project Name */}
               <div>
                 <label className="block text-lg font-medium text-gray-600 mb-2">Project Name</label>
-                <Select onValueChange={handleProjectChange} disabled={loadingMocs}>
+                <Select onValueChange={(value) => setValue("projectName", value)} disabled={loadingMocs}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
@@ -122,7 +141,7 @@ export default function FileUploader() {
               {/* Drawing Category */}
               <div>
                 <label className="block text-lg font-medium text-gray-600 mb-2">Drawing Category</label>
-                <Select onValueChange={handleCategoryChange}>
+                <Select onValueChange={(value) => setValue("category", value)}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
@@ -153,7 +172,10 @@ export default function FileUploader() {
               {isUploading && (
                 <div>
                   <label className="block text-lg font-medium text-gray-600 mb-2">Upload Progress</label>
-                  <Progress value={uploadProgress} />
+                  <div className="flex items-center">
+                    <Progress value={uploadProgress} className="flex-1" />
+                    <span className="ml-2 text-gray-700">{Math.round(uploadProgress)}%</span>
+                  </div>
                 </div>
               )}
 
@@ -181,39 +203,38 @@ export default function FileUploader() {
                   {selectedFiles.map((file, index) => (
                     <div
                       key={index}
-                      className="bg-white p-4 rounded-lg shadow-sm flex items-center justify-between transition-all hover:shadow-md"
+                      className="flex items-center justify-between p-2 border border-gray-300 rounded-md shadow-sm"
                     >
-                      <div className="flex items-center">
-                        {file.type === "application/pdf" && (
-                          <AiOutlineFilePdf className="text-red-500 text-xl mr-2" />
-                        )}
-                        <span>{file.name}</span>
+                      <div className="flex items-center space-x-3">
+                        <AiOutlineFilePdf className="text-red-500 text-2xl" />
+                        <span className="font-medium text-sm text-gray-800">{file.name}</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => removeFile(file)}
-                        className="text-red-500 hover:text-red-700"
+                        className="text-red-500 hover:text-red-600"
                       >
-                        <AiOutlineClose className="text-xl" />
+                        <AiOutlineClose />
                       </button>
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <p className="p-6 text-center text-gray-500">No files selected yet.</p>
+              <div className="p-6 text-gray-500">No files selected</div>
             )}
           </ScrollArea>
         </CardContent>
 
+        {/* Remove All Button */}
         {selectedFiles.length > 0 && (
-          <CardFooter className="p-6 flex justify-center">
+          <CardFooter className="p-4">
             <button
               type="button"
               onClick={removeAllFiles}
-              className="text-red-500 hover:text-red-700 font-semibold"
+              className="bg-red-500 text-white p-3 rounded-lg hover:bg-red-600 transition-all duration-300"
             >
-              Remove All Selected Files
+              Remove All Files
             </button>
           </CardFooter>
         )}
@@ -221,3 +242,5 @@ export default function FileUploader() {
     </div>
   );
 }
+
+
