@@ -25,13 +25,13 @@ const fetchMocNames = async () => {
 };
 
 export default function FileUploader() {
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<Set<File>>(new Set());
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
-  
-  const { data: mocNames, isLoading: loadingMocs } = useQuery({
+
+  const { data: mocNames, isLoading: loadingMocs, refetch } = useQuery({
     queryKey: ["mocNames"],
     queryFn: fetchMocNames,
     staleTime: 5 * 60 * 1000,
@@ -42,18 +42,18 @@ export default function FileUploader() {
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length) setSelectedFiles(prevFiles => [...prevFiles, ...files]);
+    const files = new Set([...selectedFiles, ...Array.from(e.target.files || [])]);
+    setSelectedFiles(files);
   };
 
   const removeFile = (fileToRemove: File) => {
-    setSelectedFiles(prevFiles => prevFiles.filter(file => file !== fileToRemove));
+    setSelectedFiles(prevFiles => new Set([...prevFiles].filter(file => file !== fileToRemove)));
   };
 
-  const removeAllFiles = () => setSelectedFiles([]);
+  const removeAllFiles = () => setSelectedFiles(new Set());
 
   const onSubmit = async (data: FormData) => {
-    if (selectedFiles.length === 0) {
+    if (selectedFiles.size === 0) {
       setDialogMessage("Please select at least one file.");
       setDialogOpen(true);
       return;
@@ -74,7 +74,7 @@ export default function FileUploader() {
     setIsUploading(true);
     setUploadProgress(0);
 
-    const totalFiles = selectedFiles.length;
+    const totalFiles = selectedFiles.size;
     let uploadedCount = 0;
 
     for (const file of selectedFiles) {
@@ -90,16 +90,17 @@ export default function FileUploader() {
     }
 
     setIsUploading(false);
-    // Ensure that the success message shows up after all files have been uploaded
     setDialogMessage("All selected files uploaded successfully!");
     setDialogOpen(true);
 
     // Reset form and selected files after the upload completes
     reset();
-    setSelectedFiles([]);
-        // Clear the Select fields
-        setValue('projectName', '');
-        setValue('category', '');
+    setSelectedFiles(new Set());
+    
+    // Clear the Select fields and refetch MOC names
+    setValue('projectName', '');
+    setValue('category', '');
+    refetch();
   };
 
   return (
@@ -196,48 +197,44 @@ export default function FileUploader() {
       <Card className="w-[45%] shadow-lg border border-gray-200 rounded-lg flex flex-col">
         <CardContent className="flex-1 p-0">
           <ScrollArea className="h-[300px] overflow-auto">
-            {selectedFiles.length > 0 ? (
+            {selectedFiles.size > 0 ? (
               <div className="space-y-4 p-6">
                 <h3 className="font-medium text-lg text-gray-600">Selected Files:</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  {selectedFiles.map((file, index) => (
+                  {[...selectedFiles].map((file, index) => (
                     <div
                       key={index}
                       className="flex items-center justify-between p-2 border border-gray-300 rounded-md shadow-sm"
                     >
                       <div className="flex items-center space-x-3">
                         <AiOutlineFilePdf className="text-red-500 text-2xl" />
-                        <span className="font-medium text-sm text-gray-800">{file.name}</span>
+                        <div>
+                          <p className="text-gray-800 font-medium">{file.name}</p>
+                          <p className="text-gray-500 text-sm">{(file.size / 1024).toFixed(2)} KB</p>
+                        </div>
                       </div>
-                      <button
-                        type="button"
+                      <AiOutlineClose
+                        className="text-red-600 cursor-pointer hover:text-red-800"
                         onClick={() => removeFile(file)}
-                        className="text-red-500 hover:text-red-600"
-                      >
-                        <AiOutlineClose />
-                      </button>
+                      />
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="p-6 text-gray-500">No files selected</div>
+              <div className="flex justify-center items-center h-full text-gray-500">
+                No files selected.
+              </div>
             )}
           </ScrollArea>
         </CardContent>
-
-        {/* Remove All Button */}
-        {selectedFiles.length > 0 && (
-          <CardFooter className="p-4">
-            <button
-              type="button"
-              onClick={removeAllFiles}
-              className="bg-red-500 text-white p-3 rounded-lg hover:bg-red-600 transition-all duration-300"
-            >
-              Remove All Files
-            </button>
-          </CardFooter>
-        )}
+        <CardFooter className="p-4">
+          {selectedFiles.size > 0 && (
+            <Button variant="destructive" onClick={removeAllFiles}>
+              Remove All
+            </Button>
+          )}
+        </CardFooter>
       </Card>
     </div>
   );
