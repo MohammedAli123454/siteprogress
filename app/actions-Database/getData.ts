@@ -3,7 +3,7 @@
 import { db } from "../configs/db";
 import { files as filesSchema } from "../configs/schema";
 import { mocDetail } from "../configs/schema";
-import { eq,sql } from "drizzle-orm";
+import { and,eq,sql } from "drizzle-orm";
 
 // Fetch unique project names
 export async function getUniqueProjectNames() {
@@ -28,14 +28,24 @@ export async function getallAwardedMocs() {
 }
 
 // Fetch URLs by project name
-export async function getFilesByProjectName(projectName: string) {
-  const files = await db
+export async function getFilesByProjectName(projectName: string, category?: string) {
+  const conditions = [eq(filesSchema.project_name, projectName)];
+
+  if (category) {
+    conditions.push(eq(filesSchema.category, category));
+  }
+
+  const query = db
     .select({
-      url: filesSchema.url,  // Select the URL
-      fileName: filesSchema.fileName,  // Select the file name
+      url: filesSchema.url,
+      fileName: filesSchema.fileName,
+      category: filesSchema.category,
     })
     .from(filesSchema)
-    .where(eq(filesSchema.project_name, projectName));  // Use eq for equality check
+    .where(and(...conditions)); // Spread the conditions array into `and`
 
-  return files;  // Return both URL and fileName for each file
+  const files = await query;
+
+  return files;
 }
+

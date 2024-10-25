@@ -2,8 +2,8 @@
 
 import { db } from "../configs/db";
 import { files as filesSchema } from "../configs/schema";
-import { put } from "@vercel/blob";
-
+import { put,del } from "@vercel/blob";
+import { eq } from "drizzle-orm";
 
 // Server action to upload files and save their URLs in the database under the specified project name
 export async function uploadFiles(formData: FormData) {
@@ -39,4 +39,28 @@ export async function uploadFiles(formData: FormData) {
 
   // Return an array of uploaded file URLs
   return uploadedFiles;
+}
+
+// Server action to delete a file from Vercel Blob and remove its record from the database
+export async function deleteFile(fileUrl: string) {
+  // Extract the file key from the URL (assuming it's the part after the domain)
+  const urlParts = new URL(fileUrl);
+  const fileKey = urlParts.pathname.substring(1); // This will give you the file path in blob storage
+  
+  // Delete the file from Vercel Blob
+  await del(fileKey, {
+    token: process.env.IMAGES_TO_BLOB,  // Use the environment variable for the Blob token
+  });
+
+  // Delete the file record from the database using the file URL
+  const deleteResult = await db
+    .delete(filesSchema)
+    .where(eq(filesSchema.url, fileUrl));
+  
+  // Inspect deleteResult to determine if rows were affected
+  if (deleteResult.rowCount === 0) {  // Adjust according to the actual delete result structure
+    throw new Error("File not found in the database.");
+  }
+
+  return { success: true, message: "File deleted successfully." };
 }
