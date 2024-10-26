@@ -20,22 +20,22 @@ const fetchUniqueProjectNames = async () => {
 };
 
 const fetchFilesForSelectedProject = async (projectName: string, category: string) => {
-  const files = await getFilesByProjectName(projectName, category);
-  return files; 
+  const allFiles = await getFilesByProjectName(projectName, category);
+  return allFiles; 
 };
 
 export default function FileDelete() {
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [selectedFileUrls, setSelectedFileUrls] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
-  const [files, setFiles] = useState<{ id: string; url: string; fileName: string }[]>([]);
+  const [allFiles, setAllFiles] = useState<{ id: string; url: string; fileName: string }[]>([]);
   const [deletionProgress, setDeletionProgress] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
   const [loadingFiles, setLoadingFiles] = useState(false);
-  const [showFilesCard, setShowFilesCard] = useState(false); // Control visibility of the files card
+  const [showFilesCard, setShowFilesCard] = useState(false); // Control visibility of the allFiles card
 
   const { data: projectNames, isLoading: loadingProjects, error: projectError } = useQuery({
     queryKey: ["uniqueProjectNames"],
@@ -45,27 +45,25 @@ export default function FileDelete() {
 
   const handleProjectChange = (projectName: string) => {
     setSelectedProject(projectName);
-    setSelectedFiles([]);
+    setSelectedFileUrls([]);
     setSelectAll(false);
-    setFiles([]); 
+    setAllFiles([]); 
   };
 
   const handleCategoryChange = (categoryName: string) => {
     setSelectedCategory(categoryName);
-    setSelectedFiles([]);
+    setSelectedFileUrls([]);
     setSelectAll(false);
   };
 
   const handleFetchFiles = async () => {
     if (!selectedProject) {
-      setDialogMessage("Please select a project.");
-      setDialogOpen(true);
+      openDialog("Please select a project.");
       return;
     }
 
     if (!selectedCategory) {
-      setDialogMessage("Please select a category.");
-      setDialogOpen(true);
+      openDialog("Please select a category.");
       return;
     }
 
@@ -77,52 +75,57 @@ export default function FileDelete() {
       fileName: file.fileName,
       category: file.category,
     }));
-    setFiles(formattedFiles);
+    setAllFiles(formattedFiles);
     setLoadingFiles(false);
-    setShowFilesCard(true); // Show files card and hide the first card
+    setShowFilesCard(true); // Show allFiles card and hide the first card
   };
 
   const handleSelectFile = (fileUrl: string) => {
-    setSelectedFiles((prevSelected) =>
+    setSelectedFileUrls((prevSelected) =>
       prevSelected.includes(fileUrl) ? prevSelected.filter((url) => url !== fileUrl) : [...prevSelected, fileUrl]
     );
   };
 
   const handleSelectAll = () => {
     setSelectAll((prev) => !prev);
-    setSelectedFiles(selectAll ? [] : files.map((file) => file.url));
+    setSelectedFileUrls(selectAll ? [] : allFiles.map((file) => file.url));
   };
 
   const handleDeleteFiles = async () => {
-    if (selectedFiles.length > 0) {
+    if (selectedFileUrls.length > 0) {
       setIsDeleting(true);
       setDeletionProgress(0);
 
-      const totalFiles = selectedFiles.length;
+      const totalFiles = selectedFileUrls.length;
       let deletedCount = 0;
 
-      for (const fileUrl of selectedFiles) {
+      for (const fileUrl of selectedFileUrls) {
         await deleteFile(fileUrl);
         deletedCount += 1;
         setDeletionProgress((deletedCount / totalFiles) * 100);
       }
+      openDialog("All selected allFiles deleted successfully!");
+ 
 
-      setDialogMessage("All selected files deleted successfully!");
-      setDialogOpen(true);
-
-      const remainingFiles = files.filter(file => !selectedFiles.includes(file.url));
-      setFiles(remainingFiles);
-      setSelectedFiles([]);
+      const remainingFiles = allFiles.filter(file => !selectedFileUrls.includes(file.url));
+      setAllFiles(remainingFiles);
+      setSelectedFileUrls([]);
       setSelectAll(false);
       setIsDeleting(false);
       setDeletionProgress(0); 
     }
   };
 
+
+  const openDialog = (message: string) => {
+    setDialogMessage(message);
+    setDialogOpen(true);
+  };
+
   const handleCancel = () => {
     setSelectedProject(null);
-    setFiles([]);
-    setSelectedFiles([]);
+    setAllFiles([]);
+    setSelectedFileUrls([]);
     setShowFilesCard(false); // Show the first card again on cancel
   };
 
@@ -212,8 +215,8 @@ export default function FileDelete() {
                     <span className="ml-2 text-gray-700">{Math.round(deletionProgress)}%</span>
                   </div>
                 )}
-                {files.length === 0 ? (
-                  <p className="text-gray-500">No files found.</p>
+                {allFiles.length === 0 ? (
+                  <p className="text-gray-500">No allFiles found.</p>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     <div className="flex items-center space-x-2 col-span-full">
@@ -222,11 +225,11 @@ export default function FileDelete() {
                         Select All
                       </label>
                     </div>
-                    {files.map((file) => (
+                    {allFiles.map((file) => (
                       <div key={file.id} className="border p-2 rounded-md flex items-center space-x-2">
                         <Checkbox
                           id={file.id}
-                          checked={selectedFiles.includes(file.url)}
+                          checked={selectedFileUrls.includes(file.url)}
                           onCheckedChange={() => handleSelectFile(file.url)}
                         />
                         <label htmlFor={file.id} className="text-md text-gray-700 flex items-center">
@@ -243,7 +246,7 @@ export default function FileDelete() {
           <div className="p-4 border-t"> {/* Card footer for buttons */}
             <Button
               onClick={handleDeleteFiles}
-              disabled={selectedFiles.length === 0 || isDeleting}
+              disabled={selectedFileUrls.length === 0 || isDeleting}
               variant="destructive"
             >
               {isDeleting ? 'Deleting...' : 'Delete'}
