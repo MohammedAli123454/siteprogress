@@ -5,6 +5,33 @@ import { files as filesSchema } from "../configs/schema";
 import { put,del } from "@vercel/blob";
 import { eq } from "drizzle-orm";
 
+import { invoices,lineItems } from "../configs/schema";
+
+
+
+type InvoiceHeader = {
+  invoiceNumber: string;
+  date: string;
+  customerName: string;
+  customerAddress: string;
+  totalQty: number;
+  grandTotal: number;
+};
+
+type LineItem = {
+  itemCode: string;
+  description: string;
+  qty: number;
+  unit: string;
+  unitPrice: number;
+  totalPrice: number;
+};
+
+type InvoiceData = {
+  header: InvoiceHeader;
+  lineItems: LineItem[];
+};
+
 // Server action to upload files and save their URLs in the database under the specified project name
 export async function uploadFiles(formData: FormData) {
   const projectName = formData.get("projectName") as string;
@@ -63,4 +90,38 @@ export async function deleteFile(fileUrl: string) {
   }
 
   return { success: true, message: "File deleted successfully." };
+}
+
+
+// Save Invoice Function
+export async function saveInvoice(data: InvoiceData) {
+  const { header, lineItems: items } = data;
+
+  try {
+    // Convert date to a Date object for correct timestamp type
+    const invoiceHeader = {
+      ...header,
+      date: new Date(header.date),
+    };
+
+    // Insert invoice header and get the full inserted invoice record
+    const [invoice] = await db
+      .insert(invoices)
+      .values(invoiceHeader)
+      .returning(); // This returns the full inserted record, including `id`
+
+    // Prepare line items data with the invoice ID
+    const lineItemsData = items.map((item) => ({
+      ...item,
+      invoiceId: invoice.id, // invoice.id is guaranteed by returning the full record
+    }));
+
+    // Insert line items
+    await db.insert(lineItems).values(lineItemsData);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error saving invoice:", error);
+    throw new Error("Failed to save invoice");
+  }
 }
