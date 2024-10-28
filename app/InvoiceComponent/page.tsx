@@ -6,8 +6,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { saveInvoice } from "@/app/actions/uploadFile"; 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
-import { ColDef, CellValueChangedEvent,ICellRendererParams } from "ag-grid-community"; // Import necessary types
-
+import { ColDef, CellValueChangedEvent, ICellRendererParams } from "ag-grid-community";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { LoaderCircle } from "lucide-react";
 
 type LineItem = {
     itemCode: string;
@@ -36,18 +38,24 @@ const InvoiceComponent = () => {
     const [lineItems, setLineItems] = useState<LineItem[]>([]);
     const [totalQty, setTotalQty] = useState(0);
     const [grandTotal, setGrandTotal] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
 
     const queryClient = useQueryClient();
 
     const saveInvoiceMutation = useMutation({
         mutationFn: saveInvoice,
         onSuccess: () => {
-            // Invalidate queries with a query key
             queryClient.invalidateQueries({ queryKey: ["invoices"] });
+            setLineItems([]);
+            setTotalQty(0);
+            setGrandTotal(0);
+            setIsLoading(false);
+        },
+        onError: () => {
+            setIsLoading(false);
         },
     });
     
-
     const calculateTotals = () => {
         const qty = lineItems.reduce((acc, item) => acc + item.qty, 0);
         const total = lineItems.reduce((acc, item) => acc + item.totalPrice, 0);
@@ -56,8 +64,9 @@ const InvoiceComponent = () => {
     };
 
     const addRow = () => {
-        setLineItems([
-            ...lineItems,
+        // Add new row at the end of the lineItems array
+        setLineItems(prevLineItems => [
+            ...prevLineItems,
             { itemCode: "", description: "", qty: 0, unit: "", unitPrice: 0, totalPrice: 0 }
         ]);
     };
@@ -70,15 +79,15 @@ const InvoiceComponent = () => {
     const onCellValueChanged = (event: CellValueChangedEvent<LineItem>) => {
         if (event.rowIndex !== null && event.rowIndex !== undefined) {
             const updatedLineItems = [...lineItems];
-            updatedLineItems[event.rowIndex] = event.data; // Safely access the index
-            updatedLineItems[event.rowIndex].totalPrice = event.data.qty * event.data.unitPrice; // Calculate total price
+            updatedLineItems[event.rowIndex] = event.data; 
+            updatedLineItems[event.rowIndex].totalPrice = event.data.qty * event.data.unitPrice; 
             setLineItems(updatedLineItems);
             calculateTotals();
         }
     };
     
-
     const handleSave = () => {
+        setIsLoading(true);
         saveInvoiceMutation.mutate({
             header: { ...header, totalQty, grandTotal },
             lineItems,
@@ -86,30 +95,26 @@ const InvoiceComponent = () => {
     };
 
     const columnDefs: ColDef<LineItem>[] = [
-        { field: "itemCode", headerName: "Item Code", editable: true },
-        { field: "description", headerName: "Description", editable: true },
-        { field: "qty", headerName: "Quantity", editable: true },
-        { field: "unit", headerName: "Unit", editable: true },
-        { field: "unitPrice", headerName: "Unit Price", editable: true },
+        { field: "itemCode", headerName: "Item Code", editable: true, width: 150 },
+        { field: "description", headerName: "Description", editable: true, width: 550 },
+        { field: "qty", headerName: "Quantity", editable: true, width: 110 },
+        { field: "unit", headerName: "Unit", editable: true, width: 110 },
+        { field: "unitPrice", headerName: "Unit Price", editable: true, width: 110 },
         {
             field: "totalPrice",
             headerName: "Total Price",
-            valueGetter: (params) => {
-                if (params.data) {
-                    return params.data.qty * params.data.unitPrice;
-                }
-                return 0; // Or handle this case as needed
-            },
+            valueGetter: (params) => params.data ? params.data.qty * params.data.unitPrice : 0,
+            width: 150,
         },
         {
             headerName: "Actions",
             cellRenderer: (params: ICellRendererParams) => {
-                const rowIndex = params.node.rowIndex; // Get rowIndex
+                const rowIndex = params.node.rowIndex; 
                 return (
                     <button
                         onClick={() => {
                             if (rowIndex !== null) {
-                                deleteRow(rowIndex); // Call deleteRow only if rowIndex is not null
+                                deleteRow(rowIndex);
                             }
                         }}
                     >
@@ -117,43 +122,95 @@ const InvoiceComponent = () => {
                     </button>
                 );
             },
+            width: 150,
         },
     ];
+
     return (
         <div>
-            <h2>Create Invoice</h2>
-            <form>
-                <label>Invoice Number</label>
-                <input type="text" value={header.invoiceNumber} onChange={(e) => setHeader({ ...header, invoiceNumber: e.target.value })} />
+            <Card className="w-[95%] mx-auto mb-4">
+                <CardContent>
+                    <form className="flex flex-wrap">
+                        <div className="mb-4 w-1/4 p-2">
+                            <label className="block">Invoice Number</label>
+                            <input
+                                type="text"
+                                value={header.invoiceNumber}
+                                onChange={(e) => setHeader({ ...header, invoiceNumber: e.target.value })}
+                                className="border p-2 w-full"
+                            />
+                        </div>
 
-                <label>Date</label>
-                <input type="date" value={header.date} onChange={(e) => setHeader({ ...header, date: e.target.value })} />
+                        <div className="mb-4 w-1/4 p-2">
+                            <label className="block">Date</label>
+                            <input
+                                type="date"
+                                value={header.date}
+                                onChange={(e) => setHeader({ ...header, date: e.target.value })}
+                                className="border p-2 w-full"
+                            />
+                        </div>
 
-                <label>Customer Name</label>
-                <input type="text" value={header.customerName} onChange={(e) => setHeader({ ...header, customerName: e.target.value })} />
+                        <div className="mb-4 w-1/4 p-2">
+                            <label className="block">Customer Name</label>
+                            <input
+                                type="text"
+                                value={header.customerName}
+                                onChange={(e) => setHeader({ ...header, customerName: e.target.value })}
+                                className="border p-2 w-full"
+                            />
+                        </div>
 
-                <label>Customer Address</label>
-                <input type="text" value={header.customerAddress} onChange={(e) => setHeader({ ...header, customerAddress: e.target.value })} />
-            </form>
+                        <div className="mb-4 w-1/4 p-2">
+                            <label className="block">Customer Address</label>
+                            <input
+                                type="text"
+                                value={header.customerAddress}
+                                onChange={(e) => setHeader({ ...header, customerAddress: e.target.value })}
+                                className="border p-2 w-full"
+                            />
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
 
-            <button onClick={addRow}>Add Item</button>
-            <div className="ag-theme-alpine" style={{ height: 400, width: "100%" }}>
-                <AgGridReact<LineItem>
-                    rowData={lineItems}
-                    columnDefs={columnDefs}
-                    onCellValueChanged={onCellValueChanged}
-                    domLayout="autoHeight"
-                />
-            </div>
+            <Card className="w-[95%] mx-auto mb-4">
+                <CardContent>
+                    <div className="ag-theme-alpine" style={{ height: 300, width: "100%" }}>
+                        <AgGridReact<LineItem>
+                            rowData={lineItems} // Ensure this directly binds to the state
+                            columnDefs={columnDefs}
+                            onCellValueChanged={onCellValueChanged}
+                            domLayout="autoHeight"
+                        />
+                    </div>
+                </CardContent>
+            </Card>
             
-            <div>
-                <p>Total Quantity: {totalQty}</p>
-                <p>Grand Total: {grandTotal}</p>
-            </div>
-            
-            <button onClick={handleSave}>Save Invoice</button>
+            <Card className="p-4 w-[95%] mx-auto mb-4">
+                <CardContent>
+                    {isLoading ? (
+                        <div className="flex items-center justify-center h-64">
+                            <LoaderCircle className="animate-spin" color="blue" size={48} />
+                        </div>
+                    ) : (
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <p className="font-bold">Total Quantity: <span className="text-lg">{totalQty}</span></p>
+                                <p className="font-bold">Grand Total: <span className="text-lg">{grandTotal}</span></p>
+                            </div>
+                            <div className="flex space-x-2">
+                                <Button onClick={handleSave}>Save Invoice</Button>
+                                <Button onClick={addRow} variant="secondary">Add Item</Button>
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 };
 
 export default InvoiceComponent;
+
+
