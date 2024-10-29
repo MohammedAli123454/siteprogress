@@ -32,6 +32,7 @@ type InvoiceData = {
   lineItems: LineItem[];
 };
 
+
 // Server action to upload files and save their URLs in the database under the specified project name
 export async function uploadFiles(formData: FormData) {
   const projectName = formData.get("projectName") as string;
