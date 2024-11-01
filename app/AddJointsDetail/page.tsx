@@ -7,13 +7,29 @@ import { saveJointsDetail } from "@/app/actions/saveJointDetail";
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
-import { ColDef, CellValueChangedEvent, ICellRendererParams } from "ag-grid-community";
+import {
+    ColDef,
+    CellValueChangedEvent,
+    ICellRendererParams,
+} from "ag-grid-community";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+    Select,
+    SelectTrigger,
+    SelectValue,
+    SelectContent,
+    SelectItem,
+} from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import {
+    Popover,
+    PopoverTrigger,
+    PopoverContent,
+} from "@/components/ui/popover";
 import { getUniqueMOCNumbers, getProjectsByMoc } from "@/app/actions-Database/getData";
+import { Input } from "@/components/ui/input";
+import { LoaderCircle } from "lucide-react"; // Import LoaderCircle
 
 type LineItem = {
     pipeSize: number;
@@ -43,40 +59,39 @@ const AddJointsDetail = () => {
     const queryClient = useQueryClient();
     const { register, handleSubmit, reset, control, setValue } = useForm<Header>({
         defaultValues: {
-            mocStartDate: '', // Set default value if needed
-            MCCDate: '',      // Set default value if needed
+            mocStartDate: '',
+            MCCDate: '',
         },
     });
 
     const [lineItems, setLineItems] = useState<LineItem[]>([
         { pipeSize: 0, thk: "", type: "", shopJoint: 0, fieldJoint: 0, totalJoint: 0, shopInchDia: 0, fieldInchDia: 0, totalInchDia: 0 }
     ]);
-    const [totalShopJoints, setTotalShopJoints] = useState(0);
-    const [totalFieldJoints, setTotalFieldJoints] = useState(0);
-    const [totalJoints, setTotalJoints] = useState(0);
-    const [totalShopInchDia, setTotalShopInchDia] = useState(0);
-    const [totalFieldInchDia, setTotalFieldInchDia] = useState(0);
-    const [totalInchDia, setTotalInchDia] = useState(0);
+
+    const [totals, setTotals] = useState({
+        totalShopJoints: 0,
+        totalFieldJoints: 0,
+        totalJoints: 0,
+        totalShopInchDia: 0,
+        totalFieldInchDia: 0,
+        totalInchDia: 0,
+    });
+
     const [projectName, setProjectName] = useState<string>("");
     const [isLoading, setIsLoading] = useState(false);
     const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
-    type MOCNumber = {
-        moc_no: string;
-    };
-
-    const { data: mocNumbers, isLoading: loadingMocs, error: mocError } = useQuery({
+    const { data: mocNumbers, isLoading: loadingMocs } = useQuery({
         queryKey: ["uniqueMOCNumbers"],
         queryFn: fetchUniqueMOCNumbers,
         staleTime: 5 * 60 * 1000,
     });
 
-
-
     const handleMOCChange = async (selectedMOC: string) => {
         const project = await getProjectsByMoc(selectedMOC);
-        setValue("mocName", project || "No project found"); // Set the project name in the form
+        setValue("mocName", project || "No project found");
     };
+
     const saveInvoiceMutation = useMutation({
         mutationFn: saveJointsDetail,
         onSuccess: () => {
@@ -85,6 +100,14 @@ const AddJointsDetail = () => {
             setLineItems([{ pipeSize: 0, thk: "", type: "", shopJoint: 0, fieldJoint: 0, totalJoint: 0, shopInchDia: 0, fieldInchDia: 0, totalInchDia: 0 }]);
             setIsLoading(false);
             setShowSuccessDialog(true);
+            setTotals({
+                totalShopJoints: 0,
+                totalFieldJoints: 0,
+                totalJoints: 0,
+                totalShopInchDia: 0,
+                totalFieldInchDia: 0,
+                totalInchDia: 0,
+            });
         },
         onError: () => {
             setIsLoading(false);
@@ -92,19 +115,24 @@ const AddJointsDetail = () => {
     });
 
     const calculateTotals = () => {
-        const sJoints = lineItems.reduce((acc, item) => acc + item.shopJoint, 0);
-        const fJoints = lineItems.reduce((acc, item) => acc + item.fieldJoint, 0);
-        const tJoints = lineItems.reduce((acc, item) => acc + item.totalJoint, 0);
-        const sInchDia = lineItems.reduce((acc, item) => acc + item.shopInchDia, 0);
-        const fInchDia = lineItems.reduce((acc, item) => acc + item.fieldInchDia, 0);
-        const totalInchDia = lineItems.reduce((acc, item) => acc + item.totalInchDia, 0);
+        const newTotals = lineItems.reduce((acc, item) => {
+            acc.totalShopJoints += item.shopJoint;
+            acc.totalFieldJoints += item.fieldJoint;
+            acc.totalJoints += item.totalJoint;
+            acc.totalShopInchDia += item.shopInchDia;
+            acc.totalFieldInchDia += item.fieldInchDia;
+            acc.totalInchDia += item.totalInchDia;
+            return acc;
+        }, {
+            totalShopJoints: 0,
+            totalFieldJoints: 0,
+            totalJoints: 0,
+            totalShopInchDia: 0,
+            totalFieldInchDia: 0,
+            totalInchDia: 0,
+        });
 
-        setTotalShopJoints(sJoints);
-        setTotalFieldJoints(fJoints);
-        setTotalJoints(tJoints);
-        setTotalShopInchDia(sInchDia);
-        setTotalFieldInchDia(fInchDia);
-        setTotalInchDia(totalInchDia);
+        setTotals(newTotals);
     };
 
     const addRow = () => {
@@ -132,26 +160,19 @@ const AddJointsDetail = () => {
                 totalInchDia: (row.pipeSize * row.shopJoint) + (row.pipeSize * row.fieldJoint),
             };
             setLineItems(updatedLineItems);
-            calculateTotals(); // Ensure totals are recalculated after cell change
+            calculateTotals();
         }
     };
 
     const handleSave: SubmitHandler<Header> = (data) => {
-        console.log("Form Data:", data);
         setIsLoading(true);
-
         saveInvoiceMutation.mutate({
             header: {
                 moc: data.moc,
                 mocName: data.mocName,
-                mocStartDate: data.mocStartDate, // Include if required
-                MCCDate: data.MCCDate,             // Include if required
-                totalShopJoints,
-                totalFieldJoints,
-                totalJoints,
-                totalShopInchDia,
-                totalFieldInchDia,
-                totalInchDia,
+                mocStartDate: data.mocStartDate,
+                MCCDate: data.MCCDate,
+                ...totals,
             },
             lineItems,
         });
@@ -203,9 +224,9 @@ const AddJointsDetail = () => {
 
     return (
         <div>
-            <Card className="w-[98%] mx-auto mb-4 shadow-lg">
+            <Card className="w-[98%] mx-auto mb-4 flex-1 shadow-lg">
                 <CardContent>
-                    <form onSubmit={handleSubmit(handleSave)} className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+                    <form onSubmit={handleSubmit(handleSave)} className="grid grid-cols-1 sm:grid-cols-5 justify-center text-center w-full gap-4">
                         <div>
                             <label className="block text-lg font-medium text-gray-600 mb-2">Select MOC</label>
                             <Controller
@@ -229,13 +250,14 @@ const AddJointsDetail = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Project Name</label>
-                            <input
+                            <label className="block text-lg font-medium text-gray-600 mb-2">Project Name</label>
+                            <Input
                                 type="text"
                                 {...register("mocName", { required: "Project Name is required" })}
-                                className="border rounded-md p-2 w-full"
+                                placeholder="Enter Project Name"
                             />
                         </div>
+
                         <div>
                             <label className="block text-lg font-medium text-gray-600 mb-2">MOC Start Date</label>
                             <Controller
@@ -291,22 +313,14 @@ const AddJointsDetail = () => {
                                 }}
                             />
                         </div>
-
-                        <div className="sm:col-span-4">
-                            <Button type="submit" className="w-full">Save</Button>
-                        </div>
                     </form>
                 </CardContent>
             </Card>
 
-            <div className="flex justify-between w-[98%] mx-auto mb-4">
-                <Button onClick={addRow} className="mb-4">Add Row</Button>
-            </div>
-
-            <Card className="w-[98%] mx-auto shadow-lg">
+            <Card className="w-[98%] mx-auto mb-4 flex-1 shadow-lg">
                 <CardContent>
-                    <div className="ag-theme-alpine w-full h-[400px]">
-                    <AgGridReact<LineItem>
+                    <div className="ag-theme-alpine mt-4" style={{ height: 300, width: "100%" }}>
+                        <AgGridReact<LineItem>
                             rowData={lineItems}
                             columnDefs={columnDefs}
                             onCellValueChanged={onCellValueChanged}
@@ -315,6 +329,36 @@ const AddJointsDetail = () => {
                     </div>
                 </CardContent>
             </Card>
+
+            <Card className="w-[98%] mx-auto mb-4 flex-1 shadow-lg">
+                <CardContent className="p-2">
+                    <h2 className="text-lg font-semibold mb-2">Totals</h2>
+                    <div className="grid grid-cols-3 mb-2">
+                        <div>
+                            Total Shop Joints: {totals.totalShopJoints} <br />
+                            Total Field Joints: {totals.totalFieldJoints} <br />
+                            Total Joints: {totals.totalJoints}
+                        </div>
+                        <div>
+                            Total Shop Inch Dia: {totals.totalShopInchDia} <br />
+                            Total Field Inch Dia: {totals.totalFieldInchDia} <br />
+                            Total Inch Dia: {totals.totalInchDia}
+                        </div>
+                        <div className="flex justify-center items-center flex-col">
+                            <div className="flex space-x-2">
+                                <Button onClick={addRow}>Add Row</Button>
+                                <Button onClick={handleSubmit(handleSave)}>Save</Button>
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {isLoading && ( // Display the loader when isLoading is true
+                <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-75 z-50">
+                    <LoaderCircle className="animate-spin text-blue-500" size={64} />
+                </div>
+            )}
 
             {showSuccessDialog && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
