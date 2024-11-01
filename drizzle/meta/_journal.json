@@ -43,6 +43,13 @@
       "when": 1730138981125,
       "tag": "0005_cultured_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1730484505623,
+      "tag": "0006_regular_blue_shield",
+      "breakpoints": true
     }
   ]
 }

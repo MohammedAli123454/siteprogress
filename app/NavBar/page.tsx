@@ -25,7 +25,8 @@ export default function Navbar({}: Props) {
                 <Button onClick={() => router.push('/FileUploader')} variant='secondary' className={buttonClasses}>Upload Drawings</Button>
                 <Button onClick={() => router.push('/FileGetter')} variant='secondary' className={buttonClasses}>Show Drawings</Button>
                 <Button onClick={() => router.push('/FileDelete')} variant='secondary' className={buttonClasses}>Delete Files</Button>
-                <Button onClick={() => router.push('/InvoiceComponent')} variant='secondary' className={buttonClasses}>Create Invoice</Button>
+                {/* <Button onClick={() => router.push('/InvoiceComponent')} variant='secondary' className={buttonClasses}>Create Invoice</Button> */}
+                <Button onClick={() => router.push('/AddJointsDetail')} variant='secondary' className={buttonClasses}>Add Joints To MOC</Button>
             </div>
         </div>
     )

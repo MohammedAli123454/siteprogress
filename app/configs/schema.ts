@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { pgTable, serial, varchar, primaryKey, integer, json,timestamp} from "drizzle-orm/pg-core";
-
+import { date } from 'drizzle-orm/pg-core'; // Ensure this import is included
 export const mocDetail = pgTable("mocDetail", {
   id: serial('id').primaryKey(),  // Primary key
   moc: varchar('MOC').notNull().unique(),  // Add unique constraint here
@@ -56,4 +56,40 @@ export const lineItems = pgTable("line_items", {
   unit: varchar("unit").notNull(),
   unitPrice: integer("unit_price").notNull(),
   totalPrice: integer("total_price").notNull(),
+});
+
+
+
+
+export const jointSummary = pgTable("jointSummary", {
+  id: serial("id").primaryKey(),
+  moc: varchar("MOC").notNull().unique(),
+  mocName: varchar("MOC_NAME").notNull(),
+  
+  mocStartDate: date("moc_start_date").notNull(),  // Correctly defined date type
+  MCCDate: date("mcc_date").notNull(),              // Correctly defined date type
+
+  totalShopJoints: integer("total_shop_joints").notNull(),
+  totalFieldJoints: integer("total_field_joints").notNull(),
+  totalJoints: integer("total_joints").notNull(),
+  totalShopInchDia: integer("total_shop_inch_dia").notNull(),
+  totalFieldInchDia: integer("total_field_inch_dia").notNull(),
+  totalInchDia: integer("total_inch_dia").notNull(),
+});
+
+
+
+// Line Items table
+export const jointTable = pgTable("jointTable", {
+  id: serial("id").primaryKey(),
+  pipeSize: integer("pipe_size").notNull(),
+  thk: varchar("thk").notNull(),
+  type: varchar("type").notNull(),
+  shopJoint: integer("shop_joint").notNull(),
+  fieldJoint: integer("field_joint").notNull(),
+  totalJoint: integer("total_joint").notNull(),
+  shopInchDia: integer("shop_inch_dia").notNull(),
+  fieldInchDia: integer("field_inch_dia").notNull(),
+  totalInchDia: integer("total_inch_dia").notNull(),
+  moc: varchar('MOC').notNull().references(() => jointSummary.moc),  // Foreign key to mocDetail.moc
 });

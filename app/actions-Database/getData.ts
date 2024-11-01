@@ -17,6 +17,37 @@ export async function getUniqueProjectNames() {
 }
 
 
+
+// Fetch unique project names
+// Fetch unique project names
+export async function getUniqueMOCNumbers() {
+  const mocNumbers = await db
+      .select({
+          moc_no: sql`DISTINCT ${mocDetail.moc}`.as<string>(),
+      })
+      .from(mocDetail);
+
+  // Assuming mocNumbers is an array of objects, return it as is
+  return mocNumbers; // Ensure this returns [{ moc_no: 'value' }, ...]
+}
+
+
+
+
+// Fetch unique project names
+export async function getProjectsByMoc(mocName: string) {
+  const projects = await db
+    .select({
+      project_name: mocDetail.mocName, // Select project_name column
+    })
+    .from(mocDetail)
+    .where(sql`${mocDetail.moc} = ${mocName}`) // Filter by mocName
+    .limit(1); // Limit to 1 if only one project_name is expected
+
+  return projects[0]?.project_name || null; // Return project_name or null if not found
+}
+
+
 export async function getallAwardedMocs() {
   const allAwardedMocs = await db
     .select({
