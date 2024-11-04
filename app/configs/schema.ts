@@ -93,3 +93,20 @@ export const jointTable = pgTable("jointTable", {
   totalInchDia: integer("total_inch_dia").notNull(),
   moc: varchar('MOC').notNull().references(() => jointSummary.moc),  // Foreign key to mocDetail.moc
 });
+
+
+export const mocRecords = pgTable("moc_records", {
+  id: serial("id").primaryKey(),
+  type: varchar("type").notNull(),
+  mocNumber: varchar("moc_number").notNull(),
+  smallDescription: varchar("small_description").notNull(),
+  mocName: varchar("moc_name").notNull(),
+  awardedDate: date("awarded_date").notNull(),
+  startDate: date("start_date").notNull(),
+  mccDate: date("mcc_date").notNull(),
+  value: integer("value").notNull(),
+  scope: json("scope").notNull(), // Using JSON for the scope array
+  pqrStatus: varchar("pqr_status").notNull(),
+  wqtStatus: varchar("wqt_status").notNull(),
+  wpsStatus: varchar("wps_status").notNull(),
+});
