@@ -8,9 +8,13 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogTrigger, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogTrigger, DialogContent, DialogFooter, DialogTitle, DialogHeader } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
+import { saveMocDetail } from "@/app/actions/saveMocDetail";
+import { LoaderCircle } from "lucide-react";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const disciplines = ["Civil", "Scaffolding", "Piping", "Hydro test", "E&I"];
 
@@ -33,9 +37,41 @@ export default function AddMocRecordForm() {
     const { register, handleSubmit, control, reset } = useForm<FormData>();
     const [selectedScope, setSelectedScope] = useState<string[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [dialogMessage, setDialogMessage] = useState("");
+    const queryClient = useQueryClient();
+
+    // Use mutation with TanStack Query
+    const { mutate } = useMutation( {
+        mutationFn: saveMocDetail,
+        onSuccess: () => {
+            setSelectedScope([]);
+            setIsLoading(false);
+            openDialog("MOC record saved successfully");
+            reset();
+ 
+        },
+        onError: (error) => {
+            setIsLoading(false);
+            openDialog("MOC record could not be saved something went wrong!!");
+        },
+    });
+
+   
+    const openDialog = (message: string) => {
+        setDialogMessage(message);
+        setDialogOpen(true);
+      };
+
 
     const onSubmit: SubmitHandler<FormData> = (data) => {
-        console.log({ ...data, scope: selectedScope });
+        setIsLoading(true);
+        const formData = { 
+            ...data, 
+            scope: selectedScope // Use selectedScope directly
+        };
+        mutate(formData); // Use mutate instead of calling saveMocDetail directly
     };
 
     const handleFeatureChange = (feature: string) => {
@@ -52,6 +88,17 @@ export default function AddMocRecordForm() {
 
     return (
         <Card className="w-[90%] mx-auto mt-6 p-6 bg-white shadow-lg rounded-lg">
+             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Message</DialogTitle>
+          </DialogHeader>
+          <p>{dialogMessage}</p>
+          <DialogFooter>
+            <Button onClick={() => setDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
             <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-semibold text-gray-700">Add MOC Record</CardTitle>
             </CardHeader>
@@ -285,7 +332,7 @@ export default function AddMocRecordForm() {
                     {/* Submit Button */}
                     <div className="col-span-full mt-4 text-center">
                         <Button type="submit" className="bg-green-500 text-white w-full rounded hover:bg-green-600">
-                            Submit
+                        {isLoading ? <LoaderCircle className="animate-spin mr-2" /> : "Submit"}
                         </Button>
                     </div>
                 </form>
