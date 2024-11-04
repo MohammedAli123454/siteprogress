@@ -28,6 +28,7 @@ export default function Navbar({}: Props) {
                 {/* <Button onClick={() => router.push('/InvoiceComponent')} variant='secondary' className={buttonClasses}>Create Invoice</Button> */}
                 <Button onClick={() => router.push('/AddJointsDetail')} variant='secondary' className={buttonClasses}>Add Joints To MOC</Button>
                 <Button onClick={() => router.push('/AddMocDetail')} variant='secondary' className={buttonClasses}>Add New Awarded Moc</Button>
+                <Button onClick={() => router.push('/stepperForm')} variant='secondary' className={buttonClasses}>S.Form</Button>
             </div>
         </div>
     )

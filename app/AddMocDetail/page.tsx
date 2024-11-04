@@ -16,7 +16,7 @@ import { LoaderCircle } from "lucide-react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-const disciplines = ["Civil", "Scaffolding", "Piping", "Hydro test", "E&I"];
+const disciplines = ["Civil", "Scaffolding", "Piping", "Hydro test", "E&I","Insulation", "Fire Proffing", "Structural Platform","Pipe Rack"];
 
 type FormData = {
     type: string;
