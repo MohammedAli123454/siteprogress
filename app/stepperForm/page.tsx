@@ -54,27 +54,38 @@ const StepperForm = () => {
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(onSubmit)} className="max-w-lg mx-auto">
         {/* Step Indicator */}
-        <div className="flex items-center justify-between mb-6">
-          {steps.map((_, index) => (
-            <div key={index} className="relative flex items-center w-full">
-              <div
-                className={`flex items-center justify-center w-8 h-8 rounded-full border-2 z-10 ${
-                  index + 1 <= step ? 'bg-blue-500 border-blue-500 text-white' : 'border-gray-300 text-gray-500'
-                }`}
-              >
-                {index + 1}
-              </div>
-              {index < steps.length - 1 && (
-                <div className="absolute top-1/2 left-8 right-8 h-0.5 bg-gray-300">
-                  <div
-                    className={`h-0.5 ${index + 1 < step ? 'bg-blue-500' : 'bg-gray-300'}`}
-                    style={{ width: '100%' }}
-                  />
-                </div>
-              )}
-            </div>
-          ))}
+        <div className="flex items-center gap-8 mb-6">
+  {steps.map((_, index) => (
+    <div key={index} className="relative flex items-center">
+      {/* Circle */}
+      <div
+        className={`flex items-center justify-center w-10 h-10 rounded-full border-2  transition-all duration-300 ease-in-out transform hover:scale-110 ${
+          index + 1 <= step 
+            ? 'bg-blue-500 border-blue-500 text-white shadow-lg' 
+            : 'border-gray-300 text-gray-500 hover:border-blue-300 hover:text-blue-500'
+        }`}
+      >
+        {index + 1}
+      </div>
+
+      {/* Connecting line between circles */}
+      {index < steps.length - 1 && (
+        <div className="absolute top-1/2 left-full w-8">
+          <div
+            className={`h-0.5 ${index + 1 < step ? 'bg-blue-500' : 'bg-gray-300'} rounded-full transition-all duration-300 ease-in-out`}
+          />
         </div>
+      )}
+    </div>
+  ))}
+</div>
+
+
+
+
+
+
+
 
         <Card className="p-6">
           <CardHeader>
