@@ -1,7 +1,7 @@
 "use client";
 
-import { useForm, Controller, SubmitHandler } from "react-hook-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useForm, Controller, FormProvider, SubmitHandler } from "react-hook-form";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
@@ -13,11 +13,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { saveMocDetail } from "@/app/actions/saveMocDetail";
 import { LoaderCircle } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { CalendarIcon } from "lucide-react"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-const disciplines = ["Civil", "Scaffolding", "Piping", "Hydro test", "E&I","Insulation", "Fire Proffing", "Structural Platform","Pipe Rack"];
-
+const disciplines = ["Civil", "Scaffolding", "Piping", "Hydro test", "E&I", "Insulation", "Fire Proofing", "Structural Platform", "Pipe Rack"];
+const steps = [
+    { label: 'Personal Information' },
+    { label: 'Address Information' },
+    { label: 'Contact Information' },
+    { label: 'Account Setup' },
+    { label: 'Review & Save' },
+    { label: 'Save Data' },
+];
 type FormData = {
     type: string;
     mocNumber: string;
@@ -34,45 +41,51 @@ type FormData = {
 };
 
 export default function AddMocRecordForm() {
-    const { register, handleSubmit, control, reset } = useForm<FormData>();
+    const methods = useForm<FormData>();
+    const { register, handleSubmit, control, reset } = methods;
     const [selectedScope, setSelectedScope] = useState<string[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [dialogMessage, setDialogMessage] = useState("");
+    const [step, setStep] = useState(1); // Step tracker
     const queryClient = useQueryClient();
 
     // Use mutation with TanStack Query
-    const { mutate } = useMutation( {
+    const { mutate } = useMutation({
         mutationFn: saveMocDetail,
         onSuccess: () => {
             setSelectedScope([]);
             setIsLoading(false);
             openDialog("MOC record saved successfully");
             reset();
- 
         },
-        onError: (error) => {
+        onError: () => {
             setIsLoading(false);
-            openDialog("MOC record could not be saved something went wrong!!");
+            openDialog("MOC record could not be saved. Something went wrong!!");
         },
     });
 
-   
     const openDialog = (message: string) => {
         setDialogMessage(message);
         setDialogOpen(true);
-      };
-
+    };
 
     const onSubmit: SubmitHandler<FormData> = (data) => {
         setIsLoading(true);
-        const formData = { 
-            ...data, 
-            scope: selectedScope // Use selectedScope directly
+
+        // Don't convert dates to ISO strings; just pass them as Date objects
+        const formData = {
+            ...data,
+            awardedDate: data.awardedDate, // Keep as Date
+            startDate: data.startDate,     // Keep as Date
+            mccDate: data.mccDate,         // Keep as Date
+            scope: selectedScope,          // Keep selectedScope as an array of strings
         };
+
         mutate(formData); // Use mutate instead of calling saveMocDetail directly
     };
+
 
     const handleFeatureChange = (feature: string) => {
         setSelectedScope((prevScope) =>
@@ -86,257 +99,356 @@ export default function AddMocRecordForm() {
         setIsDialogOpen(false);
     };
 
+    const handleNext = () => {
+        if (step < 5) setStep(step + 1);
+    };
+
+    const handleBack = () => {
+        if (step > 1) setStep(step - 1);
+    };
+
     return (
-        <Card className="w-[90%] mx-auto mt-6 p-6 bg-white shadow-lg rounded-lg">
-             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Message</DialogTitle>
-          </DialogHeader>
-          <p>{dialogMessage}</p>
-          <DialogFooter>
-            <Button onClick={() => setDialogOpen(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-            <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-semibold text-gray-700">Add MOC Record</CardTitle>
-            </CardHeader>
+        <Card className="w-[70%] mx-auto mt-6 p-6 bg-white shadow-lg rounded-lg">
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Message</DialogTitle>
+                    </DialogHeader>
+                    <p>{dialogMessage}</p>
+                    <DialogFooter>
+                        <Button onClick={() => setDialogOpen(false)}>Close</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Step Indicator */}
+            <div className="flex items-center gap-12 mb-6">
+                {steps.map((_, index) => (
+                    <div key={index} className="relative flex items-center">
+                        {/* Circle */}
+                        <div
+                            className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-300 ease-in-out transform hover:scale-110 ${index + 1 <= step
+                                    ? 'bg-blue-500 border-blue-500 text-white shadow-lg'
+                                    : 'border-gray-300 text-gray-500 hover:border-blue-300 hover:text-blue-500'
+                                }`}
+                        >
+                            {index + 1}
+                        </div>
+
+                        {/* Connecting line between circles */}
+                        {index < steps.length - 1 && (
+                            <div className="absolute top-1/2 left-full w-12">
+                                <div
+                                    className={`h-0.5 ${index + 1 < step ? 'bg-blue-500' : 'bg-gray-300'} rounded-full transition-all duration-300 ease-in-out`}
+                                />
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+
             <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Type Field */}
-                    <div>
-                        <label className="block text-md font-medium text-gray-600 mb-2">Type</label>
-                        <Controller
-                            name="type"
-                            control={control}
-                            render={({ field }) => (
-                                <Select onValueChange={(value) => field.onChange(value)}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select Type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="MOC">MOC</SelectItem>
-                                        <SelectItem value="Project">Project</SelectItem>
-                                        <SelectItem value="Package">Package</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        />
-                    </div>
-
-                    {/* MOC Number Field */}
-                    <div>
-                        <label className="block text-md font-medium text-gray-600 mb-2">MOC Number</label>
-                        <Input type="text" {...register('mocNumber')} placeholder="Enter MOC Number" />
-                    </div>
-
-                    {/* Small Description Field */}
-                    <div>
-                        <label className="block text-md font-medium text-gray-600 mb-2">Small Description</label>
-                        <Input type="text" {...register('smallDescription', { required: "Project Name is required" })} placeholder="Enter Project Name" />
-                    </div>
-
-                    {/* Full Description Field */}
-                    <div className="col-span-full">
-                        <label className="block text-md font-medium text-gray-600 mb-2">Full Description</label>
-                        <Controller
-                            name="mocName"
-                            control={control}
-                            render={({ field }) => (
-                                <Textarea {...field} placeholder="Enter Small Description" className="w-full" required />
-                            )}
-                        />
-                    </div>
-
-                    {/* Awarded Date Field */}
-                    <div>
-                        <label className="block text-md font-medium text-gray-600 mb-2">Awarded Date</label>
-                        <Controller
-                            name="awardedDate"
-                            control={control}
-                            render={({ field }) => (
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" className="w-full">
-                                            {field.value ? new Date(field.value).toLocaleDateString() : "Select Date"}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="p-0">
-                                        <Calendar
-                                            mode="single"
-                                            selected={field.value ? new Date(field.value) : undefined}
-                                            onSelect={(date) => field.onChange(date)}
-                                            className="rounded-md border"
+                <FormProvider {...methods}>
+                    <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
+                        {step === 1 && (
+                            <div className="grid grid-cols-1 space-y-8">
+                                <div className="grid grid-cols-5 gap-4 items-center">
+                                    <label className="col-span-1 text-md font-medium text-gray-600 mb-2">Type</label>
+                                    <div className="col-span-4">
+                                        <Controller
+                                            name="type"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <Select onValueChange={(value) => field.onChange(value)}>
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder="Select Type" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="MOC">MOC</SelectItem>
+                                                        <SelectItem value="Project">Project</SelectItem>
+                                                        <SelectItem value="Package">Package</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
                                         />
-                                    </PopoverContent>
-                                </Popover>
-                            )}
-                        />
-                    </div>
-
-                    {/* Start Date Field */}
-                    <div>
-                        <label className="block text-md font-medium text-gray-600 mb-2">Start Date</label>
-                        <Controller
-                            name="startDate"
-                            control={control}
-                            render={({ field }) => (
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" className="w-full">
-                                            {field.value ? new Date(field.value).toLocaleDateString() : "Select Date"}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="p-0">
-                                        <Calendar
-                                            mode="single"
-                                            selected={field.value ? new Date(field.value) : undefined}
-                                            onSelect={(date) => field.onChange(date)}
-                                            className="rounded-md border"
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                            )}
-                        />
-                    </div>
-
-                    {/* MCC Date Field */}
-                    <div>
-                        <label className="block text-md font-medium text-gray-600 mb-2">MCC Date</label>
-                        <Controller
-                            name="mccDate"
-                            control={control}
-                            render={({ field }) => (
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" className="w-full">
-                                            {field.value ? new Date(field.value).toLocaleDateString() : "Select Date"}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="p-0">
-                                        <Calendar
-                                            mode="single"
-                                            selected={field.value ? new Date(field.value) : undefined}
-                                            onSelect={(date) => field.onChange(date)}
-                                            className="rounded-md border"
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                            )}
-                        />
-                    </div>
-
-                    {/* Value Field */}
-                    <div>
-                        <label className="block text-md font-medium text-gray-600 mb-2">Value</label>
-                        <Input type="number" step="0.01" {...register('value')} placeholder="Enter Value" />
-                    </div>
-
-                    {/* PQR Status */}
-                    <div>
-                        <label className="block text-md font-medium text-gray-600 mb-2">PQR Status</label>
-                        <Controller
-                            name="pqrStatus"
-                            control={control}
-                            render={({ field }) => (
-                                <Select onValueChange={(value) => field.onChange(value)}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select PQR Status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Not started">Not started</SelectItem>
-                                        <SelectItem value="Ongoing">Ongoing</SelectItem>
-                                        <SelectItem value="Under approval">Under approval</SelectItem>
-                                        <SelectItem value="Approved">Approved</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        />
-                    </div>
-
-                     {/* WQT Status */}
-                     <div>
-                        <label className="block text-md font-medium text-gray-600 mb-2">WQT Status</label>
-                        <Controller
-                            name="wqtStatus"
-                            control={control}
-                            render={({ field }) => (
-                                <Select onValueChange={(value) => field.onChange(value)}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select PQR Status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Not started">Not started</SelectItem>
-                                        <SelectItem value="Ongoing">Ongoing</SelectItem>
-                                        <SelectItem value="Under approval">Under approval</SelectItem>
-                                        <SelectItem value="Approved">Approved</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        />
-                    </div>
-
-                     {/* WQS Status */}
-                     <div>
-                        <label className="block text-md font-medium text-gray-600 mb-2">WPS Status</label>
-                        <Controller
-                            name="wpsStatus"
-                            control={control}
-                            render={({ field }) => (
-                                <Select onValueChange={(value) => field.onChange(value)}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select PQR Status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Not started">Not started</SelectItem>
-                                        <SelectItem value="Ongoing">Ongoing</SelectItem>
-                                        <SelectItem value="Under approval">Under approval</SelectItem>
-                                        <SelectItem value="Approved">Approved</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        />
-                    </div>
-
-
-                    {/* Scope Selection */}
-                    <div>
-                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button variant="default" className="w-full bg-blue-500 text-white rounded hover:bg-blue-600">
-                                    Select MOC Scope
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <h3 className="text-lg font-medium">Select Scopes</h3>
-                                <div className="space-y-2 mt-4">
-                                    {disciplines.map((item, index) => (
-                                        <div key={index} className="flex items-center">
-                                            <Checkbox
-                                                id={`discipline-${index}`}
-                                                checked={selectedScope.includes(item)}
-                                                onCheckedChange={() => handleFeatureChange(item)}
-                                            />
-                                            <label htmlFor={`discipline-${index}`} className="ml-2">{item}</label>
-                                        </div>
-                                    ))}
+                                    </div>
                                 </div>
-                                <DialogFooter>
-                                    <Button onClick={handleDialogClose} className="bg-blue-500 text-white hover:bg-blue-600">OK</Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
 
-                    {/* Submit Button */}
-                    <div className="col-span-full mt-4 text-center">
-                        <Button type="submit" className="bg-green-500 text-white w-full rounded hover:bg-green-600">
-                        {isLoading ? <LoaderCircle className="animate-spin mr-2" /> : "Submit"}
-                        </Button>
+                                <div className="grid grid-cols-5 gap-4 items-center">
+                                    <label className="col-span-1 text-md font-medium text-gray-600 mb-2">MOC Number</label>
+                                    <div className="col-span-4">
+                                        <Input type="text" {...register('mocNumber')} placeholder="Enter MOC Number" />
+                                    </div>
+                                </div>
+
+
+                                <div className="grid grid-cols-5 gap-4 items-center">
+                                <label className="col-span-1 text-md font-medium text-gray-600 mb-2">Value</label>
+                                <div className="col-span-4">
+                                    <Input type="number" step="0.01" {...register('value')} placeholder="Enter MOC PO Value" />
+                                </div>
+                                </div>
+
+
+                                <div className="grid grid-cols-5 gap-4 items-center">
+                                    <label className="col-span-1 text-md font-medium text-gray-600 mb-2">Small Description</label>
+                                    <div className="col-span-4">
+                                        <Input type="text" {...register('smallDescription', { required: "Small Description is required" })} placeholder="Enter Small Description" />
+                                    </div>
+                                </div>
+
+
+                                <div className="grid grid-cols-5 gap-4 items-center">
+                                    <label className="col-span-1 text-md font-medium text-gray-600 mb-2">Full Description</label>
+                                    <div className="col-span-4">
+                                        <Controller
+                                            name="mocName"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <Textarea {...field} placeholder="Enter Full Description" className="w-full" required />
+                                            )}
+                                        />
+                                    </div>
+                                </div>
+
+
+
+                            </div>
+
+
+
+
+                        )}
+
+
+
+{step === 2 && (
+    <div className="grid grid-cols-1 space-y-8">
+
+        {/* Awarded Date Field */}
+        <div className="grid grid-cols-5 gap-4 items-center">
+            <label className="col-span-1 text-md font-medium text-gray-600 mb-2">Awarded Date</label>
+            <div className="col-span-2">
+                <Controller
+                    name="awardedDate"
+                    control={control}
+                    render={({ field }) => (
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant={"outline"}
+                                    className="w-full pl-3 text-left font-normal"
+                                >
+                                    {field.value ? new Date(field.value).toLocaleDateString() : "Pick a MOC Awarded date"}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                            mode="single"
+                                            selected={field.value ? new Date(field.value) : undefined}
+                                            onSelect={(date) => field.onChange(date)}
+                                            className="rounded-md border"
+                                        />
+                            </PopoverContent>
+                        </Popover>
+                    )}
+                />
+            </div>
+        </div>
+
+        {/* Start Date Field */}
+        <div className="grid grid-cols-5 gap-4 items-center">
+            <label className="col-span-1 text-md font-medium text-gray-600 mb-2">Start Date</label>
+            <div className="col-span-2">
+                <Controller
+                    name="startDate"
+                    control={control}
+                    render={({ field }) => (
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant={"outline"}
+                                    className="w-full pl-3 text-left font-normal"
+                                >
+                                    {field.value ? new Date(field.value).toLocaleDateString() : "Pick a MOC Start date"}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                            mode="single"
+                                            selected={field.value ? new Date(field.value) : undefined}
+                                            onSelect={(date) => field.onChange(date)}
+                                            className="rounded-md border"
+                                        />
+                            </PopoverContent>
+                        </Popover>
+                    )}
+                />
+            </div>
+        </div>
+
+        {/* MCC Date Field */}
+        <div className="grid grid-cols-5 gap-4 items-center">
+            <label className="col-span-1 text-md font-medium text-gray-600 mb-2">MCC Date</label>
+            <div className="col-span-2">
+                <Controller
+                    name="mccDate"
+                    control={control}
+                    render={({ field }) => (
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant={"outline"}
+                                    className="w-full pl-3 text-left font-normal"
+                                >
+                                    {field.value ? new Date(field.value).toLocaleDateString() : "Pick a Mechanical Completion date"}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                            mode="single"
+                                            selected={field.value ? new Date(field.value) : undefined}
+                                            onSelect={(date) => field.onChange(date)}
+                                            className="rounded-md border"
+                                        />
+                            </PopoverContent>
+                        </Popover>
+                    )}
+                />
+            </div>
+        </div>
+
+    </div>
+)}
+
+
+                        {step === 3 && (
+                            <div className="grid grid-cols-1 space-y-8">
+                                <div className="grid grid-cols-5 gap-4 items-center">
+                                    <label className="col-span-1 text-md font-medium text-gray-600 mb-2">Enter PQR Status</label>
+                                    <div className="col-span-2">
+                                    <Controller
+                                        name="pqrStatus"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Select onValueChange={(value) => field.onChange(value)}>
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Procedure Qualification Record Status" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Not started">Not started</SelectItem>
+                                                    <SelectItem value="Ongoing">Ongoing</SelectItem>
+                                                    <SelectItem value="Under approval">Under approval</SelectItem>
+                                                    <SelectItem value="Approved">Approved</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
+                                    </div>
+                                </div>
+
+                                {/* WQT Status */}
+                                <div className="grid grid-cols-5 gap-4 items-center">
+                                    <label className="col-span-1 text-md font-medium text-gray-600 mb-2">Enter WQT Status</label>
+                                    <div className="col-span-2">
+                                    <Controller
+                                        name="wqtStatus"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Select onValueChange={(value) => field.onChange(value)}>
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Welder Qualification Test Status" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Not started">Not started</SelectItem>
+                                                    <SelectItem value="Ongoing">Ongoing</SelectItem>
+                                                    <SelectItem value="Under approval">Under approval</SelectItem>
+                                                    <SelectItem value="Approved">Approved</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
+                                    </div>
+                                </div>
+
+                                {/* WQS Status */}
+                                <div className="grid grid-cols-5 gap-4 items-center">
+                                    <label className="col-span-1 text-md font-medium text-gray-600 mb-2">Enter WPS Status</label>
+                                    <div className="col-span-2">
+                                    <Controller
+                                        name="wpsStatus"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Select onValueChange={(value) => field.onChange(value)}>
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Welding Procedure Specification Status" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Not started">Not started</SelectItem>
+                                                    <SelectItem value="Ongoing">Ongoing</SelectItem>
+                                                    <SelectItem value="Under approval">Under approval</SelectItem>
+                                                    <SelectItem value="Approved">Approved</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
+                                    </div>
+                                </div>
+
+
+
+
+                            </div>
+                        )}
+
+{step === 4 && (
+    <div>
+        <h3 className="text-lg font-medium mb-4">Select Scope</h3>    
+        {/* Display the checkboxes directly */}
+        <div className="space-y-4 mt-6">
+            <h3 className="text-lg font-medium">Select Scopes</h3>
+            <div className="space-y-2 mt-4">
+                {disciplines.map((item, index) => (
+                    <div key={index} className="flex items-center">
+                        <Checkbox
+                            id={`discipline-${index}`}
+                            checked={selectedScope.includes(item)}
+                            onCheckedChange={() => handleFeatureChange(item)}
+                        />
+                        <label htmlFor={`discipline-${index}`} className="ml-2">{item}</label>
                     </div>
-                </form>
+                ))}
+            </div>
+        </div>
+    </div>
+)}
+
+{step === 5 && (
+                            <CardFooter className="flex justify-center">
+                                <Button variant="default" type="submit" disabled={isLoading}>
+                                    {isLoading ? <LoaderCircle className="animate-spin mr-2" /> : "Save MOC Record"}
+                                </Button>
+                            </CardFooter>
+                        )}
+
+
+                    </form>
+                </FormProvider>
             </CardContent>
+
+            <CardFooter className="flex justify-between">
+                {/* Navigation buttons outside the form */}
+                <Button variant="outline" onClick={handleBack} disabled={step === 1}>Back</Button>
+                <Button variant="default" onClick={handleNext} disabled={step === 5}>
+                    {step === 5 ? "Final Step" : "Next"}
+                </Button>
+            </CardFooter>
         </Card>
     );
 }
+
+
