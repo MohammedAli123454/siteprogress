@@ -1,0 +1,218 @@
+[
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Engineer"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Supervisor"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Inspector"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Foreman"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Safety Officers"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Permit Receivers"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Fabricator"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Pipe Fitter"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Grinder"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Gas Cutter"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Welder Structural"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Welder CS"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Welder SS"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Welder P9"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Welder Duplex"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Helper"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Crane Operator"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Rigger Iii"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Rigging Helpers"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Fire Watch"
+    },
+    {
+        "Discipline": "Piping & Mechanical",
+        "TradeName": "Driver"
+    },
+    {
+        "Discipline": "Civil",
+        "TradeName": "Engineer"
+    },
+    {
+        "Discipline": "Civil",
+        "TradeName": "Supervisor"
+    },
+    {
+        "Discipline": "Civil",
+        "TradeName": "Inspector"
+    },
+    {
+        "Discipline": "Civil",
+        "TradeName": "Foreman"
+    },
+    {
+        "Discipline": "Civil",
+        "TradeName": "Safety Officers"
+    },
+    {
+        "Discipline": "Civil",
+        "TradeName": "Permit Receivers"
+    },
+    {
+        "Discipline": "Civil",
+        "TradeName": "Mason"
+    },
+    {
+        "Discipline": "Civil",
+        "TradeName": "Steel Fixer"
+    },
+    {
+        "Discipline": "Civil",
+        "TradeName": "Carpenter"
+    },
+    {
+        "Discipline": "Civil",
+        "TradeName": "Helper"
+    },
+    {
+        "Discipline": "E&I",
+        "TradeName": "E&I Engineer"
+    },
+    {
+        "Discipline": "E&I",
+        "TradeName": "Supervisor"
+    },
+    {
+        "Discipline": "E&I",
+        "TradeName": "Foreman"
+    },
+    {
+        "Discipline": "E&I",
+        "TradeName": "Inspector"
+    },
+    {
+        "Discipline": "E&I",
+        "TradeName": "Safety Officers"
+    },
+    {
+        "Discipline": "E&I",
+        "TradeName": "Permit Receivers"
+    },
+    {
+        "Discipline": "E&I",
+        "TradeName": "Electrician"
+    },
+    {
+        "Discipline": "E&I",
+        "TradeName": "Instrument Technician"
+    },
+    {
+        "Discipline": "E&I",
+        "TradeName": "Helper"
+    },
+    {
+        "Discipline": "E&I",
+        "TradeName": "Driver"
+    },
+    {
+        "Discipline": "Painting",
+        "TradeName": "Supervisor"
+    },
+    {
+        "Discipline": "Painting",
+        "TradeName": "Inspector"
+    },
+    {
+        "Discipline": "Painting",
+        "TradeName": "Foreman"
+    },
+    {
+        "Discipline": "Painting",
+        "TradeName": "Painter"
+    },
+    {
+        "Discipline": "Painting",
+        "TradeName": "Sand Blaster"
+    },
+    {
+        "Discipline": "Painting",
+        "TradeName": "Helper"
+    },
+    {
+        "Discipline": "Painting",
+        "TradeName": "Driver"
+    },
+    {
+        "Discipline": "Scaffolding",
+        "TradeName": "Inspector"
+    },
+    {
+        "Discipline": "Scaffolding",
+        "TradeName": "Supervisor"
+    },
+    {
+        "Discipline": "Scaffolding",
+        "TradeName": "Foreman"
+    },
+    {
+        "Discipline": "Scaffolding",
+        "TradeName": "Scaffolder"
+    },
+    {
+        "Discipline": "Scaffolding",
+        "TradeName": "Helper"
+    },
+    {
+        "Discipline": "Scaffolding",
+        "TradeName": "Driver"
+    }
+]

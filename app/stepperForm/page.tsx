@@ -241,140 +241,154 @@
 
 
 
-'use client'
+'use client';
 
-import React, { useState } from 'react'
-import { useForm, Controller } from 'react-hook-form'
-import { Input } from '@/components/ui/input' // Import the Input component from shadcn-ui
+import React, { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import tradeList from '@/app/tradelist.json';
 
-// List of trades
-const tradesList = [
-    'SAFETY OFFICERS', 'PERMIT RECEIVERS', 'PIPING ENGINEER', 'SUPERVISOR - PIPING',
-    'SUPERVISOR - CIVIL', 'SUPERVISOR - PAINTING', 'SUPERVISOR - SCAFFOLDING', 'FABRICATOR',
-    'PIPE FITTER', 'GRINDER', 'GAS CUTTER', 'Welder Supervisor/Foreman', '6G WELDER CS',
-    'STRUCTURE 3G WELDER', 'WELDER HELPER', 'HELPER', 'CRANE OPERATOR', 'RIGGER III',
-    'RIGGING HELPERS', 'ELECTRICIAN', 'FIRE WATCH', 'Mason', 'Steel Fixer', 'Carpenter',
-    'Instrument Technician', 'Painter', 'Sand Blaster', 'Scaffolder'
-]
-
+// Define the Trade interface
 interface Trade {
-    tradeName: string
-    selected: boolean
-    nos: string | number
+  TradeName: string;
+  Discipline: string;
+  selected: boolean;
+  nos: string | number;
 }
 
+const typedTradeList: Trade[] = tradeList as Trade[];
+
+// Main component
 const TradeListComponent: React.FC = () => {
-    const { control, handleSubmit } = useForm()
-    const [tradeValues, setTradeValues] = useState<Trade[]>(
-        tradesList.map(trade => ({
-            tradeName: trade,
-            selected: false,
-            nos: ''
-        }))
-    )
+  const [tradeValues, setTradeValues] = useState<Trade[]>(
+    typedTradeList.map((trade) => ({
+      ...trade,
+      selected: false,
+      nos: '',
+    }))
+  );
 
-    // Toggle selection of a single trade
-    const toggleTradeSelection = (tradeName: string) => {
-        setTradeValues(prev =>
-            prev.map(trade =>
-                trade.tradeName === tradeName
-                    ? { ...trade, selected: !trade.selected }
-                    : trade
-            )
-        )
+  const [showValues, setShowValues] = useState(false); // New state to toggle showing values
+
+  // Toggle selection of a single trade
+  const toggleTradeSelection = (tradeName: string, discipline: string) => {
+    setTradeValues((prev) =>
+      prev.map((trade) =>
+        trade.TradeName === tradeName && trade.Discipline === discipline
+          ? { ...trade, selected: !trade.selected }
+          : trade
+      )
+    );
+  };
+
+  // Select or deselect all trades
+  const toggleAllTrades = (selectAll: boolean) => {
+    setTradeValues((prev) => prev.map((trade) => ({ ...trade, selected: selectAll })));
+  };
+
+  // Handle NOS input change (to prevent one input affecting another)
+  const handleNosChange = (tradeName: string, discipline: string, value: string) => {
+    setTradeValues((prev) =>
+      prev.map((trade) =>
+        trade.TradeName === tradeName && trade.Discipline === discipline
+          ? { ...trade, nos: value }
+          : trade
+      )
+    );
+  };
+
+  // Group trades by discipline
+  const groupedTrades = tradeValues.reduce((acc, trade) => {
+    if (!acc[trade.Discipline]) {
+      acc[trade.Discipline] = [];
     }
+    acc[trade.Discipline].push(trade);
+    return acc;
+  }, {} as Record<string, Trade[]>);
 
-    // Select/Deselect all trades
-    const toggleAllTrades = (selectAll: boolean) => {
-        setTradeValues(prev =>
-            prev.map(trade => ({ ...trade, selected: selectAll }))
-        )
-    }
+  const disciplines = Object.entries(groupedTrades);
 
-    // Handle NOS input change
-    const handleNosChange = (tradeName: string, value: string) => {
-        setTradeValues(prev =>
-            prev.map(trade =>
-                trade.tradeName === tradeName
-                    ? { ...trade, nos: value }
-                    : trade
-            )
-        )
-    }
+  return (
+    <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4"> {/* Use the same background for the entire screen */}
+      <div className="max-w-screen-lg w-full p-6 bg-gray-200 rounded-lg shadow-lg space-y-6"> {/* Card background is same as screen */}
+        {/* Select All / Deselect All Controls */}
+        <div className="flex justify-between mb-4">
+          <button
+            type="button"
+            onClick={() => toggleAllTrades(true)}
+            className="text-blue-500 px-4 py-2 border rounded hover:bg-blue-100"
+          >
+            Select All
+          </button>
+          <button
+            type="button"
+            onClick={() => toggleAllTrades(false)}
+            className="text-red-500 px-4 py-2 border rounded hover:bg-red-100"
+          >
+            Deselect All
+          </button>
+        </div>
 
-    const onSubmit = (data: any) => {
-        console.log(data)
-    }
-
-    return (
-        <form onSubmit={handleSubmit(onSubmit)} className="w-full p-4 bg-white rounded shadow-lg">
-            {/* Select All / Deselect All Controls */}
-            <div className="flex items-center justify-between mb-4">
-                <button
-                    type="button"
-                    onClick={() => toggleAllTrades(true)}
-                    className="text-blue-500"
-                >
-                    Select All
-                </button>
-                <button
-                    type="button"
-                    onClick={() => toggleAllTrades(false)}
-                    className="text-red-500"
-                >
-                    Deselect All
-                </button>
-            </div>
-
-            {/* Grid layout with 2 columns */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto border p-2">
-                {tradeValues.map((trade, index) => (
-                    <div key={index} className="flex items-center justify-between gap-4 mb-4">
-                        {/* Checkbox and trade name (60% width) */}
-                        <div className="flex items-center w-3/5 gap-4">
-                            <input
-                                type="checkbox"
-                                checked={trade.selected}
-                                onChange={() => toggleTradeSelection(trade.tradeName)}
-                                className="h-4 w-4"
-                            />
-                            <label className="text-sm">{trade.tradeName}</label>
-                        </div>
-
-                        {/* NOS input field (40% width) */}
-                        <div className="w-2/5">
-                            <Controller
-                                control={control}
-                                name={`nos-${trade.tradeName}`}
-                                render={({ field }) => (
-                                    <Input
-                                        {...field}
-                                        id={`nos-${trade.tradeName}`}
-                                        type="number"
-                                        placeholder="Estimated No"
-                                        value={trade.nos}
-                                        onChange={(e) => {
-                                            field.onChange(e)
-                                            handleNosChange(trade.tradeName, e.target.value)
-                                        }}
-                                    />
-                                )}
-                            />
-                        </div>
+        {/* Render disciplines in a single column layout */}
+        <div className="grid grid-cols-1 gap-6">
+          {disciplines.map(([discipline, trades]) => (
+            <Card key={discipline} className="border p-4 space-y-4 bg-gray-200 shadow-none"> {/* Same background for card */}
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-gray-800">
+                  Select Required Manpower For {discipline}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {trades.map((trade, index) => (
+                  <div key={index} className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={trade.selected}
+                        onCheckedChange={() =>
+                          toggleTradeSelection(trade.TradeName, trade.Discipline)
+                        }
+                      />
+                      <span className="text-gray-700">{trade.TradeName}</span>
                     </div>
+                    <div className="flex justify-center sm:justify-between">
+                      <Input
+                        type="number"
+                        placeholder="Enter Required No."
+                        value={trade.nos}
+                        onChange={(e) =>
+                          handleNosChange(trade.TradeName, trade.Discipline, e.target.value)
+                        }
+                        className="w-full sm:w-1/2 bg-gray-300 border-gray-400 text-gray-700 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
                 ))}
-            </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-            <div className="mt-4">
-                <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-500 text-white rounded"
-                >
-                    Submit
-                </button>
-            </div>
-        </form>
-    )
-}
+        {/* Button to toggle showing the trade values */}
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={() => setShowValues(!showValues)}
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-400"
+          >
+            {showValues ? 'Hide Values' : 'Show Values'}
+          </button>
+        </div>
 
-export default TradeListComponent
+        {/* Conditionally render trade values */}
+        {showValues && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold text-gray-800">Trade Values:</h3>
+            <pre className="bg-gray-200 p-4 rounded">{JSON.stringify(tradeValues, null, 2)}</pre>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default TradeListComponent;
