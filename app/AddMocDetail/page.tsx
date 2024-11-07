@@ -15,6 +15,8 @@ import { saveMocDetail } from "@/app/actions/saveMocDetail";
 import { LoaderCircle } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+
+
 import { CalendarIcon } from "lucide-react"
 
 const disciplines = ["Civil", "Scaffolding", "Piping", "Hydro test", "E&I", "Insulation", "Fire Proofing", "Structural Platform", "Pipe Rack"];
@@ -52,15 +54,19 @@ export default function AddMocRecordForm() {
     const [formDataForReview, setFormDataForReview] = useState<FormData | null>(null);
     const queryClient = useQueryClient();
 
+
+
     // Use mutation with TanStack Query
     const { mutate } = useMutation({
         mutationFn: saveMocDetail,
         onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["mocdetail"] });
             setSelectedScope([]);
             setIsLoading(false);
             openDialog("MOC record saved successfully");
             reset();
-            queryClient.invalidateQueries({ queryKey: ["jointdetail"] });
+            setStep(1);
+         
         },
         onError: () => {
             setIsLoading(false);
@@ -454,11 +460,14 @@ export default function AddMocRecordForm() {
                                         </div>
                                     </div>
                                 </div>
+                                {/* <div className="absolute top-1/2 left-full w-12"> */}
+                              
                                 <div className="col-span-full mt-4 text-center">
                                     <Button type="submit" className="bg-green-500 text-white w-full rounded hover:bg-green-600">
                                         {isLoading ? <LoaderCircle className="animate-spin mr-2" /> : "Submit"}
                                     </Button>
                                 </div>
+                                
 
                             </div>
                         )}
