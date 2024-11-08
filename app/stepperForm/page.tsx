@@ -336,7 +336,7 @@ const TradeListComponent: React.FC = () => {
             <Card key={discipline} className="border p-4 space-y-4 bg-gray-200 shadow-none"> {/* Same background for card */}
               <CardHeader>
                 <CardTitle className="text-lg font-semibold text-gray-800">
-                  Select Required Manpower For {discipline}
+                  Select the trade persons for  {discipline}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
