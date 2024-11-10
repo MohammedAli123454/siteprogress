@@ -98,8 +98,8 @@ export default function WeldSummaryTable() {
   };
 
   const params = useParams(); // Get the parameters from the URL
-  const moc = params?.params?.[0]; // Access the first parameter
-  const Type = params?.params?.[1]; // Access the second parameter
+  const moc: string = params?.params?.[0] ?? ""; // Default to an empty string if undefined
+  const Type: string = params?.params?.[1] ?? ""; // Default to an empty string if undefined
 
   console.log("Type=" + Type);
 
