@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Select from 'react-select';
 import { useQuery } from '@tanstack/react-query';
+import { LoaderCircle } from 'lucide-react'; // Import the LoaderCircle icon
 
 // Define types for country, state, and city options
 interface Country {
@@ -99,77 +100,78 @@ export default function Rnd2() {
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
   });
 
-  // If countries are loading, show loading message
-  if (isCountriesLoading) return <div>Loading countries...</div>;
-  if (countriesError) return <div>Error loading countries: {countriesError.message}</div>;
+  const isLoading = isCountriesLoading || isStatesLoading || isCitiesLoading;
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-4">Select Your Location</h2>
-
-      {/* Parent container with Tailwind grid layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Country selection */}
-        <div className="flex flex-col items-center space-x-2">
-          <label htmlFor="country" className="block text-lg font-medium w-1/3">Country</label>
-          <div className="w-2/3">
-            <Select
-              options={countries}
-              value={selectedCountry}
-              onChange={setSelectedCountry}
-              placeholder="Select Country"
-              isClearable
-              isLoading={isCountriesLoading}
-            />
-          </div>
-        </div>
-
-        {/* State selection */}
-        <div className="flex items-center space-x-2">
-          <label htmlFor="state" className="block text-lg font-medium w-1/3">State</label>
-          <div className="w-2/3">
-            {isStatesLoading && <div>Loading states...</div>}
-            {statesError && <div>Error loading states: {statesError.message}</div>}
-            <Select
-              options={states}
-              value={selectedState}
-              onChange={setSelectedState}
-              placeholder="Select State"
-              isDisabled={!selectedCountry || isStatesLoading || !states}
-              isClearable
-              isLoading={isStatesLoading}
-            />
-          </div>
-        </div>
-
-        {/* City selection */}
-        <div className="flex items-center space-x-2">
-          <label htmlFor="city" className="block text-lg font-medium w-1/3">City</label>
-          <div className="w-2/3">
-            {isCitiesLoading && <div>Loading cities...</div>}
-            {citiesError && <div>Error loading cities: {citiesError.message}</div>}
-            <Select
-              options={cities}
-              value={selectedCity}
-              onChange={setSelectedCity}
-              placeholder="Select City"
-              isDisabled={!selectedState || isCitiesLoading || !cities}
-              isClearable
-              isLoading={isCitiesLoading}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Display selected location */}
-      {selectedCity && (
-        <div className="mt-6">
-          <h3 className="text-xl font-semibold">Selected Location:</h3>
-          <p className="text-lg">Country: {selectedCountry?.label}</p>
-          <p className="text-lg">State: {selectedState?.label}</p>
-          <p className="text-lg">City: {selectedCity?.label}</p>
+    <div className="w-full min-h-screen flex justify-center items-center p-6 relative">
+      {/* Overlay Spinner */}
+      {isLoading && (
+        <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <LoaderCircle className="animate-spin text-white" size={48} />
         </div>
       )}
+
+      {/* Main Content */}
+      <div className="w-full max-w-xl bg-white p-8 rounded-lg shadow-lg">
+        <h2 className="text-2xl font-semibold mb-6 text-center">Select Your Location</h2>
+
+        {/* Child container with form inputs */}
+        <div className="space-y-6">
+          {/* Country selection */}
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <label htmlFor="country" className="text-lg font-medium">Country</label>
+            <div className="col-span-2">
+              <Select
+                options={countries}
+                value={selectedCountry}
+                onChange={setSelectedCountry}
+                placeholder="Select Country"
+                isClearable
+              />
+            </div>
+          </div>
+
+          {/* State selection */}
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <label htmlFor="state" className="text-lg font-medium">State</label>
+            <div className="col-span-2">
+              <Select
+                options={states}
+                value={selectedState}
+                onChange={setSelectedState}
+                placeholder="Select State"
+                isDisabled={!selectedCountry || isStatesLoading || !states}
+                isClearable
+              />
+            </div>
+          </div>
+
+          {/* City selection */}
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <label htmlFor="city" className="text-lg font-medium">City</label>
+            <div className="col-span-2">
+              <Select
+                options={cities}
+                value={selectedCity}
+                onChange={setSelectedCity}
+                placeholder="Select City"
+                isDisabled={!selectedState || isCitiesLoading || !cities}
+                isClearable
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Display selected location */}
+        {selectedCity && (
+          <div className="mt-6">
+            <h3 className="text-xl font-semibold">Selected Location:</h3>
+            <p className="text-lg">Country: {selectedCountry?.label}</p>
+            <p className="text-lg">State: {selectedState?.label}</p>
+            <p className="text-lg">City: {selectedCity?.label}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
