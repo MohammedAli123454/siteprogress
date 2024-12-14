@@ -42,13 +42,13 @@ const TradeListComponent: React.FC = () => {
       </nav>
 
       {/* Fixed Container (Adjusted to avoid covering Navbar) */}
-      <div className="fixed inset-0 flex justify-center items-center mt-16 bg-gray-100">
-        <div className="w-full max-w-4xl h-[650px] p-6 rounded-lg shadow-lg bg-white overflow-hidden">
+      <div className="fixed inset-0 flex justify-center items-center mt-5">
+        <div className="w-full max-w-4xl h-[650px] p-6 rounded-lg shadow-lg overflow-hidden">
           {/* Tabs for switching between disciplines */}
           <Tabs defaultValue={disciplines[0]}>
-            <TabsList className="bg-gray-200 rounded-md p-2 mb-4 overflow-x-auto">
+            <TabsList className="rounded-md p-2 mb-4 overflow-x-auto">
               {disciplines.map(discipline => (
-                <TabsTrigger key={discipline} value={discipline} className="text-gray-700 hover:text-blue-600">
+                <TabsTrigger key={discipline} value={discipline} >
                   {discipline}
                 </TabsTrigger>
               ))}

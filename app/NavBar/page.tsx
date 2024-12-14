@@ -15,7 +15,7 @@ export default function Navbar({}: Props) {
             <Link href='/' className='font-semibold text-neutral-700'>Home</Link>
             <div className='flex items-center justify-center space-x-2'>
                 <Button onClick={() => router.push('/MocDetail')} variant='secondary' className={buttonClasses}>MOC Detail</Button>
-                <Button onClick={() => router.push('/TotalJointsByMOC')} variant='secondary' className={buttonClasses}>Overall Joints By MOCs</Button>
+                {/* <Button onClick={() => router.push('/TotalJointsByMOC')} variant='secondary' className={buttonClasses}>Overall Joints By MOCs</Button> */}
                 <Button onClick={() => router.push('/AllMocMaterials')} variant='secondary' className={buttonClasses}>All MOC Materials</Button>
                 <Button onClick={() => router.push('/Scope')} variant='secondary' className={buttonClasses}>Scope</Button>
                 {/* <Button onClick={() => router.push('/CarFeatures')} variant='secondary' className={buttonClasses}>Car Features</Button> */}
@@ -29,6 +29,10 @@ export default function Navbar({}: Props) {
                 <Button onClick={() => router.push('/AddJointsDetail')} variant='secondary' className={buttonClasses}>Add Joints To MOC</Button>
                 <Button onClick={() => router.push('/AddMocDetail')} variant='secondary' className={buttonClasses}>Add New Awarded Moc</Button>
                 <Button onClick={() => router.push('/stepperForm')} variant='secondary' className={buttonClasses}>S.Form</Button>
+
+                <Button onClick={() => router.push('/Rnd')} variant='secondary' className={buttonClasses}>RND</Button>
+                <Button onClick={() => router.push('/Rnd1')} variant='secondary' className={buttonClasses}>RND1</Button>
+                <Button onClick={() => router.push('/Rnd2')} variant='secondary' className={buttonClasses}>RND2</Button>
             </div>
         </div>
     )
