@@ -27,6 +27,7 @@ const fetchCountries = async (): Promise<Country[]> => {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
   const data = await response.json();
+  console.log("Countries", data);
   return data.data.map((country: { country: string }) => ({
     value: country.country,
     label: country.country,
@@ -44,6 +45,7 @@ const fetchStates = async (country: string): Promise<State[]> => {
   });
 
   const data = await response.json();
+  console.log("States", data);
   return data.data.states.map((state: { name: string }) => ({
     value: state.name,
     label: state.name,
@@ -65,6 +67,7 @@ const fetchCities = async (country: string, state: string): Promise<City[]> => {
   }
 
   const data = await response.json();
+  console.log("Cities:", data);
   return data.data.map((city: string) => ({
     value: city,
     label: city,
@@ -103,7 +106,7 @@ export default function Rnd2() {
   const isLoading = isCountriesLoading || isStatesLoading || isCitiesLoading;
 
   return (
-    <div className="w-full min-h-screen flex justify-center items-center p-6 relative">
+    <div className="flex items-center justify-center min-h-[90vh] bg-white border border-gray-200 p-8 max-w-[1400px] mx-auto">
       {/* Overlay Spinner */}
       {isLoading && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
@@ -112,15 +115,15 @@ export default function Rnd2() {
       )}
 
       {/* Main Content */}
-      <div className="w-full max-w-xl bg-white p-8 rounded-lg shadow-lg">
+      <div className="min-h-[60vh] w-full max-w-xl bg-white p-8 rounded-lg shadow-lg">
         <h2 className="text-2xl font-semibold mb-6 text-center">Select Your Location</h2>
 
         {/* Child container with form inputs */}
         <div className="space-y-6">
           {/* Country selection */}
-          <div className="grid grid-cols-3 gap-4 items-center">
-            <label htmlFor="country" className="text-lg font-medium">Country</label>
-            <div className="col-span-2">
+          <div className="grid grid-cols-5 gap-4 items-center">
+            <label htmlFor="country" className="col-span-1 text-lg font-medium">Country</label>
+            <div className="col-span-4">
               <Select
                 options={countries}
                 value={selectedCountry}
@@ -132,9 +135,9 @@ export default function Rnd2() {
           </div>
 
           {/* State selection */}
-          <div className="grid grid-cols-3 gap-4 items-center">
-            <label htmlFor="state" className="text-lg font-medium">State</label>
-            <div className="col-span-2">
+          <div className="grid grid-cols-5 gap-4 items-center">
+            <label htmlFor="state" className="col-span-1 text-lg font-medium">State</label>
+            <div className="col-span-4">
               <Select
                 options={states}
                 value={selectedState}
@@ -147,9 +150,9 @@ export default function Rnd2() {
           </div>
 
           {/* City selection */}
-          <div className="grid grid-cols-3 gap-4 items-center">
-            <label htmlFor="city" className="text-lg font-medium">City</label>
-            <div className="col-span-2">
+          <div className="grid grid-cols-5 gap-4 items-center">
+            <label htmlFor="city" className="col-span-1 text-lg font-medium">City</label>
+            <div className="col-span-4">
               <Select
                 options={cities}
                 value={selectedCity}
@@ -175,3 +178,5 @@ export default function Rnd2() {
     </div>
   );
 }
+
+
