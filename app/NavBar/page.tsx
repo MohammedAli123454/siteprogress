@@ -33,6 +33,8 @@ export default function Navbar({}: Props) {
                 <Button onClick={() => router.push('/Rnd')} variant='secondary' className={buttonClasses}>RND</Button>
                 <Button onClick={() => router.push('/Rnd1')} variant='secondary' className={buttonClasses}>RND1</Button>
                 <Button onClick={() => router.push('/Rnd2')} variant='secondary' className={buttonClasses}>RND2</Button>
+
+                <Button onClick={() => router.push('/NavBar1')} variant='secondary' className={buttonClasses}>NavBar</Button>
             </div>
         </div>
     )
