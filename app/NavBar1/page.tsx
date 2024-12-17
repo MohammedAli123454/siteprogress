@@ -70,14 +70,13 @@ const SideNav1 = () => {
       </button>
 
       {/* Sidebar */}
-      <aside
-        className={`bg-gray-100 h-screen shadow-md p-4 overflow-y-auto transition-all duration-300 ${
-          isSidebarVisible ? "w-64" : "w-0 overflow-hidden"
-        }`}
-        style={{ position: "fixed", top: 0, left: 0 }}
-      >
+      <div
+  className={`bg-gray-100 h-screen shadow-md p-4 overflow-y-auto transition-all duration-300 
+    ${isSidebarVisible ? "w-64" : "w-0 overflow-hidden"}
+    fixed top-0 left-0`}
+>
         {/* Sidebar Navigation */}
-        <nav className="mt-8">
+        <div className="mt-8">
           {sections.map((section) => (
             <div key={section.title} className="mb-4">
               {/* Section Header */}
@@ -114,8 +113,8 @@ const SideNav1 = () => {
               )}
             </div>
           ))}
-        </nav>
-      </aside>
+        </div>
+      </div>
     </div>
   );
 };
