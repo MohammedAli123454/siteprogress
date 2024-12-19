@@ -1,35 +1,35 @@
 "use client";
+
 import { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaBars, FaTimes, FaChevronRight, FaChevronDown } from "react-icons/fa"; // Import icons
+import { FaBars, FaTimes, FaChevronRight, FaChevronDown } from "react-icons/fa";
+import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
 
-interface Section {
-  title: string;
-  links: { name: string; path: string }[];
-}
+{/* <Button onClick={() => router.push('/Scope')} variant='secondary' className={buttonClasses}>Scope</Button> */}
+import useStore from '../store'; // Import the useStore hook
 
-const SideNav1 = () => {
+const SideNav = () => {
+  const { isSidebarVisible, toggleSidebar } = useStore();
   const pathname = usePathname();
+
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
-  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
 
   const handleToggleSection = (section: string) => {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const handleSidebarToggle = () => {
-    setIsSidebarVisible((prev) => !prev);
-  };
+  const isActive = (path: string) => (pathname.startsWith(path) ? "bg-gray-200" : "");
 
-  const isActive = (path: string) =>
-    pathname.startsWith(path) ? "bg-gray-200" : "";
 
-  const sections: Section[] = [
+
+
+  const sections = [
     {
       title: "Getting Started",
       links: [
-        { name: "Installation", path: "/getting-started/installation" },
+        { name: "Installation", path: "/Scope" },
         { name: "Project Structure", path: "/getting-started/project-structure" },
       ],
     },
@@ -56,6 +56,25 @@ const SideNav1 = () => {
         { name: "Fast Refresh", path: "/architecture/fast-refresh" },
         { name: "Supported Browsers", path: "/architecture/browsers" },
       ],
+      
+    },
+    {
+      title: "Operating System",
+      links: [
+        { name: "Windwows", path: "/architecture/accessibility" },
+        { name: "Linus", path: "/architecture/fast-refresh" },
+        { name: "Mac os", path: "/architecture/browsers" },
+      ],
+      
+    },
+    {
+      title: "Manguages",
+      links: [
+        { name: "Jawa", path: "/architecture/accessibility" },
+        { name: "Phthon", path: "/architecture/fast-refresh" },
+        { name: "Java Script", path: "/architecture/browsers" },
+      ],
+      
     },
   ];
 
@@ -63,20 +82,20 @@ const SideNav1 = () => {
     <div className="relative">
       {/* Toggle Button */}
       <button
-        onClick={handleSidebarToggle}
-        className="fixed top-4 left-4 z-50 bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-all"
-      >
-        {isSidebarVisible ? <FaTimes size={20} /> : <FaBars size={20} />}
-      </button>
+  onClick={toggleSidebar}
+  className="fixed top-4 left-4 z-50 p-2 hover:text-gray-700 transition-all"
+>
+  {isSidebarVisible ? <LuPanelLeftClose size={30} /> : <LuPanelRightClose size={30} />}
+</button>
 
       {/* Sidebar */}
       <div
-  className={`bg-gray-100 h-screen shadow-md p-4 overflow-y-auto transition-all duration-300 
-    ${isSidebarVisible ? "w-64" : "w-0 overflow-hidden"}
-    fixed top-0 left-0`}
->
-        {/* Sidebar Navigation */}
-        <div className="mt-8">
+        className={`bg-gray-100 h-screen shadow-md p-2 overflow-y-auto transition-all duration-300 
+        ${isSidebarVisible ? "w-64" : "w-0 overflow-hidden"}
+        fixed top-0 left-0`}
+      >
+        {/* Sidebar Content */}
+        <div className="mt-12">
           {sections.map((section) => (
             <div key={section.title} className="mb-4">
               {/* Section Header */}
@@ -99,11 +118,9 @@ const SideNav1 = () => {
                 <ul className="pl-4">
                   {section.links.map((link) => (
                     <li key={link.name}>
-                      <Link
+                        <Link
                         href={link.path}
-                        className={`block py-1 px-2 rounded hover:bg-gray-200 ${isActive(
-                          link.path
-                        )}`}
+                        className={`block py-1 px-2 rounded hover:bg-gray-200 ${isActive(link.path)}`}
                       >
                         {link.name}
                       </Link>
@@ -119,4 +136,4 @@ const SideNav1 = () => {
   );
 };
 
-export default SideNav1;
+export default SideNav;
