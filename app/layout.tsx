@@ -22,7 +22,7 @@ export default function RootLayout({
 
         {/* Main Content */}
         <div
-          className={`transition-transform duration-300 ease-in-out p-4 ${
+          className={`transition-transform duration-300 ease-in-out p-2 ${
             isSidebarVisible ? "transform translate-x-64" : "transform translate-x-0"
           }`}
         >

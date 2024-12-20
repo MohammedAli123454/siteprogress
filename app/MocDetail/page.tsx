@@ -84,63 +84,64 @@ export default function MOCJointsCharts() {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-h-screen w-full p-4">
-      {/* Overall Joints or Inch Dia Pie Chart */}
-      <div className="relative space-y-4">
-        {/* Toggle Switch in top-left corner */}
-        <div className="absolute top-4 left-0 p-2">
-          <label className="flex items-center space-x-2">
-            <Switch checked={isInchDia} onCheckedChange={() => setIsInchDia(!isInchDia)} />
-            <span className="text-sm">{isInchDia ? 'Inch Dia' : 'Joints'}</span>
-          </label>
+    <div className="w-full flex justify-center items-center">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-h-screen p-4">
+        {/* Overall Joints or Inch Dia Pie Chart */}
+        <div className="relative space-y-4">
+          {/* Toggle Switch in top-left corner */}
+          <div className="absolute top-4 left-0 p-2">
+            <label className="flex items-center space-x-2">
+              <Switch checked={isInchDia} onCheckedChange={() => setIsInchDia(!isInchDia)} />
+              <span className="text-sm">{isInchDia ? 'Inch Dia' : 'Joints'}</span>
+            </label>
+          </div>
+          <PieChartComponent
+            data={overallChartData}
+            pieChartTitle={isInchDia ? 'Overall Inch Dia' : 'Overall Joints'}
+            moc="*"
+            totalValue={overallTotalValue}
+            chartConfig={{
+              value: { label: 'value', color: 'hsl(var(--chart-2))' },
+              label: { color: 'hsl(var(--background))' },
+            }}
+            chartCenterMessage={isInchDia ? 'Overall Inch Dia' : 'Overall Joints'}
+            Type={isInchDia ? 'InchDia' : 'Joints'}
+          />
         </div>
-        <PieChartComponent
-          data={overallChartData}
-          pieChartTitle={isInchDia ? 'Overall Inch Dia' : 'Overall Joints'}
-          moc="*"
-          totalValue={overallTotalValue}
-          chartConfig={{
-            value: { label: 'value', color: 'hsl(var(--chart-2))' },
-            label: { color: 'hsl(var(--background))' },
-          }}
-          chartCenterMessage={isInchDia ? 'Overall Inch Dia' : 'Overall Joints'}
-          Type={isInchDia ? 'InchDia' : 'Joints'}
-        />
+  
+        {/* Loop through each MOC data and render the corresponding Pie chart */}
+        {safeMocData.length > 0 ? (
+          safeMocData.map((moc) => {
+            const chartData = [
+              { metric: isInchDia ? 'Shop Inch Dia' : 'Shop Joints', value: Number(moc.shopJoints || 0) },
+              { metric: isInchDia ? 'Field Inch Dia' : 'Field Joints', value: Number(moc.fieldJoints || 0) },
+              { metric: isInchDia ? 'Total Inch Dia' : 'Total Joints', value: Number(moc.totalJoints || 0) },
+            ];
+  
+            const totalValue = Number(moc.shopJoints || 0) + Number(moc.fieldJoints || 0);
+  
+            return (
+              <div key={moc.moc} className="space-y-4">
+                <PieChartComponent
+                  data={chartData}
+                  pieChartTitle={moc.mocName}
+                  moc={moc.moc}
+                  totalValue={totalValue}
+                  chartConfig={{
+                    value: { label: 'value', color: 'hsl(var(--chart-2))' },
+                    label: { color: 'hsl(var(--background))' },
+                  }}
+                  chartCenterMessage={isInchDia ? 'Total Inch Dia' : 'Total Joints'}
+                  Type={isInchDia ? 'InchDia' : 'Joints'}
+                />
+              </div>
+            );
+          })
+        ) : (
+          <div className="text-center text-gray-500">No MOC data available</div>
+        )}
       </div>
-
-      {/* Loop through each MOC data and render the corresponding Pie chart */}
-      {safeMocData.length > 0 ? (
-        safeMocData.map((moc) => {
-          const chartData = [
-            { metric: isInchDia ? 'Shop Inch Dia' : 'Shop Joints', value: Number(moc.shopJoints || 0) },
-            { metric: isInchDia ? 'Field Inch Dia' : 'Field Joints', value: Number(moc.fieldJoints || 0) },
-            { metric: isInchDia ? 'Total Inch Dia' : 'Total Joints', value: Number(moc.totalJoints || 0) },
-          ];
-
-          const totalValue = Number(moc.shopJoints || 0) + Number(moc.fieldJoints || 0);
-
-          return (
-            
-            <div key={moc.moc} className="space-y-4">
-              <PieChartComponent
-                data={chartData}
-                pieChartTitle={moc.mocName}
-                moc={moc.moc}
-                totalValue={totalValue}
-                chartConfig={{
-                  value: { label: 'value', color: 'hsl(var(--chart-2))' },
-                  label: { color: 'hsl(var(--background))' },
-                }}
-                chartCenterMessage={isInchDia ? 'Total Inch Dia' : 'Total Joints'}
-                Type={isInchDia ? 'InchDia' : 'Joints'}
-              />
-            </div>
-
-          );
-        })
-      ) : (
-        <div className="text-center text-gray-500">No MOC data available</div>
-      )}
     </div>
   );
+  
 }

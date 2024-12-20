@@ -68,11 +68,11 @@ const SideNav = () => {
       
     },
     {
-      title: "Manguages",
+      title: "Joint Detail",
       links: [
-        { name: "Jawa", path: "/architecture/accessibility" },
-        { name: "Phthon", path: "/architecture/fast-refresh" },
-        { name: "Java Script", path: "/architecture/browsers" },
+        { name: "Joints By MOC", path: "/JointsByMoc" },
+        { name: "Inch Dia By MOC", path: "/InchDiaByMoc" },
+        { name: "Overall Summary", path: "/OverallJoints" },
       ],
       
     },
@@ -83,7 +83,7 @@ const SideNav = () => {
       {/* Toggle Button */}
       <button
   onClick={toggleSidebar}
-  className="fixed top-4 left-4 z-50 p-2 hover:text-gray-700 transition-all"
+  className="fixed top-0 left-4 z-50 p-2 hover:text-gray-700 transition-all"
 >
   {isSidebarVisible ? <LuPanelLeftClose size={30} /> : <LuPanelRightClose size={30} />}
 </button>
