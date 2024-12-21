@@ -1,5 +1,4 @@
 "use client";
-
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/providers/query-providee";
@@ -11,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] });
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  // Use the Zustand hook with type safety
+  // Use Zustand hook to track sidebar visibility
   const isSidebarVisible = useStore((state) => state.isSidebarVisible);
 
   return (
@@ -22,15 +21,37 @@ export default function RootLayout({
 
         {/* Main Content */}
         <div
-          className={`transition-transform duration-300 ease-in-out p-2 ${
-            isSidebarVisible ? "transform translate-x-64" : "transform translate-x-0"
-          }`}
+          className="transition-all duration-300 ease-in-out p-0 flex min-h-screen"
+          style={{
+            // Adjust the margin-left based on sidebar visibility
+            marginLeft: isSidebarVisible ? "16rem" : "0", // Move content to the right when sidebar is open
+            transition: "margin-left 0.3s ease-in-out", // Smooth transition for margin
+          }}
         >
-          <QueryProvider>{children}</QueryProvider>
+          {/* Content wrapper to center content */}
+          <div
+            className="flex justify-center items-center"
+            style={{
+              minHeight: '100vh', // Ensure minimum height
+              minWidth: '100vw', // Ensure minimum width
+              overflow: 'hidden', // Optionally hide overflowing content
+            }}
+          >
+            {/* Scaling applied directly to the QueryProvider */}
+            <div
+              className="transition-all duration-300 ease-in-out"
+              style={{
+                transform: isSidebarVisible ? 'scale(0.81)' : 'scale(1)', // Apply scaling when sidebar is visible
+                transformOrigin: '0 0', // Scale from the top-left corner
+                transition: 'transform 0.3s ease-in-out',
+              }}
+            >
+              <QueryProvider>{children}</QueryProvider>
+            </div>
+          </div>
         </div>
       </body>
     </html>
   );
 }
-
 
