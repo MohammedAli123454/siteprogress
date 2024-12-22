@@ -1,4 +1,5 @@
 "use client";
+
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/providers/query-providee";
@@ -16,42 +17,32 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        {/* Sidebar */}
-        <SideNav />
+        <div className="flex min-h-screen">
+          {/* Sidebar */}
+          <SideNav />
 
-        {/* Main Content */}
-        <div
-          className="transition-all duration-300 ease-in-out p-0 flex min-h-screen"
-          style={{
-            // Adjust the margin-left based on sidebar visibility
-            marginLeft: isSidebarVisible ? "16rem" : "0", // Move content to the right when sidebar is open
-            transition: "margin-left 0.3s ease-in-out", // Smooth transition for margin
-          }}
-        >
-          {/* Content wrapper to center content */}
+          {/* Main Content */}
           <div
-            className="flex justify-center items-center"
+            className={`transition-all duration-300 ease-in-out`}
             style={{
-              minHeight: '100vh', // Ensure minimum height
-              minWidth: '100vw', // Ensure minimum width
-              overflow: 'hidden', // Optionally hide overflowing content
+              marginLeft: isSidebarVisible ? "16rem" : "0", // Adjust margin-left based on sidebar visibility
+              width: isSidebarVisible ? "calc(100% - 16rem)" : "100%", // Shrink width when sidebar is open
+              transition: "width 0.3s ease-in-out, margin-left 0.3s ease-in-out",
             }}
           >
-            {/* Scaling applied directly to the QueryProvider */}
-            <div
-              className="transition-all duration-300 ease-in-out"
-              style={{
-                transform: isSidebarVisible ? 'scale(0.81)' : 'scale(1)', // Apply scaling when sidebar is visible
-                transformOrigin: '0 0', // Scale from the top-left corner
-                transition: 'transform 0.3s ease-in-out',
-              }}
-            >
-              <QueryProvider>{children}</QueryProvider>
-            </div>
+            <QueryProvider>
+              <div
+                className="h-full"
+                style={{
+                  minHeight: "100vh",
+                }}
+              >
+                {children}
+              </div>
+            </QueryProvider>
           </div>
         </div>
       </body>
     </html>
   );
 }
-

@@ -77,6 +77,8 @@ export default function FileUploader() {
     const totalFiles = selectedFiles.size;
     let uploadedCount = 0;
 
+    console.log(selectedFiles);
+
     for (const file of selectedFiles) {
       const formData = new FormData();
       formData.append("projectName", data.projectName);
@@ -104,140 +106,158 @@ export default function FileUploader() {
   };
 
   return (
-    <div className="flex gap-8 w-full mt-12 h-[calc(100vh-80px)] justify-center items-start">
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Error</DialogTitle>
-          </DialogHeader>
-          <p>{dialogMessage}</p>
-          <DialogFooter>
-            <Button onClick={() => setDialogOpen(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* First Card: Upload Form */}
-      <Card className="w-[45%] shadow-lg border border-gray-200 rounded-lg flex flex-col">
-        <CardContent>
-          <FormProvider {...formMethods}>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <div className="w-full h-screen flex justify-center items-center bg-gray-50">
+    <div className="min-w-full bg-white shadow-lg rounded-lg p-6">
+      <FormProvider {...formMethods}>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Layout: Left side (Project Name, Drawing Category) & Right side (File Upload) */}
+          <div className="grid grid-cols-12 gap-6">
+            {/* Left Column: Project Name & Drawing Category */}
+            <div className="col-span-8 flex flex-col space-y-6">
               {/* Project Name */}
-              <div>
-                <label className="block text-lg font-medium text-gray-600 mb-2">Project Name</label>
-                <Select onValueChange={(value) => setValue("projectName", value)} disabled={loadingMocs}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a project" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mocNames?.map((projectName: string) => (
-                      <SelectItem key={projectName} value={projectName}>
-                        {projectName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-12 gap-2 items-center">
+                <label className="col-span-3 text-lg font-medium text-gray-600">Project Name</label>
+                <div className="col-span-9">
+                  <Select onValueChange={(value) => setValue("projectName", value)} disabled={loadingMocs}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a project" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mocNames?.map((projectName: string) => (
+                        <SelectItem key={projectName} value={projectName}>
+                          {projectName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-
+  
               {/* Drawing Category */}
-              <div>
-                <label className="block text-lg font-medium text-gray-600 mb-2">Drawing Category</label>
-                <Select onValueChange={(value) => setValue("category", value)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="P&I Drawings">P&I Drawings</SelectItem>
-                    <SelectItem value="Isometric Drawings">Isometric Drawings</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-12 gap-4 items-center">
+                <label className="col-span-3 text-lg font-medium text-gray-600">Drawing Category</label>
+                <div className="col-span-9">
+                  <Select onValueChange={(value) => setValue("category", value)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="P&I Drawings">P&I Drawings</SelectItem>
+                      <SelectItem value="Isometric Drawings">Isometric Drawings</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-
+            </div>
+  
+            {/* Right Column: File Upload */}
+            <div className="col-span-4 flex flex-col space-y-6 h-full">
               {/* File Upload */}
-              <div>
-                <label className="block text-lg font-medium text-gray-600 mb-2">Select Files to Upload</label>
-                <input type="file" onChange={handleFileChange} multiple className="hidden" id="file-input" />
+              <div className="flex-1">
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  multiple
+                  className="hidden"
+                  id="file-input"
+                />
                 <label
                   htmlFor="file-input"
                   className="cursor-pointer flex flex-col items-center justify-center bg-blue-100 border-4 border-dotted border-blue-500 text-blue-600 p-8 rounded-lg hover:bg-blue-200 transition-all duration-300"
-                  style={{ width: "100%", height: "200px" }}
+                  style={{ width: "100%" }}
                 >
                   <div className="text-center">
-                    <span className="block text-2xl font-semibold mb-2">Click to Upload</span>
+                    <span className="block text-2xl font-semibold mb-2">Select Files To</span>
                     <span className="block text-sm">or drag and drop files here</span>
                   </div>
                 </label>
               </div>
-
-              {/* Upload Progress */}
-              {isUploading && (
-                <div>
-                  <label className="block text-lg font-medium text-gray-600 mb-2">Upload Progress</label>
-                  <div className="flex items-center">
-                    <Progress value={uploadProgress} className="flex-1" />
-                    <span className="ml-2 text-gray-700">{Math.round(uploadProgress)}%</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="w-full bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition-all duration-300"
-                disabled={isUploading}
-              >
-                {isUploading ? "Uploading..." : "Upload Files"}
-              </button>
-            </form>
-          </FormProvider>
-        </CardContent>
-      </Card>
-
-      {/* Second Card: Selected Files */}
-      <Card className="w-[45%] shadow-lg border border-gray-200 rounded-lg flex flex-col">
-        <CardContent className="flex-1 p-0">
-          <ScrollArea className="h-[300px] overflow-auto">
-            {selectedFiles.size > 0 ? (
-              <div className="space-y-4 p-6">
-                <h3 className="font-medium text-lg text-gray-600">Selected Files:</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {[...selectedFiles].map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-2 border border-gray-300 rounded-md shadow-sm"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <AiOutlineFilePdf className="text-red-500 text-2xl" />
-                        <div>
-                          <p className="text-gray-800 font-medium">{file.name}</p>
-                          <p className="text-gray-500 text-sm">{(file.size / 1024).toFixed(2)} KB</p>
+            </div>
+          </div>
+  
+          {/* Selected Files (Spans the entire width of the form) */}
+          <div className="w-full shadow-lg border border-gray-200 rounded-lg flex flex-col mt-6">
+            <div className="flex-1 p-0">
+              <div className="h-[300px] overflow-auto">
+                {selectedFiles.size > 0 ? (
+                  <div className="space-y-4 p-6">
+                    <h3 className="font-medium text-lg text-gray-600">Selected Files:</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {[...selectedFiles].map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 border border-gray-300 rounded-md shadow-sm"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <AiOutlineFilePdf className="text-red-500 text-2xl" />
+                            <div>
+                              <p className="text-gray-800 font-medium">{file.name}</p>
+                              <p className="text-gray-500 text-sm">{(file.size / 1024).toFixed(2)} KB</p>
+                            </div>
+                          </div>
+                          <AiOutlineClose
+                            className="text-red-600 cursor-pointer hover:text-red-800"
+                            onClick={() => removeFile(file)}
+                          />
                         </div>
-                      </div>
-                      <AiOutlineClose
-                        className="text-red-600 cursor-pointer hover:text-red-800"
-                        onClick={() => removeFile(file)}
-                      />
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                  <div className="flex justify-center items-center h-full text-gray-500">
+                    No files selected.
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="flex justify-center items-center h-full text-gray-500">
-                No files selected.
+            </div>
+            {selectedFiles.size > 0 && (
+              <div className="p-4">
+                <button
+                  type="button"
+                  className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600"
+                  onClick={removeAllFiles}
+                >
+                  Remove All
+                </button>
               </div>
             )}
-          </ScrollArea>
-        </CardContent>
-        <CardFooter className="p-4">
-          {selectedFiles.size > 0 && (
-            <Button variant="destructive" onClick={removeAllFiles}>
-              Remove All
-            </Button>
+          </div>
+  
+          {/* Upload Progress */}
+          {isUploading && (
+            <div className="grid grid-cols-12 gap-4 items-center">
+              <label className="col-span-3 text-lg font-medium text-gray-600">Upload Progress</label>
+              <div className="col-span-9 flex items-center">
+                <Progress value={uploadProgress} className="flex-1" />
+                <span className="ml-2 text-gray-700">{Math.round(uploadProgress)}%</span>
+              </div>
+            </div>
           )}
-        </CardFooter>
-      </Card>
+  
+          {/* Submit Button */}
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="bg-green-500 text-white py-3 px-6 rounded-lg hover:bg-green-600 transition-all duration-300"
+              disabled={isUploading}
+            >
+              {isUploading ? "Uploading..." : "Upload Files"}
+            </button>
+          </div>
+        </form>
+      </FormProvider>
     </div>
+  </div>
+  
+  
+  
   );
+
+
+  
+  
+  
 }
+
 
 

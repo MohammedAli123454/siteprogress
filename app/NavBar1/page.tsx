@@ -50,11 +50,11 @@ const SideNav = () => {
       ],
     },
     {
-      title: "Architecture",
+      title: "Drawings",
       links: [
-        { name: "Accessibility", path: "/architecture/accessibility" },
-        { name: "Fast Refresh", path: "/architecture/fast-refresh" },
-        { name: "Supported Browsers", path: "/architecture/browsers" },
+        { name: "Upload Drawings", path: "/FileUploader" },
+        { name: "Delete Drawing", path: "/FileDelete" },
+        { name: "View Drawings", path: "/FileGetter" },
       ],
       
     },

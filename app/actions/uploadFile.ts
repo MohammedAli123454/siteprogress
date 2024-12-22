@@ -53,6 +53,8 @@ export async function uploadFiles(formData: FormData) {
       token: process.env.IMAGES_TO_BLOB,  // Use the environment variable for the Blob token
     });
 
+ 
+
     // Push the uploaded file URL to the array
     uploadedFiles.push({ url });
 
