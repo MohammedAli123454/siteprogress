@@ -5,11 +5,11 @@ import { useForm, FormProvider } from "react-hook-form";
 import { AiOutlineClose, AiOutlineFilePdf } from "react-icons/ai";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { getallAwardedMocs } from "@/app/actions-Database/getData";
 import { useQuery } from "@tanstack/react-query";
 import { uploadFiles } from "@/app/actions/uploadFile";
+import Select from "react-select"; // Importing react-select
 
 interface FormData {
   projectName: string;
@@ -43,16 +43,16 @@ export default function FileUploader() {
     setSelectedFiles(files);
   };
 
-  const handleProjectChange = (value: string) => {
-    setValue("projectName", value);
+  const handleProjectChange = (selectedOption: any) => {
+    setValue("projectName", selectedOption?.value);
     // Clear the error message if the project is selected
     if (dialogMessage === "Please select a project.") {
       setDialogMessage("");
     }
   };
-  
-  const handleCategoryChange = (value: string) => {
-    setValue("category", value);
+
+  const handleCategoryChange = (selectedOption: any) => {
+    setValue("category", selectedOption?.value);
     // Clear the error message if the category is selected
     if (dialogMessage === "Please select a drawing category.") {
       setDialogMessage("");
@@ -112,31 +112,47 @@ export default function FileUploader() {
     setValue('category', '');
     refetch();
   };
+// Helper Function for Success Message
+const renderSuccessMessage = () => (
+  <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
+    <div className="bg-green-100 text-green-700 p-6 rounded-lg shadow-md flex items-center space-x-4">
+      <span className="flex-1 text-lg font-medium">Drawings have been saved successfully!</span>
+      <button
+        className="ml-2 text-green-700 hover:text-green-900"
+        onClick={() => setSuccessMessage(false)}
+      >
+        <AiOutlineClose />
+      </button>
+    </div>
+  </div>
+);
+
+// Helper Function for Error Message
+const renderErrorMessage = () => (
+  <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-6 text-center">
+    {dialogMessage}
+  </div>
+);
+
+// Helper Function for Upload Progress
+const renderUploadProgress = () => (
+  <div className="grid grid-cols-12 gap-4 items-center">
+    <label className="col-span-3 text-lg font-medium text-gray-600">Upload Progress</label>
+    <div className="col-span-9 flex items-center">
+      <Progress value={uploadProgress} className="flex-1" />
+      <span className="ml-2 text-gray-700">{Math.round(uploadProgress)}%</span>
+    </div>
+  </div>
+);
 
   return (
     <div className="w-full h-screen flex justify-center items-center bg-gray-50">
       <div className="min-w-full h-full bg-white shadow-lg rounded-lg p-6">
         {/* Success Message */}
-        {successMessage && (
-          <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
-            <div className="bg-green-100 text-green-700 p-6 rounded-lg shadow-md flex items-center space-x-4">
-              <span className="flex-1 text-lg font-medium">Drawings have been saved successfully!</span>
-              <button
-                className="ml-2 text-green-700 hover:text-green-900"
-                onClick={() => setSuccessMessage(false)}
-              >
-                <AiOutlineClose />
-              </button>
-            </div>
-          </div>
-        )}
+        {successMessage && renderSuccessMessage()}
 
-         {/* Error Message */}
-      {dialogMessage && (
-        <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-6 text-center">
-          {dialogMessage}
-        </div>
-      )}
+        {/* Error Message */}
+        {dialogMessage && renderErrorMessage()}
 
         {/* Component Heading */}
         <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Upload the Project Drawing</h1>
@@ -155,20 +171,11 @@ export default function FileUploader() {
                         <label className="col-span-3 text-lg font-medium text-gray-600">Project Name</label>
                         <div className="col-span-9">
                         <Select
-                          onValueChange={handleProjectChange}  // Use the handler to clear message on selection
-                          disabled={loadingMocs}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select a project" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {mocNames?.map((projectName: string) => (
-                              <SelectItem key={projectName} value={projectName}>
-                                {projectName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                            options={mocNames?.map(name => ({ value: name, label: name })) || []}
+                            onChange={handleProjectChange}
+                            isDisabled={loadingMocs}
+                            placeholder="Select a project"
+                          />
                         </div>
                       </div>
 
@@ -176,15 +183,14 @@ export default function FileUploader() {
                       <div className="grid grid-cols-12 gap-4 items-center">
                         <label className="col-span-3 text-lg font-medium text-gray-600">Drawing Category</label>
                         <div className="col-span-9">
-                        <Select onValueChange={handleCategoryChange}>  {/* Use the handler here as well */}
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="P&I Drawings">P&I Drawings</SelectItem>
-                            <SelectItem value="Isometric Drawings">Isometric Drawings</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Select
+                            options={[
+                              { value: "P&I Drawings", label: "P&I Drawings" },
+                              { value: "Isometric Drawings", label: "Isometric Drawings" }
+                            ]}
+                            onChange={handleCategoryChange}
+                            placeholder="Select a category"
+                          />
                         </div>
                       </div>
                     </div>
@@ -256,16 +262,8 @@ export default function FileUploader() {
               </CardContent>
             </Card>
 
-            {/* Upload Progress */}
-            {isUploading && (
-              <div className="grid grid-cols-12 gap-4 items-center">
-                <label className="col-span-3 text-lg font-medium text-gray-600">Upload Progress</label>
-                <div className="col-span-9 flex items-center">
-                  <Progress value={uploadProgress} className="flex-1" />
-                  <span className="ml-2 text-gray-700">{Math.round(uploadProgress)}%</span>
-                </div>
-              </div>
-            )}
+           {/* Upload Progress */}
+           {isUploading && renderUploadProgress()}
 
             {/* Buttons (Remove All and Upload Files) */}
             <div className="flex justify-between mt-6">
@@ -295,6 +293,7 @@ export default function FileUploader() {
     </div>
   );
 }
+
 
 
 
