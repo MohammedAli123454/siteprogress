@@ -5,11 +5,11 @@ import { useForm, FormProvider } from "react-hook-form";
 import { AiOutlineClose, AiOutlineFilePdf } from "react-icons/ai";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
 import { getallAwardedMocs } from "@/app/actions-Database/getData";
 import { useQuery } from "@tanstack/react-query";
 import { uploadFiles } from "@/app/actions/uploadFile";
-import Select from "react-select"; // Importing react-select
+
+import { FormField } from "@/components/FormField";
 
 interface FormData {
   projectName: string;
@@ -34,30 +34,21 @@ export default function FileUploader() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const formMethods = useForm<FormData>();
-  const { handleSubmit, reset, setValue } = formMethods;
-  const { toast } = useToast();
+  const formMethods = useForm({
+    defaultValues: {
+      projectName: "",
+      category: "",
+    },
+  });
+
+  const { handleSubmit, reset } = formMethods;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = new Set([...selectedFiles, ...Array.from(e.target.files || [])]);
     setSelectedFiles(files);
   };
 
-  const handleProjectChange = (selectedOption: any) => {
-    setValue("projectName", selectedOption?.value);
-    // Clear the error message if the project is selected
-    if (dialogMessage === "Please select a project.") {
-      setDialogMessage("");
-    }
-  };
-
-  const handleCategoryChange = (selectedOption: any) => {
-    setValue("category", selectedOption?.value);
-    // Clear the error message if the category is selected
-    if (dialogMessage === "Please select a drawing category.") {
-      setDialogMessage("");
-    }
-  };
+ 
 
   const removeFile = (fileToRemove: File) => {
     setSelectedFiles(prevFiles => new Set([...prevFiles].filter(file => file !== fileToRemove)));
@@ -108,8 +99,6 @@ export default function FileUploader() {
     setSuccessMessage(true);
     reset();
     setSelectedFiles(new Set());
-    setValue('projectName', '');
-    setValue('category', '');
     refetch();
   };
 // Helper Function for Success Message
@@ -166,38 +155,34 @@ const renderUploadProgress = () => (
                 <Card className="h-full flex items-center justify-center p-0">
                   <CardContent className="flex flex-col justify-center items-center w-full h-full p-6">
                     <div className="space-y-6 w-full">
-                      {/* Project Name */}
-                      <div className="grid grid-cols-12 gap-2 items-center">
-                        <label className="col-span-3 text-lg font-medium text-gray-600">Project Name</label>
-                        <div className="col-span-9">
-                        <Select
-                            options={mocNames?.map(name => ({ value: name, label: name })) || []}
-                            onChange={handleProjectChange}
-                            isDisabled={loadingMocs}
-                            placeholder="Select a project"
-                          />
-                        </div>
-                      </div>
+                         {/* Project Name */}
+                         <FormField
+  name="projectName"
+  label="Project Name"
+  options={mocNames?.map((name) => ({ value: name, label: name })) || []}
+  placeholder="Select a project"
+  labelColSpan={3}
+  selectColSpan={9}
+  isDisabled={loadingMocs}
+/>
+
 
                       {/* Drawing Category */}
-                      <div className="grid grid-cols-12 gap-4 items-center">
-                        <label className="col-span-3 text-lg font-medium text-gray-600">Drawing Category</label>
-                        <div className="col-span-9">
-                        <Select
-                            options={[
-                              { value: "P&I Drawings", label: "P&I Drawings" },
-                              { value: "Isometric Drawings", label: "Isometric Drawings" }
-                            ]}
-                            onChange={handleCategoryChange}
-                            placeholder="Select a category"
-                          />
-                        </div>
-                      </div>
+                      <FormField
+                        name="category"
+                        label="Drawing Category"
+                        options={[
+                          { value: "P&I Drawings", label: "P&I Drawings" },
+                          { value: "Isometric Drawings", label: "Isometric Drawings" },
+                        ]}
+                        placeholder="Select a category"
+                        labelColSpan={3}
+                        selectColSpan={9}
+                      />
                     </div>
                   </CardContent>
                 </Card>
               </div>
-
               {/* Right Column: File Upload */}
               <div className="col-span-4">
                 <Card className="h-full flex items-center justify-center p-0">

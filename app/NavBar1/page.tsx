@@ -73,6 +73,7 @@ const SideNav = () => {
         { name: "Joints By MOC", path: "/JointsByMoc" },
         { name: "Inch Dia By MOC", path: "/InchDiaByMoc" },
         { name: "Overall Summary", path: "/OverallJoints" },
+        { name: "Account Chart", path: "/AccountChart" },
       ],
       
     },
