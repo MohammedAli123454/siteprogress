@@ -11,6 +11,12 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer as PieResponsiveContainer,
+} from "recharts";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -22,52 +28,41 @@ import {
 } from "@/components/ui/select";
 
 const transactions = [
-  { date: "2024-12-25", type: "INCOME", amount: 1200 },
-  { date: "2024-12-26", type: "EXPENSE", amount: 500 },
-  { date: "2024-12-27", type: "INCOME", amount: 800 },
-  { date: "2024-12-28", type: "EXPENSE", amount: 300 },
-  { date: "2024-12-29", type: "INCOME", amount: 1500 },
-  { date: "2024-12-30", type: "EXPENSE", amount: 800 },
-  { date: "2024-12-31", type: "INCOME", amount: 1000 },
-  { date: "2024-11-15", type: "EXPENSE", amount: 450 },
-  { date: "2024-11-20", type: "INCOME", amount: 1000 },
-  { date: "2024-11-25", type: "EXPENSE", amount: 600 },
-  { date: "2024-11-30", type: "INCOME", amount: 1300 },
-  { date: "2024-10-01", type: "EXPENSE", amount: 300 },
-  { date: "2024-10-05", type: "INCOME", amount: 1100 },
-  { date: "2024-10-10", type: "EXPENSE", amount: 200 },
-  { date: "2024-10-15", type: "INCOME", amount: 950 },
-  { date: "2024-09-07", type: "INCOME", amount: 850 },
-  { date: "2024-09-12", type: "EXPENSE", amount: 400 },
-  { date: "2024-09-18", type: "INCOME", amount: 1300 },
-  { date: "2024-09-25", type: "EXPENSE", amount: 500 },
-  { date: "2024-08-14", type: "EXPENSE", amount: 600 },
-  { date: "2024-08-20", type: "INCOME", amount: 1250 },
-  { date: "2024-08-25", type: "EXPENSE", amount: 450 },
-  { date: "2024-07-30", type: "INCOME", amount: 1000 },
-  { date: "2024-07-31", type: "EXPENSE", amount: 550 },
-  { date: "2024-06-30", type: "INCOME", amount: 1000 },
-  { date: "2024-06-31", type: "EXPENSE", amount: 550 },
-  { date: "2024-05-30", type: "INCOME", amount: 1000 },
-  { date: "2024-05-31", type: "EXPENSE", amount: 550 },
-  { date: "2024-04-28", type: "EXPENSE", amount: 300 },
-  { date: "2024-04-29", type: "INCOME", amount: 1500 },
+  { date: "2024-12-25", type: "INCOME", amount: 1200, category: "Salary" },
+  { date: "2024-12-26", type: "EXPENSE", amount: 500, category: "Groceries" },
+  { date: "2024-12-27", type: "INCOME", amount: 800, category: "Freelance" },
+  { date: "2024-12-28", type: "EXPENSE", amount: 300, category: "Transportation" },
+  { date: "2024-12-29", type: "INCOME", amount: 1500, category: "Bonus" },
+  { date: "2024-12-30", type: "EXPENSE", amount: 800, category: "Rent" },
+  { date: "2024-12-31", type: "INCOME", amount: 1000, category: "Salary" },
+  { date: "2024-11-15", type: "EXPENSE", amount: 450, category: "Utilities" },
+  { date: "2024-11-20", type: "INCOME", amount: 1000, category: "Freelance" },
+  { date: "2024-11-25", type: "EXPENSE", amount: 600, category: "Entertainment" },
+  { date: "2024-11-30", type: "INCOME", amount: 1300, category: "Salary" },
+  { date: "2024-10-01", type: "EXPENSE", amount: 300, category: "Groceries" },
+  { date: "2024-10-05", type: "INCOME", amount: 1100, category: "Salary" },
+  { date: "2024-10-10", type: "EXPENSE", amount: 200, category: "Transportation" },
+  { date: "2024-10-15", type: "INCOME", amount: 950, category: "Freelance" },
+  { date: "2024-09-07", type: "INCOME", amount: 850, category: "Salary" },
+  { date: "2024-09-12", type: "EXPENSE", amount: 400, category: "Groceries" },
+  { date: "2024-09-18", type: "INCOME", amount: 1300, category: "Bonus" },
+  { date: "2024-09-25", type: "EXPENSE", amount: 500, category: "Rent" },
+  { date: "2024-08-14", type: "EXPENSE", amount: 600, category: "Utilities" },
+  { date: "2024-08-20", type: "INCOME", amount: 1250, category: "Salary" },
+  { date: "2024-08-25", type: "EXPENSE", amount: 450, category: "Groceries" },
+  { date: "2024-07-30", type: "INCOME", amount: 1000, category: "Salary" },
+  { date: "2024-07-31", type: "EXPENSE", amount: 550, category: "Entertainment" },
+  { date: "2024-06-30", type: "INCOME", amount: 1000, category: "Freelance" },
+  { date: "2024-06-31", type: "EXPENSE", amount: 550, category: "Groceries" },
+  { date: "2024-05-30", type: "INCOME", amount: 1000, category: "Freelance" },
+  { date: "2024-05-31", type: "EXPENSE", amount: 550, category: "Transportation" },
+  { date: "2024-04-28", type: "EXPENSE", amount: 300, category: "Utilities" },
+  { date: "2024-04-29", type: "INCOME", amount: 1500, category: "Bonus" },
 ];
 
-
-//filteredData for All Time
-// [
-//     { date: "Apr 2024", income: 1500, expense: 300 },
-//     { date: "May 2024", income: 1000, expense: 550 },
-//     { date: "Jun 2024", income: 1000, expense: 550 },
-//     { date: "Jul 2024", income: 1000, expense: 550 },
-//     { date: "Aug 2024", income: 1250, expense: 1050 },
-//     { date: "Sep 2024", income: 2150, expense: 900 },
-//     { date: "Oct 2024", income: 2050, expense: 500 },
-//     { date: "Nov 2024", income: 2300, expense: 1050 },
-//     { date: "Dec 2024", income: 4500, expense: 1600 }
-//   ];
-
+const categoryColors = [
+  "#22c55e", "#ef4444", "#2563eb", "#fbbf24", "#9333ea", "#10b981", "#6ee7b7", "#d97706"
+];
 
 const DATE_RANGES = {
   "7D": { label: "Last 7 Days", days: 7 },
@@ -114,6 +109,33 @@ export default function AccountChart() {
     );
   }, [dateRange]);
 
+  const categoryData = useMemo(() => {
+    const range = DATE_RANGES[dateRange];
+    const now = new Date();
+    const startDate = range.days
+      ? startOfDay(subDays(now, range.days))
+      : startOfDay(new Date(0));
+
+    const filtered = transactions.filter(
+      (t) => new Date(t.date) >= startDate && new Date(t.date) <= endOfDay(now)
+    );
+
+    const grouped = filtered.reduce((acc, transaction) => {
+      if (!acc[transaction.category]) {
+        acc[transaction.category] = 0;
+      }
+      acc[transaction.category] += transaction.amount;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const data = Object.entries(grouped).map(([name, value]) => ({
+      name,
+      value,
+    }));
+
+    return data;
+  }, [dateRange]);
+
   const totals = useMemo(() => {
     return filteredData.reduce(
       (acc, day) => ({
@@ -124,14 +146,10 @@ export default function AccountChart() {
     );
   }, [filteredData]);
 
-console.log(filteredData);
-
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-7">
-        <CardTitle className="text-base font-normal">
-          Transaction Overview
-        </CardTitle>
+        <CardTitle className="text-base font-normal">Transaction Overview</CardTitle>
         <Select value={dateRange} onValueChange={(value: DateRange) => setDateRange(value)}>
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Select range" />
@@ -146,38 +164,87 @@ console.log(filteredData);
         </Select>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-around mb-6 text-sm">
-          <div className="text-center">
-            <p className="text-muted-foreground">Total Income</p>
-            <p className="text-lg font-bold text-green-500">
-              ${totals.income.toFixed(2)}
-            </p>
+      <div className="grid grid-cols-12 gap-6">
+          {/* Left side - Cards */}
+          <div className="col-span-12 md:col-span-5 space-y-4">
+            {/* Total Income Card */}
+            <Card>
+              <CardContent className="flex items-center justify-center text-center space-x-4 py-6">
+                <div className="flex-1">
+                  <p className="text-1xl md:text-1xl lg:text-1xl gradient-title tracking-wider">TOTAL INCOME</p>
+                </div>
+                <div className="flex-1">
+                  <p className="text-lg font-bold text-green-500">${totals.income.toFixed(2)}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Total Expenses Card */}
+            <Card>
+              <CardContent className="flex items-center justify-center text-center space-x-4 py-6">
+                <div className="flex-1">
+                  <p className="text-1xl md:text-1xl lg:text-1xl gradient-title tracking-wider">TOTAL EXPENSES</p>
+                </div>
+                <div className="flex-1">
+                  <p className="text-lg font-bold text-red-500">${totals.expense.toFixed(2)}</p>
+                </div>
+              </CardContent>
+            </Card>
+            {/* Net Card */}
+            <Card>
+              <CardContent className="flex items-center justify-center text-center space-x-4 py-6">
+                <div className="flex-1">
+                  <p className="text-1xl md:text-1xl lg:text-1xl gradient-title tracking-wider">NET BALANCE</p>
+                </div>
+                <div className="flex-1">
+                  <p
+                    className={`text-lg font-bold ${
+                      totals.income - totals.expense >= 0
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }`}
+                  >
+                    ${(totals.income - totals.expense).toFixed(2)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-          <div className="text-center">
-            <p className="text-muted-foreground">Total Expenses</p>
-            <p className="text-lg font-bold text-red-500">
-              ${totals.expense.toFixed(2)}
-            </p>
-          </div>
-          <div className="text-center">
-            <p className="text-muted-foreground">Net</p>
-            <p
-              className={`text-lg font-bold ${
-                totals.income - totals.expense >= 0
-                  ? "text-green-500"
-                  : "text-red-500"
-              }`}
-            >
-              ${(totals.income - totals.expense).toFixed(2)}
-            </p>
+
+          {/* Right side - Pie Chart */}
+          <div className="col-span-12 md:col-span-7 flex justify-center">
+            {categoryData.length > 0 ? (
+              <PieResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={categoryData}
+                    dataKey="value"
+                    nameKey="name"
+                    outerRadius="80%"
+                    innerRadius="60%"
+                    paddingAngle={5}
+                    label={({ name, value }) => `${name}: $${value.toFixed(2)}`}
+                  >
+                    {categoryData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={categoryColors[index % categoryColors.length]}
+                      />
+                    ))}
+                  </Pie>
+           
+                </PieChart>
+              </PieResponsiveContainer>
+            ) : (
+              <p>No data available for the selected range.</p>
+            )}
           </div>
         </div>
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={filteredData}
-              margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
-            >
+
+        {/* Bar Chart */}
+        <div className="h-[300px] mt-8">
+        <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={filteredData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis
                 dataKey="date"
