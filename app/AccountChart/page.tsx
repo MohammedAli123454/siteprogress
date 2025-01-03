@@ -141,10 +141,72 @@ export default function AccountChart() {
       (acc, day) => ({
         income: acc.income + day.income,
         expense: acc.expense + day.expense,
+        balance: acc.income + day.income - (acc.expense + day.expense), // Calculate balance
       }),
-      { income: 0, expense: 0 }
+      { income: 0, expense: 0, balance: 0 } // Initialize balance as 0
     );
   }, [filteredData]);
+  
+
+
+  type CardProps = {
+    title: string;
+    value: number;
+    color: string;
+  };
+  
+  const CardComponent = ({ title, value, color }: CardProps) => (
+    <Card>
+      <CardContent className="flex items-center justify-center text-center py-6 space-x-4">
+        <div>
+          <p className="text-lg gradient-title tracking-wider">{title}</p>
+        </div>
+        <div>
+          <p className={`text-lg font-bold text-${color}`}>${value.toFixed(2)}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  // Define types for the props
+interface CategoryData {
+  name: string;
+  value: number;
+}
+
+interface PieChartComponentProps {
+  categoryData: CategoryData[];
+  categoryColors: string[];
+}
+
+const PieChartComponent = ({ categoryData, categoryColors }: PieChartComponentProps) => (
+  // Check if categoryData has items
+  categoryData.length > 0 ? (
+    <ResponsiveContainer width="100%" height={300}>
+      <PieChart>
+        <Pie
+          data={categoryData}
+          dataKey="value"
+          nameKey="name"
+          outerRadius="80%"
+          innerRadius="60%"
+          paddingAngle={5}
+          label={({ name, value }) => `${name}: $${value.toFixed(2)}`}
+        >
+          {categoryData.map((entry, index) => (
+            <Cell
+              key={`cell-${index}`}
+              fill={categoryColors[index % categoryColors.length]}
+            />
+          ))}
+        </Pie>
+      </PieChart>
+    </ResponsiveContainer>
+  ) : (
+    // Fallback message when categoryData is empty
+    <p>No data available for the selected range.</p>
+  )
+);
 
   return (
     <Card>
@@ -164,86 +226,25 @@ export default function AccountChart() {
         </Select>
       </CardHeader>
       <CardContent>
-      <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-12 gap-6">
           {/* Left side - Cards */}
           <div className="col-span-12 md:col-span-5 space-y-4">
-            {/* Total Income Card */}
-            <Card>
-              <CardContent className="flex items-center justify-center text-center space-x-4 py-6">
-                <div className="flex-1">
-                  <p className="text-1xl md:text-1xl lg:text-1xl gradient-title tracking-wider">TOTAL INCOME</p>
-                </div>
-                <div className="flex-1">
-                  <p className="text-lg font-bold text-green-500">${totals.income.toFixed(2)}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Total Expenses Card */}
-            <Card>
-              <CardContent className="flex items-center justify-center text-center space-x-4 py-6">
-                <div className="flex-1">
-                  <p className="text-1xl md:text-1xl lg:text-1xl gradient-title tracking-wider">TOTAL EXPENSES</p>
-                </div>
-                <div className="flex-1">
-                  <p className="text-lg font-bold text-red-500">${totals.expense.toFixed(2)}</p>
-                </div>
-              </CardContent>
-            </Card>
-            {/* Net Card */}
-            <Card>
-              <CardContent className="flex items-center justify-center text-center space-x-4 py-6">
-                <div className="flex-1">
-                  <p className="text-1xl md:text-1xl lg:text-1xl gradient-title tracking-wider">NET BALANCE</p>
-                </div>
-                <div className="flex-1">
-                  <p
-                    className={`text-lg font-bold ${
-                      totals.income - totals.expense >= 0
-                        ? "text-green-500"
-                        : "text-red-500"
-                    }`}
-                  >
-                    ${(totals.income - totals.expense).toFixed(2)}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+          <CardComponent title="TOTAL INCOME" value={totals.income} color="green-500" />
+          <CardComponent title="TOTAL EXPENSES" value={totals.expense} color="red-500" />
+          <CardComponent  title="NET BALANCE"   value={totals.balance}
+              color={totals.income - totals.expense >= 0 ? 'green-500' : 'red-500'}
+            />
           </div>
 
           {/* Right side - Pie Chart */}
           <div className="col-span-12 md:col-span-7 flex justify-center">
-            {categoryData.length > 0 ? (
-              <PieResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    dataKey="value"
-                    nameKey="name"
-                    outerRadius="80%"
-                    innerRadius="60%"
-                    paddingAngle={5}
-                    label={({ name, value }) => `${name}: $${value.toFixed(2)}`}
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={categoryColors[index % categoryColors.length]}
-                      />
-                    ))}
-                  </Pie>
-           
-                </PieChart>
-              </PieResponsiveContainer>
-            ) : (
-              <p>No data available for the selected range.</p>
-            )}
+          <PieChartComponent categoryData={categoryData} categoryColors={categoryColors} />
           </div>
         </div>
 
         {/* Bar Chart */}
         <div className="h-[300px] mt-8">
-        <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%">
             <BarChart data={filteredData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis
@@ -288,3 +289,4 @@ export default function AccountChart() {
     </Card>
   );
 }
+
