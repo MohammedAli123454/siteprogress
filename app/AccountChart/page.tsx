@@ -208,6 +208,59 @@ const PieChartComponent = ({ categoryData, categoryColors }: PieChartComponentPr
   )
 );
 
+
+
+
+interface BarChartComponentProps {
+  data: { date: string; income: number; expense: number }[]; // Specify the shape of the data
+}
+
+const BarChartComponent = ({ data }: BarChartComponentProps) => (
+  <ResponsiveContainer width="100%" height="100%">
+    <BarChart data={data}>
+      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+      <XAxis
+        dataKey="date"
+        fontSize={12}
+        tickLine={false}
+        axisLine={false}
+      />
+      <YAxis
+        fontSize={12}
+        tickLine={false}
+        axisLine={false}
+        tickFormatter={(value) => `$${value}`}
+      />
+      <Tooltip
+        formatter={(value) => [`$${value}`, undefined]}
+        contentStyle={{
+          backgroundColor: "hsl(var(--popover))",
+          border: "1px solid hsl(var(--border))",
+          borderRadius: "var(--radius)",
+        }}
+      />
+      <Legend />
+      <Bar
+        dataKey="income"
+        name="Income"
+        fill="#22c55e"
+        radius={[4, 4, 0, 0]}
+        barSize={30}
+      />
+      <Bar
+        dataKey="expense"
+        name="Expense"
+        fill="#ef4444"
+        radius={[4, 4, 0, 0]}
+        barSize={30}
+      />
+    </BarChart>
+  </ResponsiveContainer>
+);
+
+
+
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-7">
@@ -244,46 +297,7 @@ const PieChartComponent = ({ categoryData, categoryColors }: PieChartComponentPr
 
         {/* Bar Chart */}
         <div className="h-[300px] mt-8">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={filteredData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis
-                dataKey="date"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => `$${value}`}
-              />
-              <Tooltip
-                formatter={(value) => [`$${value}`, undefined]}
-                contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "var(--radius)",
-                }}
-              />
-              <Legend />
-              <Bar
-                dataKey="income"
-                name="Income"
-                fill="#22c55e"
-                radius={[4, 4, 0, 0]}
-                barSize={30}
-              />
-              <Bar
-                dataKey="expense"
-                name="Expense"
-                fill="#ef4444"
-                radius={[4, 4, 0, 0]}
-                barSize={30}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+        <BarChartComponent data={filteredData} />
         </div>
       </CardContent>
     </Card>
