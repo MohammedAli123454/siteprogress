@@ -168,16 +168,10 @@ export default function AccountChart() {
     </Card>
   );
 
-  // Define types for the props
-interface CategoryData {
-  name: string;
-  value: number;
-}
-
-interface PieChartComponentProps {
-  categoryData: CategoryData[];
-  categoryColors: string[];
-}
+  interface PieChartComponentProps {
+    categoryData: { name: string; value: number }[];  
+    categoryColors: string[];
+  }
 
 const PieChartComponent = ({ categoryData, categoryColors }: PieChartComponentProps) => (
   // Check if categoryData has items
@@ -207,9 +201,6 @@ const PieChartComponent = ({ categoryData, categoryColors }: PieChartComponentPr
     <p>No data available for the selected range.</p>
   )
 );
-
-
-
 
 interface BarChartComponentProps {
   data: { date: string; income: number; expense: number }[]; // Specify the shape of the data
