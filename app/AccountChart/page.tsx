@@ -146,7 +146,7 @@ export default function AccountChart() {
       { income: 0, expense: 0, balance: 0 } // Initialize balance as 0
     );
   }, [filteredData]);
-  
+
 
 
   type CardProps = {
@@ -154,7 +154,7 @@ export default function AccountChart() {
     value: number;
     color: string;
   };
-  
+
   const CardComponent = ({ title, value, color }: CardProps) => (
     <Card>
       <CardContent className="flex items-center justify-center text-center py-6 space-x-4">
@@ -169,93 +169,94 @@ export default function AccountChart() {
   );
 
   interface PieChartComponentProps {
-    categoryData: { name: string; value: number }[];  
+    categoryData: { name: string; value: number }[];
     categoryColors: string[];
   }
 
-const PieChartComponent = ({ categoryData, categoryColors }: PieChartComponentProps) => (
-  // Check if categoryData has items
-  categoryData.length > 0 ? (
-    <ResponsiveContainer width="100%" height={300}>
-      <PieChart>
-        <Pie
-          data={categoryData}
-          dataKey="value"
-          nameKey="name"
-          outerRadius="80%"
-          innerRadius="60%"
-          paddingAngle={5}
-          label={({ name, value }) => `${name}: $${value.toFixed(2)}`}
-        >
-          {categoryData.map((entry, index) => (
-            <Cell
-              key={`cell-${index}`}
-              fill={categoryColors[index % categoryColors.length]}
-            />
-          ))}
-        </Pie>
-      </PieChart>
+  const PieChartComponent = ({ categoryData, categoryColors }: PieChartComponentProps) => (
+    // Check if categoryData has items
+    categoryData.length > 0 ? (
+      <ResponsiveContainer width="100%" height={300}>
+        <PieChart>
+          <Pie
+            data={categoryData}
+            dataKey="value"
+            nameKey="name"
+            outerRadius="80%"
+            innerRadius="60%"
+            paddingAngle={5}
+            label={({ name, value }) => `${name}: $${value.toFixed(2)}`}
+          >
+            {categoryData.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={categoryColors[index % categoryColors.length]}
+              />
+            ))}
+          </Pie>
+        </PieChart>
+      </ResponsiveContainer>
+    ) : (
+      // Fallback message when categoryData is empty
+      <p>No data available for the selected range.</p>
+    )
+  );
+
+  interface BarChartComponentProps {
+    data: { date: string; income: number; expense: number }[]; // Specify the shape of the data
+  }
+
+  const BarChartComponent = ({ data }: BarChartComponentProps) => (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis
+          dataKey="date"
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
+        />
+        <YAxis
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(value) => `$${value}`}
+        />
+        <Tooltip
+          formatter={(value) => [`$${value}`, undefined]}
+          contentStyle={{
+            backgroundColor: "hsl(var(--popover))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: "var(--radius)",
+          }}
+        />
+        <Legend />
+        <Bar
+          dataKey="income"
+          name="Income"
+          fill="#22c55e"
+          radius={[4, 4, 0, 0]}
+          barSize={40}
+        />
+        <Bar
+          dataKey="expense"
+          name="Expense"
+          fill="#ef4444"
+          radius={[4, 4, 0, 0]}
+          barSize={40}
+        />
+      </BarChart>
     </ResponsiveContainer>
-  ) : (
-    // Fallback message when categoryData is empty
-    <p>No data available for the selected range.</p>
-  )
-);
-
-interface BarChartComponentProps {
-  data: { date: string; income: number; expense: number }[]; // Specify the shape of the data
-}
-
-const BarChartComponent = ({ data }: BarChartComponentProps) => (
-  <ResponsiveContainer width="100%" height="100%">
-    <BarChart data={data}>
-      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-      <XAxis
-        dataKey="date"
-        fontSize={12}
-        tickLine={false}
-        axisLine={false}
-      />
-      <YAxis
-        fontSize={12}
-        tickLine={false}
-        axisLine={false}
-        tickFormatter={(value) => `$${value}`}
-      />
-      <Tooltip
-        formatter={(value) => [`$${value}`, undefined]}
-        contentStyle={{
-          backgroundColor: "hsl(var(--popover))",
-          border: "1px solid hsl(var(--border))",
-          borderRadius: "var(--radius)",
-        }}
-      />
-      <Legend />
-      <Bar
-        dataKey="income"
-        name="Income"
-        fill="#22c55e"
-        radius={[4, 4, 0, 0]}
-        barSize={30}
-      />
-      <Bar
-        dataKey="expense"
-        name="Expense"
-        fill="#ef4444"
-        radius={[4, 4, 0, 0]}
-        barSize={30}
-      />
-    </BarChart>
-  </ResponsiveContainer>
-);
-
-
-
+  );
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-7">
-        <CardTitle className="text-base font-normal">Transaction Overview</CardTitle>
+    <div className="container mx-auto px-2 py-2 flex flex-col min-h-screen">
+      {/* Header Section */}
+      <div className="flex items-center justify-between mb-6">
+        {/* Transaction Overview Title */}
+        <h3 className="text-xl font-semibold text-gray-800">Transaction Overview</h3>
+  
+        {/* Full width Select dropdown */}
         <Select value={dateRange} onValueChange={(value: DateRange) => setDateRange(value)}>
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Select range" />
@@ -268,30 +269,28 @@ const BarChartComponent = ({ data }: BarChartComponentProps) => (
             ))}
           </SelectContent>
         </Select>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-12 gap-6">
-          {/* Left side - Cards */}
-          <div className="col-span-12 md:col-span-5 space-y-4">
+      </div>
+  
+      {/* Main Content Section with fixed height */}
+      <div className="grid grid-cols-12 gap-6 mb-8 h-[275px]">
+        {/* Left Side: Occupies 60% of the available space, spanning 5 out of the 12 columns in the grid. */}
+        <div className="col-span-12 md:col-span-5 space-y-4">
           <CardComponent title="TOTAL INCOME" value={totals.income} color="green-500" />
           <CardComponent title="TOTAL EXPENSES" value={totals.expense} color="red-500" />
-          <CardComponent  title="NET BALANCE"   value={totals.balance}
-              color={totals.income - totals.expense >= 0 ? 'green-500' : 'red-500'}
-            />
-          </div>
-
-          {/* Right side - Pie Chart */}
-          <div className="col-span-12 md:col-span-7 flex justify-center">
+          <CardComponent title="NET BALANCE" value={totals.balance} color={totals.income - totals.expense >= 0 ? "green-500" : "red-500"} />
+        </div>
+  
+        {/* Right Side: Occupies 60% of the available space, spanning 7 out of the 12 columns in the grid. */}
+        <div className="col-span-12 md:col-span-7 flex justify-center">
           <PieChartComponent categoryData={categoryData} categoryColors={categoryColors} />
-          </div>
         </div>
-
-        {/* Bar Chart */}
-        <div className="h-[300px] mt-8">
+      </div>
+  
+      {/* Bar Chart Section */}
+      <div className="mt-8 h-[350px]">
         <BarChartComponent data={filteredData} />
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
-}
-
+  
+}  
