@@ -139,6 +139,20 @@ const PivotalTable = <T extends Record<string, any>>({
     pivotedData[category][month] = total_sales;
   });
 
+  // pivotedData["Clothing"] = {}; 
+  // pivotedData = {
+  //   Clothing: {}
+  // };
+  // pivotedData["Clothing"]["Jan"] = 1000;
+  // {
+  //   Clothing: {
+  //     Jan: 1000,
+  //   },
+
+  // const pivotedData = {
+  //   Clothing: { Jan: 500, Feb: 750, Apr: 950 },
+  //   Electronics: { Jan: 1200, Feb: 2000, Apr: 2500 },
+  // };
 
   // Extract unique column and row keys
   const columnKeys = [...new Set(data.map((item) => item[columnKey]))].sort(
@@ -164,7 +178,6 @@ const PivotalTable = <T extends Record<string, any>>({
       <table className="min-w-full border-collapse border border-gray-400 shadow-md">
         <thead>
           <tr className="bg-gray-200">
-            {/* <th className="border border-gray-400 px-4 py-2" /> */}
             <th className="border border-gray-400 px-4 py-2">Category</th>
             {columnKeys.map((col) => (
               <th
