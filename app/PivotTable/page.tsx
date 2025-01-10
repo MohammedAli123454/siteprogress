@@ -1,15 +1,16 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import Select from "react-select";
 
-// Type definition for sales data
+// Define the type for sales data
 type SalesData = {
   month: string;
   category: string;
   total_sales: number;
 };
 
-// SalesTable1 Component
+// Main PivotTable component
 const PivotTable = () => {
   // Static sales data
   const salesData: SalesData[] = [
@@ -39,21 +40,52 @@ const PivotTable = () => {
     { month: "Sep", category: "Furniture", total_sales: 3100 },
   ];
 
+  // State to manage selected category
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Extract unique categories for the dropdown
+  const categoryOptions = Array.from(
+    new Set(salesData.map((item) => item.category))
+  ).map((category) => ({
+    value: category,
+    label: category,
+  }));
+
+  // Filter data based on selected category
+  const filteredData =
+    selectedCategory === null
+      ? salesData
+      : salesData.filter((item) => item.category === selectedCategory);
+
   return (
+
     <div className="p-4">
-      <h2 className="text-2xl font-semibold mb-4">Sales Data Analysis</h2>
-      <PivotalTable
-        data={salesData}
-        rowKey="category"
-        columnKey="month"
-        valueKey="total_sales"
-        formatNumber={(num) => num.toLocaleString()}
-      />
+    <div className="flex items-center justify-between mb-4">
+      <h2 className="text-2xl font-semibold">Sales Data Analysis</h2>
+      <div className="w-64">
+        <Select
+          options={[{ value: null, label: "All Categories" }, ...categoryOptions]}
+          onChange={(selectedOption) =>
+            setSelectedCategory(selectedOption?.value ?? null)
+          }
+          placeholder="Select a category"
+          isClearable
+        />
+      </div>
     </div>
+  
+    <PivotalTable
+      data={filteredData}
+      rowKey="category"
+      columnKey="month"
+      valueKey="total_sales"
+      formatNumber={(num) => num.toLocaleString()}
+    />
+  </div>
   );
 };
 
-// Props type for PivotalTable component
+// Props type definition for the generic PivotTable
 type PivotalTableProps<T> = {
   data: T[];
   rowKey: keyof T;
@@ -62,13 +94,16 @@ type PivotalTableProps<T> = {
   formatNumber?: (num: number) => string;
 };
 
-// Helper to render cell values
-const renderCellValue = (value: any, formatNumber?: (num: number) => string): React.ReactNode => {
+// Helper function to render cell values with optional formatting
+const renderCellValue = (
+  value: any,
+  formatNumber?: (num: number) => string
+): React.ReactNode => {
   if (value === undefined || value === null) return "-";
   return typeof value === "number" && formatNumber ? formatNumber(value) : value;
 };
 
-// PivotalTable Component
+// Generic PivotTable component
 const PivotalTable = <T extends Record<string, any>>({
   data,
   rowKey,
@@ -76,60 +111,66 @@ const PivotalTable = <T extends Record<string, any>>({
   valueKey,
   formatNumber,
 }: PivotalTableProps<T>) => {
-  // Extract unique row and column keys
-  const columnKeys = [...new Set(data.map((item) => item[columnKey]))];
-  const rowKeys = [...new Set(data.map((item) => item[rowKey]))];
+  // Month ordering based on the calendar
+  const monthOrder = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  // Initialize pivoted data structure
+  const pivotedData: Record<string, Record<string, number>> = {};
+
+  // Populate pivotedData
+  data.forEach((item) => {
+    const { month, category, total_sales } = item;
+    if (!pivotedData[category]) {
+      pivotedData[category] = {};
+    }
+    pivotedData[category][month] = total_sales;
+  });
 
 
-  console.log("Column Keys" + columnKeys);
-  console.log("Row Keys" + rowKeys);
+  // Extract unique column and row keys
+  const columnKeys = [...new Set(data.map((item) => item[columnKey]))].sort(
+    (a, b) => monthOrder.indexOf(a as string) - monthOrder.indexOf(b as string)
+  );
+  const rowKeys = Object.keys(pivotedData);
 
-// Column Keys	Apr,Aug,Dec,Feb,Jan,Jul,Jun,Mar,May,Nov,Oct,Sep
-// Row Keys	Clothing,Electronics,Home Appliances,Sports,Books,Furniture
+  // Calculate row totals
+  const rowTotals = rowKeys.map((row) =>
+    columnKeys.reduce((sum, col) => sum + (pivotedData[row][col] || 0), 0)
+  );
 
+  // Calculate column totals
+  const columnTotals = columnKeys.map((col) =>
+    rowKeys.reduce((sum, row) => sum + (pivotedData[row][col] || 0), 0)
+  );
 
-
-
-// Row Keys	Clothing,Electronics,Home Appliances,Sports,Books,Furniture
-
-
-
-  // Map data into row-column structure
-  const dataMap = data.reduce((acc, item) => {
-    const row = item[rowKey] as string;
-    const col = item[columnKey] as string;
-    acc[row] = acc[row] || {};
-    acc[row][col] = item[valueKey];
-    return acc;
-  }, {} as Record<string, Record<string, any>>);
-
-  // Calculate totals
-  const rowTotals = rowKeys.reduce((totals, row) => {
-    totals[row] = columnKeys.reduce(
-      (sum, col) => sum + (dataMap[row]?.[col] || 0),
-      0
-    );
-    return totals;
-  }, {} as Record<string, number>);
-
-  const columnTotals = columnKeys.reduce((totals, col) => {
-    totals[col] = rowKeys.reduce(
-      (sum, row) => sum + (dataMap[row]?.[col] || 0),
-      0
-    );
-    return totals;
-  }, {} as Record<string, number>);
-
-  const grandTotal = Object.values(columnTotals).reduce((sum, val) => sum + val, 0);
+  // Calculate the grand total
+  const grandTotal = rowTotals.reduce((sum, val) => sum + (val || 0), 0);
 
   return (
     <div className="overflow-auto max-h-96">
       <table className="min-w-full border-collapse border border-gray-400 shadow-md">
         <thead>
           <tr className="bg-gray-200">
-            <th className="border border-gray-400 px-4 py-2" />
+            {/* <th className="border border-gray-400 px-4 py-2" /> */}
+            <th className="border border-gray-400 px-4 py-2">Category</th>
             {columnKeys.map((col) => (
-              <th key={col as string} className="border border-gray-400 px-4 py-2">
+              <th
+                key={col as string}
+                className="border border-gray-400 px-4 py-2"
+              >
                 {col}
               </th>
             ))}
@@ -137,24 +178,34 @@ const PivotalTable = <T extends Record<string, any>>({
           </tr>
         </thead>
         <tbody>
-          {rowKeys.map((row) => (
-            <tr key={row as string}>
-              <td className="border border-gray-400 px-4 py-2 font-medium">{row}</td>
+          {rowKeys.map((row, rowIndex) => (
+            <tr key={row}>
+              <td className="border border-gray-400 px-4 py-2 font-medium">
+                {row}
+              </td>
               {columnKeys.map((col) => (
-                <td key={`${row}-${col}`} className="border border-gray-400 px-4 py-2 text-center">
-                  {renderCellValue(dataMap[row]?.[col], formatNumber)}
+                <td
+                  key={`${row}-${col}`}
+                  className="border border-gray-400 px-4 py-2 text-center"
+                >
+                  {renderCellValue(pivotedData[row][col], formatNumber)}
                 </td>
               ))}
               <td className="border border-gray-400 px-4 py-2 text-center">
-                {renderCellValue(rowTotals[row], formatNumber)}
+                {renderCellValue(rowTotals[rowIndex], formatNumber)}
               </td>
             </tr>
           ))}
           <tr className="bg-gray-100">
-            <td className="border border-gray-400 px-4 py-2 font-medium">Total</td>
-            {columnKeys.map((col) => (
-              <td key={col as string} className="border border-gray-400 px-4 py-2 text-center">
-                {renderCellValue(columnTotals[col], formatNumber)}
+            <td className="border border-gray-400 px-4 py-2 font-medium">
+              Total
+            </td>
+            {columnTotals.map((total, colIndex) => (
+              <td
+                key={`total-${colIndex}`}
+                className="border border-gray-400 px-4 py-2 text-center"
+              >
+                {renderCellValue(total, formatNumber)}
               </td>
             ))}
             <td className="border border-gray-400 px-4 py-2 text-center">
