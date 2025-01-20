@@ -1,7 +1,5 @@
 "use client";
 
-import fs from 'fs';
-import path from 'path';
 import { useState } from 'react';
 
 // Helper function to parse DXF content

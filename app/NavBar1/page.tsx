@@ -75,6 +75,7 @@ const SideNav = () => {
         { name: "Overall Summary", path: "/OverallJoints" },
         { name: "Account Chart", path: "/AccountChart" },
         { name: "Pivot Table", path: "/PivotTable" },
+        { name: "Upload DXF File", path: "/UploadDXF" },
       ],
       
     },

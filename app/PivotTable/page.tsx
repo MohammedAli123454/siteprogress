@@ -79,7 +79,7 @@ const PivotTable = () => {
       rowKey="category"
       columnKey="month"
       valueKey="total_sales"
-      formatNumber={(num) => num.toLocaleString()}
+
     />
   </div>
   );
@@ -91,17 +91,22 @@ type PivotalTableProps<T> = {
   rowKey: keyof T;
   columnKey: keyof T;
   valueKey: keyof T;
-  formatNumber?: (num: number) => string;
+
 };
 
 // Helper function to render cell values with optional formatting
-const renderCellValue = (
-  value: any,
-  formatNumber?: (num: number) => string
-): React.ReactNode => {
-  if (value === undefined || value === null) return "-";
-  return typeof value === "number" && formatNumber ? formatNumber(value) : value;
+const renderCellValue = (value: number | string | null | undefined): string => {
+  if (value === null || value === undefined) {
+    return "-";  // Render "-" for null/undefined
+  }
+
+  if (typeof value === "number") {
+    return value.toLocaleString();  // Format number
+  } else {
+    return value;  // Render string as is
+  }
 };
+
 
 // Generic PivotTable component
 const PivotalTable = <T extends Record<string, any>>({
@@ -109,7 +114,6 @@ const PivotalTable = <T extends Record<string, any>>({
   rowKey,
   columnKey,
   valueKey,
-  formatNumber,
 }: PivotalTableProps<T>) => {
   // Month ordering based on the calendar
   const monthOrder = [
@@ -201,11 +205,11 @@ const PivotalTable = <T extends Record<string, any>>({
                   key={`${row}-${col}`}
                   className="border border-gray-400 px-4 py-2 text-center"
                 >
-                  {renderCellValue(pivotedData[row][col], formatNumber)}
+                  {renderCellValue(pivotedData[row][col])}
                 </td>
               ))}
               <td className="border border-gray-400 px-4 py-2 text-center">
-                {renderCellValue(rowTotals[rowIndex], formatNumber)}
+                {renderCellValue(rowTotals[rowIndex])}
               </td>
             </tr>
           ))}
@@ -218,11 +222,11 @@ const PivotalTable = <T extends Record<string, any>>({
                 key={`total-${colIndex}`}
                 className="border border-gray-400 px-4 py-2 text-center"
               >
-                {renderCellValue(total, formatNumber)}
+                {renderCellValue(total)}
               </td>
             ))}
             <td className="border border-gray-400 px-4 py-2 text-center">
-              {renderCellValue(grandTotal, formatNumber)}
+              {renderCellValue(grandTotal)}
             </td>
           </tr>
         </tbody>
