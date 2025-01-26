@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, serial, varchar, primaryKey, integer, json,timestamp} from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar, primaryKey, integer, json,timestamp,pgEnum} from "drizzle-orm/pg-core";
 import { date } from 'drizzle-orm/pg-core'; // Ensure this import is included
 export const mocDetail = pgTable("mocDetail", {
   id: serial('id').primaryKey(),  // Primary key
@@ -109,4 +109,15 @@ export const mocRecords = pgTable("moc_records", {
   pqrStatus: varchar("pqr_status").notNull(),
   wqtStatus: varchar("wqt_status").notNull(),
   wpsStatus: varchar("wps_status").notNull(),
+});
+
+export const customers = pgTable("customers", {
+  id: serial("id").primaryKey(),
+  date: date("date").notNull(),
+  name: varchar("name").notNull(),
+  documentNo: varchar("documentNo").notNull(),
+  documentType: varchar("documentType").notNull(),
+  description: varchar("description").notNull(),
+  debit: integer("debit").notNull(),
+  credit: integer("credit").notNull(),
 });
