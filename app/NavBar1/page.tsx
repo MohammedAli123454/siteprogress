@@ -77,6 +77,10 @@ const SideNav = () => {
         { name: "Pivot Table", path: "/PivotTable" },
         { name: "Upload DXF File", path: "/UploadDXF" },
         { name: "Customer Statement", path: "/CustomerStatement" },
+        { name: "Account Receivable", path: "/AccountReceivable" },
+
+
+        
       ],
       
     },

@@ -1,0 +1,649 @@
+{
+  "id": "da494c7b-7774-4e63-97ce-ba133415666d",
+  "prevId": "36652490-fcf3-4b04-8a8d-bc2b65a722e8",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.countries": {
+      "name": "countries",
+      "schema": "",
+      "columns": {
+        "country_name": {
+          "name": "country_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "details": {
+          "name": "details",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.customers": {
+      "name": "customers",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "documentNo": {
+          "name": "documentNo",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "documentType": {
+          "name": "documentType",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "debit": {
+          "name": "debit",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credit": {
+          "name": "credit",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.files": {
+      "name": "files",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "project_name": {
+          "name": "project_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fileName": {
+          "name": "fileName",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.invoices": {
+      "name": "invoices",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "invoice_number": {
+          "name": "invoice_number",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "NOW()"
+        },
+        "customer_name": {
+          "name": "customer_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_address": {
+          "name": "customer_address",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_qty": {
+          "name": "total_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "grand_total": {
+          "name": "grand_total",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.jointSummary": {
+      "name": "jointSummary",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "MOC": {
+          "name": "MOC",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "MOC_NAME": {
+          "name": "MOC_NAME",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "moc_start_date": {
+          "name": "moc_start_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mcc_date": {
+          "name": "mcc_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_shop_joints": {
+          "name": "total_shop_joints",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_field_joints": {
+          "name": "total_field_joints",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_joints": {
+          "name": "total_joints",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_shop_inch_dia": {
+          "name": "total_shop_inch_dia",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_field_inch_dia": {
+          "name": "total_field_inch_dia",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_inch_dia": {
+          "name": "total_inch_dia",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "jointSummary_MOC_unique": {
+          "name": "jointSummary_MOC_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "MOC"
+          ]
+        }
+      }
+    },
+    "public.jointTable": {
+      "name": "jointTable",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "pipe_size": {
+          "name": "pipe_size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "thk": {
+          "name": "thk",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shop_joint": {
+          "name": "shop_joint",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field_joint": {
+          "name": "field_joint",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_joint": {
+          "name": "total_joint",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shop_inch_dia": {
+          "name": "shop_inch_dia",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field_inch_dia": {
+          "name": "field_inch_dia",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_inch_dia": {
+          "name": "total_inch_dia",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "MOC": {
+          "name": "MOC",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "jointTable_MOC_jointSummary_MOC_fk": {
+          "name": "jointTable_MOC_jointSummary_MOC_fk",
+          "tableFrom": "jointTable",
+          "tableTo": "jointSummary",
+          "columnsFrom": [
+            "MOC"
+          ],
+          "columnsTo": [
+            "MOC"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.jointsDetail": {
+      "name": "jointsDetail",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "SIZE_INCHES": {
+          "name": "SIZE_INCHES",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PIPE_SCHEDULE": {
+          "name": "PIPE_SCHEDULE",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "THKNESS": {
+          "name": "THKNESS",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "SHOP_JOINTS": {
+          "name": "SHOP_JOINTS",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "SHOP_INCH_DIA": {
+          "name": "SHOP_INCH_DIA",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "FIELD_JOINTS": {
+          "name": "FIELD_JOINTS",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "FIELD_INCH_DIA": {
+          "name": "FIELD_INCH_DIA",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TOTAL_JOINTS": {
+          "name": "TOTAL_JOINTS",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TOTAL_INCH_DIA": {
+          "name": "TOTAL_INCH_DIA",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MOC": {
+          "name": "MOC",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "jointsDetail_MOC_mocDetail_MOC_fk": {
+          "name": "jointsDetail_MOC_mocDetail_MOC_fk",
+          "tableFrom": "jointsDetail",
+          "tableTo": "mocDetail",
+          "columnsFrom": [
+            "MOC"
+          ],
+          "columnsTo": [
+            "MOC"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.line_items": {
+      "name": "line_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "invoice_id": {
+          "name": "invoice_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_code": {
+          "name": "item_code",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "qty": {
+          "name": "qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit": {
+          "name": "unit",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit_price": {
+          "name": "unit_price",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_price": {
+          "name": "total_price",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "line_items_invoice_id_invoices_id_fk": {
+          "name": "line_items_invoice_id_invoices_id_fk",
+          "tableFrom": "line_items",
+          "tableTo": "invoices",
+          "columnsFrom": [
+            "invoice_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.mocDetail": {
+      "name": "mocDetail",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "MOC": {
+          "name": "MOC",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "MOC_NAME": {
+          "name": "MOC_NAME",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "mocDetail_MOC_unique": {
+          "name": "mocDetail_MOC_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "MOC"
+          ]
+        }
+      }
+    },
+    "public.moc_records": {
+      "name": "moc_records",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "moc_number": {
+          "name": "moc_number",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "small_description": {
+          "name": "small_description",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "moc_name": {
+          "name": "moc_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "awarded_date": {
+          "name": "awarded_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mcc_date": {
+          "name": "mcc_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scope": {
+          "name": "scope",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pqr_status": {
+          "name": "pqr_status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wqt_status": {
+          "name": "wqt_status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wps_status": {
+          "name": "wps_status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

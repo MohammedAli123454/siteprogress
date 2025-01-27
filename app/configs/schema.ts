@@ -111,13 +111,19 @@ export const mocRecords = pgTable("moc_records", {
   wpsStatus: varchar("wps_status").notNull(),
 });
 
-export const customers = pgTable("customers", {
+
+export const customer = pgTable("customer", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull(),
+});
+
+export const accountReceivable = pgTable("account_receivable", {
   id: serial("id").primaryKey(),
   date: date("date").notNull(),
-  name: varchar("name").notNull(),
-  documentNo: varchar("documentNo").notNull(),
-  documentType: varchar("documentType").notNull(),
+  documentNo: varchar("documentno").notNull(),
+  documentType: varchar("documenttype").notNull(),
   description: varchar("description").notNull(),
+  amount: integer("amount").notNull(),
   debit: integer("debit").notNull(),
   credit: integer("credit").notNull(),
 });
