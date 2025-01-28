@@ -5,11 +5,13 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { db } from "../configs/db";
 import { accountReceivable, customer } from "../configs/schema";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
+import Select from "react-select";
 import { format } from "date-fns";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { FaCalendarAlt, FaSpinner } from "react-icons/fa";
 
 const entrySchema = z.object({
   date: z.date({ required_error: "Date is required" }),
@@ -27,7 +29,7 @@ type Entry = z.infer<typeof entrySchema>;
 
 type CustomerOption = {
   label: string;
-  value: number;
+  value: string;
 };
 
 const AccountReceivable = () => {
@@ -35,7 +37,7 @@ const AccountReceivable = () => {
     handleSubmit,
     control,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<Entry>({
     resolver: zodResolver(entrySchema),
     defaultValues: {
@@ -49,41 +51,54 @@ const AccountReceivable = () => {
   });
 
   const [customersList, setCustomersList] = useState<CustomerOption[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const fetchCustomers = async () => {
-    const data = await db
-      .select({ label: customer.name, value: customer.id })
-      .from(customer);
+    try {
+      const data = await db
+        .select({ label: customer.name, value: customer.id })
+        .from(customer);
 
-    setCustomersList(
-      data.map((customer) => ({
-        label: customer.label,
-        value: Number(customer.value),
-      }))
-    );
+      setCustomersList(
+        data.map((customer) => ({
+          label: customer.label,
+          value: customer.value.toString(),
+        }))
+      );
+    } catch (error) {
+      toast.error("Failed to fetch customers");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const addEntry = async (entry: Entry) => {
-    const validatedEntry = entrySchema.safeParse(entry);
-    if (!validatedEntry.success) {
-      console.error(validatedEntry.error);
-      return;
+    try {
+      // Remove redundant validation since react-hook-form already validated
+      console.log("Submitting entry:", entry); // Log entry data
+  
+      await db.insert(accountReceivable).values({
+        date: entry.date,
+        documentNo: entry.documentno,
+        documentType: entry.documenttype,
+        description: entry.description,
+        amount: entry.amount,
+        debit: entry.documenttype === "Invoice" ? entry.amount : 0,
+        credit: entry.documenttype === "Receipt" ? entry.amount : 0,
+        customerId: Number(entry.customerId), // Remove if customerId is a string
+      });
+  
+      toast.success("Entry added successfully");
+      reset();
+    } catch (error) {
+      console.error("Database error:", error); // Log detailed error
+      toast.error("Failed to add entry. Check console for details.");
     }
-
-    await db.insert(accountReceivable).values({
-      date: entry.date.toISOString(),
-      documentNo: entry.documentno,
-      documentType: entry.documenttype,
-      description: entry.description,
-      amount: entry.amount,
-      debit: entry.documenttype === "Invoice" ? entry.amount : 0,
-      credit: entry.documenttype === "Receipt" ? entry.amount : 0,
-    });
   };
 
   const onSubmit = (data: Entry) => {
     addEntry(data);
-    reset();
   };
 
   useEffect(() => {
@@ -91,155 +106,180 @@ const AccountReceivable = () => {
   }, []);
 
   return (
-    <div className="container mx-auto p-4 flex justify-center items-center min-h-screen">
-      <div className="w-full max-w-3xl">
-        <h1 className="text-2xl font-bold mb-4 text-center">Account Receivable</h1>
+    <div className="container mx-auto p-4 flex justify-center items-center min-h-screen bg-gray-50">
+      <ToastContainer />
+      <div className="w-full max-w-4xl">
+        <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">Account Receivable</h1>
 
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="mb-6 border p-6 rounded shadow-md space-y-6"
+          className="mb-6 border p-8 rounded-lg shadow-lg bg-white space-y-6"
         >
           {/* Date Field */}
-          <div className="flex items-center space-x-4 mb-4">
-            <label htmlFor="date" className="text-lg">Date</label>
-            <Controller
-              name="date"
-              control={control}
-              render={({ field }) => (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <div className="w-full">
-                      <Button
-                        variant="outline"
-                        className={`w-full text-left ${!field.value ? "text-muted-foreground" : ""}`}
-                      >
-                        {field.value ? format(new Date(field.value), "yyyy-MM-dd") : "Pick a date"}
-                      </Button>
-                    </div>
-                  </PopoverTrigger>
-                  <PopoverContent align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) => date > new Date()}
-                      className="rounded-md"
+          <div className="grid grid-cols-5 gap-4 items-center">
+            <label htmlFor="date" className="col-span-1 text-lg font-medium text-gray-700">Date</label>
+            <div className="col-span-4">
+              <Controller
+                name="date"
+                control={control}
+                render={({ field }) => (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      readOnly
+                      value={format(field.value, "yyyy-MM-dd")}
+                      onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                      className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                      placeholder="Select Date"
                     />
-                  </PopoverContent>
-                </Popover>
+                    <FaCalendarAlt className="absolute top-3 right-3 text-gray-500 cursor-pointer" onClick={() => setIsCalendarOpen(!isCalendarOpen)} />
+                    {isCalendarOpen && (
+                      <div className="absolute z-10 mt-2">
+                        <Calendar
+                          onChange={(date) => {
+                            field.onChange(date);
+                            setIsCalendarOpen(false);
+                          }}
+                          value={field.value}
+                          className="border rounded-lg shadow-sm"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              />
+              {errors.date && (
+                <p className="text-red-500 text-sm mt-1">{errors.date.message}</p>
               )}
-            />
-            {errors.date && <p className="text-red-500 text-sm">{errors.date.message}</p>}
+            </div>
           </div>
 
           {/* Customer Field */}
-          <div className="flex items-center space-x-4 mb-4">
-            <label htmlFor="customerId" className="text-lg">Customer</label>
-            <Controller
-              name="customerId"
-              control={control}
-              render={({ field }) => (
-                <Select onValueChange={field.onChange}>
-                  <SelectTrigger>
-                    <span className="text-muted-foreground">
-                      {field.value
-                        ? customersList.find((customer) => customer.value.toString() === field.value)?.label || "Select Customer"
-                        : "Select Customer"}
-                    </span>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customersList.map((customer) => (
-                      <SelectItem key={customer.value} value={customer.value.toString()}>
-                        {customer.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          <div className="grid grid-cols-5 gap-4 items-center">
+            <label htmlFor="customerId" className="col-span-1 text-lg font-medium text-gray-700">Customer</label>
+            <div className="col-span-4">
+              <Controller
+                name="customerId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    options={customersList}
+                    onChange={(selectedOption) => field.onChange(selectedOption?.value)}
+                    value={customersList.find((customer) => customer.value === field.value)}
+                    placeholder="Select Customer"
+                    isLoading={isLoading}
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                  />
+                )}
+              />
+              {errors.customerId && (
+                <p className="text-red-500 text-sm mt-1">{errors.customerId.message}</p>
               )}
-            />
-            {errors.customerId && <p className="text-red-500 text-sm">{errors.customerId.message}</p>}
+            </div>
           </div>
 
           {/* Document No */}
-          <div className="flex items-center space-x-4 mb-4">
-            <label htmlFor="documentno" className="text-lg">Document No</label>
-            <Controller
-              name="documentno"
-              control={control}
-              render={({ field }) => (
-                <input
-                  {...field}
-                  type="text"
-                  className="border p-2 w-full"
-                  placeholder="Document No"
-                />
+          <div className="grid grid-cols-5 gap-4 items-center">
+            <label htmlFor="documentno" className="col-span-1 text-lg font-medium text-gray-700">Document No</label>
+            <div className="col-span-4">
+              <Controller
+                name="documentno"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    {...field}
+                    type="text"
+                    className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
+                    placeholder="Document No"
+                  />
+                )}
+              />
+              {errors.documentno && (
+                <p className="text-red-500 text-sm mt-1">{errors.documentno.message}</p>
               )}
-            />
-            {errors.documentno && <p className="text-red-500 text-sm">{errors.documentno.message}</p>}
+            </div>
           </div>
 
           {/* Document Type */}
-          <div className="flex items-center space-x-4 mb-4">
-            <label htmlFor="documenttype" className="text-lg">Document Type</label>
-            <Controller
-              name="documenttype"
-              control={control}
-              render={({ field }) => (
-                <select {...field} className="border p-2 w-full">
-                  <option value="Invoice">Invoice</option>
-                  <option value="Receipt">Receipt</option>
-                </select>
-              )}
-            />
+          <div className="grid grid-cols-5 gap-4 items-center">
+            <label htmlFor="documenttype" className="col-span-1 text-lg font-medium text-gray-700">Document Type</label>
+            <div className="col-span-4">
+              <Controller
+                name="documenttype"
+                control={control}
+                render={({ field }) => (
+                  <select
+                    {...field}
+                    className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="Invoice">Invoice</option>
+                    <option value="Receipt">Receipt</option>
+                  </select>
+                )}
+              />
+            </div>
           </div>
 
           {/* Description */}
-          <div className="flex items-center space-x-4 mb-4">
-            <label htmlFor="description" className="text-lg">Description</label>
-            <Controller
-              name="description"
-              control={control}
-              render={({ field }) => (
-                <input
-                  {...field}
-                  type="text"
-                  className="border p-2 w-full"
-                  placeholder="Description"
-                />
+          <div className="grid grid-cols-5 gap-4 items-center">
+            <label htmlFor="description" className="col-span-1 text-lg font-medium text-gray-700">Description</label>
+            <div className="col-span-4">
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    {...field}
+                    type="text"
+                    className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
+                    placeholder="Description"
+                  />
+                )}
+              />
+              {errors.description && (
+                <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
               )}
-            />
-            {errors.description && <p className="text-red-500 text-sm">{errors.description.message}</p>}
+            </div>
           </div>
 
           {/* Amount */}
-          <div className="flex items-center space-x-4 mb-4">
-            <label htmlFor="amount" className="text-lg">Amount</label>
-            <Controller
-              name="amount"
-              control={control}
-              render={({ field }) => (
-                <input
-                  {...field}
-                  type="number"
-                  step="0.01"
-                  className="border p-2 w-full"
-                  placeholder="Amount"
-                  value={field.value || ''} // Ensure value is either a number or empty string
-                  onChange={(e) => {
-                    field.onChange(parseFloat(e.target.value) || 0); // default to 0 if NaN
-                  }}
-                />
+          <div className="grid grid-cols-5 gap-4 items-center">
+            <label htmlFor="amount" className="col-span-1 text-lg font-medium text-gray-700">Amount</label>
+            <div className="col-span-4">
+              <Controller
+                name="amount"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    {...field}
+                    type="number"
+                    step="0.01"
+                    className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
+                    placeholder="Amount"
+                    value={field.value || ''}
+                    onChange={(e) => {
+                      field.onChange(parseFloat(e.target.value) || 0);
+                    }}
+                  />
+                )}
+              />
+              {errors.amount && (
+                <p className="text-red-500 text-sm mt-1">{errors.amount.message}</p>
               )}
-            />
-            {errors.amount && <p className="text-red-500 text-sm">{errors.amount.message}</p>}
+            </div>
           </div>
 
           {/* Submit Button */}
           <div className="flex justify-center">
             <button
               type="submit"
-              className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              disabled={isSubmitting}
+              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 flex items-center"
             >
+              {isSubmitting ? (
+                <FaSpinner className="animate-spin mr-2" />
+              ) : null}
               Add Entry
             </button>
           </div>
@@ -250,3 +290,4 @@ const AccountReceivable = () => {
 };
 
 export default AccountReceivable;
+

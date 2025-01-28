@@ -117,13 +117,15 @@ export const customer = pgTable("customer", {
   name: varchar("name").notNull(),
 });
 
-export const accountReceivable = pgTable("account_receivable", {
-  id: serial("id").primaryKey(),
-  date: date("date").notNull(),
-  documentNo: varchar("documentno").notNull(),
-  documentType: varchar("documenttype").notNull(),
-  description: varchar("description").notNull(),
-  amount: integer("amount").notNull(),
-  debit: integer("debit").notNull(),
-  credit: integer("credit").notNull(),
+// Example schema configuration (e.g., using Drizzle ORM)
+export const accountReceivable = pgTable('account_receivable', {
+  id: serial('id').primaryKey(),
+  date: timestamp('date', { mode: 'date' }).notNull(), // Use 'date' mode for Date objects
+  documentNo: varchar('documentno', { length: 256 }).notNull(),
+  documentType: varchar('documenttype', { length: 50 }).notNull(),
+  description: varchar('description').notNull(),
+  amount: integer('amount').notNull(),
+  debit: integer('debit'),
+  credit: integer('credit'),
+  customerId: integer('customerid').references(() => customer.id),
 });
