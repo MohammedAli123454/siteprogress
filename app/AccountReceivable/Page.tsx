@@ -11,9 +11,20 @@ import Select from "react-select";
 import { format } from "date-fns";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FaCalendarAlt, FaSpinner } from "react-icons/fa";
+import { FaCalendarAlt, FaSpinner, FaEdit, FaTrash } from "react-icons/fa";
+import { eq } from "drizzle-orm";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 const entrySchema = z.object({
+  id: z.number().optional(),
   date: z.date({ required_error: "Date is required" }),
   customerId: z.string().nonempty("Customer is required"),
   documentno: z.string().nonempty("Document No is required"),
@@ -25,7 +36,15 @@ const entrySchema = z.object({
     .gt(0, "Amount must be greater than 0"),
 });
 
-type Entry = z.infer<typeof entrySchema>;
+type Entry = {
+  id?: number;
+  date: Date; // Ensure this is strictly Date type
+  customerId: string;
+  documentno: string;
+  documenttype: "Invoice" | "Receipt";
+  description: string;
+  amount: number;
+};
 
 type CustomerOption = {
   label: string;
@@ -37,6 +56,7 @@ const AccountReceivable = () => {
     handleSubmit,
     control,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<Entry>({
     resolver: zodResolver(entrySchema),
@@ -53,6 +73,12 @@ const AccountReceivable = () => {
   const [customersList, setCustomersList] = useState<CustomerOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [entryToDelete, setEntryToDelete] = useState<number | null>(null);
+
+  const isValidDate = (date: Date) => {
+    return !isNaN(date.getTime());
+  };
 
   const fetchCustomers = async () => {
     try {
@@ -73,11 +99,33 @@ const AccountReceivable = () => {
     }
   };
 
+  // Update the fetchEntries function to handle invalid dates
+const fetchEntries = async () => {
+  try {
+    const data = await db.select().from(accountReceivable);
+
+    const mappedEntries: Entry[] = data.map(entry => {
+      const date = new Date(entry.date);
+      return {
+        id: entry.id,
+        date: isValidDate(date) ? date : new Date(), // Fallback to valid date if invalid
+        customerId: entry.customerId?.toString() || "",
+        documentno: entry.documentNo,
+        documenttype: entry.documentType as "Invoice" | "Receipt",
+        description: entry.description,
+        amount: entry.amount,
+      };
+    });
+
+    setEntries(mappedEntries);
+  } catch (error) {
+    toast.error("Failed to fetch entries");
+  }
+};
+  
+
   const addEntry = async (entry: Entry) => {
     try {
-      // Remove redundant validation since react-hook-form already validated
-      console.log("Submitting entry:", entry); // Log entry data
-  
       await db.insert(accountReceivable).values({
         date: entry.date,
         documentNo: entry.documentno,
@@ -86,35 +134,90 @@ const AccountReceivable = () => {
         amount: entry.amount,
         debit: entry.documenttype === "Invoice" ? entry.amount : 0,
         credit: entry.documenttype === "Receipt" ? entry.amount : 0,
-        customerId: Number(entry.customerId), // Remove if customerId is a string
+        customerId: Number(entry.customerId),
       });
-  
+
       toast.success("Entry added successfully");
       reset();
+      fetchEntries();
     } catch (error) {
-      console.error("Database error:", error); // Log detailed error
+      console.error("Database error:", error);
       toast.error("Failed to add entry. Check console for details.");
     }
   };
 
-  const onSubmit = (data: Entry) => {
-    addEntry(data);
+  const updateEntry = async (entry: Entry) => {
+    try {
+      await db
+        .update(accountReceivable)
+        .set({
+          date: entry.date,
+          documentNo: entry.documentno,
+          documentType: entry.documenttype,
+          description: entry.description,
+          amount: entry.amount,
+          debit: entry.documenttype === "Invoice" ? entry.amount : 0,
+          credit: entry.documenttype === "Receipt" ? entry.amount : 0,
+          customerId: Number(entry.customerId),
+        })
+
+        .where(eq(accountReceivable.id,entry.id!));
+
+
+      toast.success("Entry updated successfully");
+      reset();
+      fetchEntries();
+    } catch (error) {
+      console.error("Database error:", error);
+      toast.error("Failed to update entry. Check console for details.");
+    }
   };
 
+  const confirmDelete = async () => {
+    if (entryToDelete) {
+      try {
+        await db.delete(accountReceivable).where(eq(accountReceivable.id, entryToDelete));
+        toast.success("Entry deleted successfully");
+        fetchEntries();
+      } catch (error) {
+        console.error("Database error:", error);
+        toast.error("Failed to delete entry. Check console for details.");
+      }
+      setEntryToDelete(null);
+    }
+  };
+
+  const onSubmit = (data: Entry) => {
+    if (data.id) {
+      updateEntry(data);
+    } else {
+      addEntry(data);
+    }
+  };
+
+  const onEdit = (entry: Entry) => {
+    setValue("id", entry.id);
+    setValue("date", entry.date);
+    setValue("customerId", entry.customerId);
+    setValue("documentno", entry.documentno);
+    setValue("documenttype", entry.documenttype);
+    setValue("description", entry.description);
+    setValue("amount", entry.amount);
+  };
   useEffect(() => {
     fetchCustomers();
+    fetchEntries();
   }, []);
 
   return (
-    <div className="container mx-auto p-4 flex justify-center items-center min-h-screen bg-gray-50">
-      <ToastContainer />
-      <div className="w-full max-w-4xl">
-        <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">Account Receivable</h1>
-
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="mb-6 border p-8 rounded-lg shadow-lg bg-white space-y-6"
-        >
+    <div className="container mx-auto p-4 bg-gray-50"> {/* Removed min-h-screen and centering */}
+    <ToastContainer />
+    <div className="w-full max-w-4xl">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="mb-4 border p-6 rounded-lg shadow-lg bg-white space-y-4" // Reduced padding and spacing
+      >
+        <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">Account Receivable</h1> {/* Moved inside form */}
           {/* Date Field */}
           <div className="grid grid-cols-5 gap-4 items-center">
             <label htmlFor="date" className="col-span-1 text-lg font-medium text-gray-700">Date</label>
@@ -127,7 +230,8 @@ const AccountReceivable = () => {
                     <input
                       type="text"
                       readOnly
-                      value={format(field.value, "yyyy-MM-dd")}
+                      value={field.value && isValidDate(field.value) ? format(field.value, "yyyy-MM-dd") : ""}
+                
                       onClick={() => setIsCalendarOpen(!isCalendarOpen)}
                       className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500 cursor-pointer"
                       placeholder="Select Date"
@@ -246,7 +350,7 @@ const AccountReceivable = () => {
           {/* Amount */}
           <div className="grid grid-cols-5 gap-4 items-center">
             <label htmlFor="amount" className="col-span-1 text-lg font-medium text-gray-700">Amount</label>
-            <div className="col-span-4">
+            <div className="col-span-3">
               <Controller
                 name="amount"
                 control={control}
@@ -268,22 +372,90 @@ const AccountReceivable = () => {
                 <p className="text-red-500 text-sm mt-1">{errors.amount.message}</p>
               )}
             </div>
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex justify-center">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 flex items-center"
-            >
-              {isSubmitting ? (
-                <FaSpinner className="animate-spin mr-2" />
-              ) : null}
-              Add Entry
-            </button>
+            <div className="col-span-1">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 flex items-center justify-center"
+              >
+                {isSubmitting ? (
+                  <FaSpinner className="animate-spin mr-2" />
+                ) : null}
+                {control._formValues.id ? "Update" : "Add"}
+              </button>
+            </div>
           </div>
         </form>
+
+        {/* Entries Table */}
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white border rounded-lg shadow-sm">
+            <thead>
+              <tr>
+                <th className="px-4 py-2 border-b">Date</th>
+                <th className="px-4 py-2 border-b">Customer</th>
+                <th className="px-4 py-2 border-b">Document No</th>
+                <th className="px-4 py-2 border-b">Document Type</th>
+                <th className="px-4 py-2 border-b">Description</th>
+                <th className="px-4 py-2 border-b">Amount</th>
+                <th className="px-4 py-2 border-b">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry) => (
+                <tr key={entry.id}>
+               <td className="px-4 py-2 border-b">
+  {isValidDate(entry.date) ? format(entry.date, "yyyy-MM-dd") : 'Invalid Date'}
+</td>
+
+                  <td className="px-4 py-2 border-b">{customersList.find(c => c.value === entry.customerId)?.label}</td>
+                  <td className="px-4 py-2 border-b">{entry.documentno}</td>
+                  <td className="px-4 py-2 border-b">{entry.documenttype}</td>
+                  <td className="px-4 py-2 border-b">{entry.description}</td>
+                  <td className="px-4 py-2 border-b">{entry.amount}</td>
+                  <td className="px-4 py-2 border-b">
+                    <button
+                      onClick={() => onEdit(entry)}
+                      className="text-blue-500 hover:text-blue-700 mr-2"
+                    >
+                      <FaEdit />
+                    </button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <button
+                          onClick={() => setEntryToDelete(entry.id!)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <FaTrash />
+                        </button>
+                      </DialogTrigger>
+                      
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Confirm Deletion</DialogTitle>
+                        </DialogHeader>
+                        <div className="py-4">
+                          Are you sure you want to delete this entry?
+                        </div>
+                        <DialogFooter>
+                          <DialogClose className="px-4 py-2 border rounded-lg">
+                            Cancel
+                          </DialogClose>
+                          <button
+                            onClick={confirmDelete}
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                          >
+                            Delete
+                          </button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
