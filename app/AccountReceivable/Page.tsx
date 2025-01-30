@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,153 +37,97 @@ const entrySchema = z.object({
     .gt(0, "Amount must be greater than 0"),
 });
 
-type Entry = {
-  id?: number;
-  date: Date; // Ensure this is strictly Date type
-  customerId: string;
-  documentno: string;
-  documenttype: "Invoice" | "Receipt";
-  description: string;
-  amount: number;
-};
-
-type CustomerOption = {
-  label: string;
-  value: string;
-};
+type Entry = z.infer<typeof entrySchema>;
+type CustomerOption = { label: string; value: string; };
 
 const AccountReceivable = () => {
-  const {
-    handleSubmit,
-    control,
-    reset,
-    setValue,
-    formState: { errors, isSubmitting },
-  } = useForm<Entry>({
+  const queryClient = useQueryClient();
+  const { control, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<Entry>({
     resolver: zodResolver(entrySchema),
-    defaultValues: {
-      date: new Date(),
-      customerId: "",
-      documentno: "",
-      documenttype: "Invoice",
-      description: "",
-      amount: 0,
-    },
+    defaultValues: { date: new Date(), customerId: "", documentno: "", documenttype: "Invoice", description: "", amount: 0 },
   });
-  const [isLoading, setIsLoading] = useState(true);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [entries, setEntries] = useState<Entry[]>([]);
   const [entryToDelete, setEntryToDelete] = useState<number | null>(null);
 
   const isValidDate = (date: Date) => {
     return !isNaN(date.getTime());
   };
 
- // Fetch customers with TanStack Query
- const { data: customers, isLoading: isCustomersLoading } = useQuery<CustomerOption[]>({
-  queryKey: ['customers'],
-  queryFn: async () => {
-    const data = await db
-      .select({ label: customer.name, value: customer.id })
-      .from(customer);
-    return data.map(c => ({ label: c.label, value: c.value.toString() }));
-  },
 
-});
+  const { data: customers, isLoading: isCustomersLoading } = useQuery<CustomerOption[]>({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      const data = await db.select({ label: customer.name, value: customer.id }).from(customer);
+      return data.map(c => ({ label: c.label, value: c.value.toString() }));
+    },
+  });
 
-  // Update the fetchEntries function to handle invalid dates
-const fetchEntries = async () => {
-  try {
-    const data = await db.select().from(accountReceivable);
-
-    const mappedEntries: Entry[] = data.map(entry => {
-      const date = new Date(entry.date);
-      return {
+  const { data: entries } = useQuery<Entry[]>({
+    queryKey: ['entries'],
+    queryFn: async () => {
+      const data = await db.select().from(accountReceivable);
+      return data.map(entry => ({
         id: entry.id,
-        date: isValidDate(date) ? date : new Date(), // Fallback to valid date if invalid
-        customerId: entry.customerId?.toString() || "",
+        date: new Date(entry.date),
+        customerId: entry.customerId?.toString() || "", // Fallback to empty string if null
         documentno: entry.documentNo,
         documenttype: entry.documentType as "Invoice" | "Receipt",
         description: entry.description,
         amount: entry.amount,
-      };
-    });
+      }));
+    },
+  });
 
-    setEntries(mappedEntries);
-  } catch (error) {
-    toast.error("Failed to fetch entries");
-  }
-};
-  
+  const addMutation = useMutation({
+    mutationFn: (entry: Entry) => db.insert(accountReceivable).values({
+      date: entry.date,
+      documentNo: entry.documentno,
+      documentType: entry.documenttype,
+      description: entry.description,
+      amount: entry.amount,
+      debit: entry.documenttype === "Invoice" ? entry.amount : 0,
+      credit: entry.documenttype === "Receipt" ? entry.amount : 0,
+      customerId: Number(entry.customerId),
+    }),
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['entries'] });
+        toast.success("Entry added successfully");
+        reset();
+    },
+  });
 
-  const addEntry = async (entry: Entry) => {
-    try {
-      await db.insert(accountReceivable).values({
-        date: entry.date,
-        documentNo: entry.documentno,
-        documentType: entry.documenttype,
-        description: entry.description,
-        amount: entry.amount,
-        debit: entry.documenttype === "Invoice" ? entry.amount : 0,
-        credit: entry.documenttype === "Receipt" ? entry.amount : 0,
-        customerId: Number(entry.customerId),
-      });
-
-      toast.success("Entry added successfully");
-      reset();
-      fetchEntries();
-    } catch (error) {
-      console.error("Database error:", error);
-      toast.error("Failed to add entry. Check console for details.");
-    }
-  };
-
-  const updateEntry = async (entry: Entry) => {
-    try {
-      await db
-        .update(accountReceivable)
-        .set({
-          date: entry.date,
-          documentNo: entry.documentno,
-          documentType: entry.documenttype,
-          description: entry.description,
-          amount: entry.amount,
-          debit: entry.documenttype === "Invoice" ? entry.amount : 0,
-          credit: entry.documenttype === "Receipt" ? entry.amount : 0,
-          customerId: Number(entry.customerId),
-        })
-
-        .where(eq(accountReceivable.id,entry.id!));
-
-
+  const updateMutation = useMutation({
+    mutationFn: (entry: Entry) => db.update(accountReceivable).set({
+      date: entry.date,
+      documentNo: entry.documentno,
+      documentType: entry.documenttype,
+      description: entry.description,
+      amount: entry.amount,
+      debit: entry.documenttype === "Invoice" ? entry.amount : 0,
+      credit: entry.documenttype === "Receipt" ? entry.amount : 0,
+      customerId: Number(entry.customerId),
+    }).where(eq(accountReceivable.id, entry.id!)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['entries'] });
       toast.success("Entry updated successfully");
       reset();
-      fetchEntries();
-    } catch (error) {
-      console.error("Database error:", error);
-      toast.error("Failed to update entry. Check console for details.");
-    }
-  };
+    },
+  });
 
-  const confirmDelete = async () => {
-    if (entryToDelete) {
-      try {
-        await db.delete(accountReceivable).where(eq(accountReceivable.id, entryToDelete));
-        toast.success("Entry deleted successfully");
-        fetchEntries();
-      } catch (error) {
-        console.error("Database error:", error);
-        toast.error("Failed to delete entry. Check console for details.");
-      }
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => db.delete(accountReceivable).where(eq(accountReceivable.id, id)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['entries'] });
+      toast.success("Entry deleted successfully");
       setEntryToDelete(null);
-    }
-  };
+    },
+  });
 
   const onSubmit = (data: Entry) => {
     if (data.id) {
-      updateEntry(data);
+      updateMutation.mutate(data);
     } else {
-      addEntry(data);
+      addMutation.mutate(data);
     }
   };
 
@@ -196,21 +140,17 @@ const fetchEntries = async () => {
     setValue("description", entry.description);
     setValue("amount", entry.amount);
   };
-  useEffect(() => {
-    fetchEntries();
-  }, []);
+
 
   return (
-    <div className="container mx-auto p-4 bg-gray-50"> {/* Removed min-h-screen and centering */}
-    <ToastContainer />
-    <div className="w-full max-w-4xl">
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="mb-4 border p-6 rounded-lg shadow-lg bg-white space-y-4" // Reduced padding and spacing
-      >
-        <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">Account Receivable</h1> {/* Moved inside form */}
-          {/* Date Field */}
-          <div className="grid grid-cols-5 gap-4 items-center">
+    <div className="container mx-auto p-4 bg-gray-50 flex justify-center">
+      <ToastContainer />
+      <div className="w-full max-w-4xl">
+        <form onSubmit={handleSubmit(onSubmit)} className="mb-4 border p-6 rounded-lg shadow-lg bg-white space-y-4">
+          <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">Account Receivable</h1>
+          {/* Form fields remain unchanged */}
+        {/* Date Field */}
+        <div className="grid grid-cols-5 gap-4 items-center">
             <label htmlFor="date" className="col-span-1 text-lg font-medium text-gray-700">Date</label>
             <div className="col-span-4">
               <Controller
@@ -376,8 +316,8 @@ const fetchEntries = async () => {
               </button>
             </div>
           </div>
-        </form>
 
+        </form>
         {/* Entries Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white border rounded-lg shadow-sm">
@@ -393,51 +333,28 @@ const fetchEntries = async () => {
               </tr>
             </thead>
             <tbody>
-              {entries.map((entry) => (
+              {entries?.map((entry) => (
                 <tr key={entry.id}>
-               <td className="px-4 py-2 border-b">
-  {isValidDate(entry.date) ? format(entry.date, "yyyy-MM-dd") : 'Invalid Date'}
-</td>
-
+                  <td className="px-4 py-2 border-b">{isValidDate(entry.date) ? format(entry.date, "yyyy-MM-dd") : "Invalid Date"}</td>
                   <td className="px-4 py-2 border-b">{customers?.find(c => c.value === entry.customerId)?.label}</td>
                   <td className="px-4 py-2 border-b">{entry.documentno}</td>
                   <td className="px-4 py-2 border-b">{entry.documenttype}</td>
                   <td className="px-4 py-2 border-b">{entry.description}</td>
                   <td className="px-4 py-2 border-b">{entry.amount}</td>
                   <td className="px-4 py-2 border-b">
-                    <button
-                      onClick={() => onEdit(entry)}
-                      className="text-blue-500 hover:text-blue-700 mr-2"
-                    >
-                      <FaEdit />
-                    </button>
+                    <button onClick={() => onEdit(entry)} className="text-blue-500 hover:text-blue-700 mr-2"><FaEdit /></button>
                     <Dialog>
                       <DialogTrigger asChild>
-                        <button
-                          onClick={() => setEntryToDelete(entry.id!)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <FaTrash />
-                        </button>
+                        <button onClick={() => setEntryToDelete(entry.id!)} className="text-red-500 hover:text-red-700"><FaTrash /></button>
                       </DialogTrigger>
-                      
                       <DialogContent>
                         <DialogHeader>
                           <DialogTitle>Confirm Deletion</DialogTitle>
                         </DialogHeader>
-                        <div className="py-4">
-                          Are you sure you want to delete this entry?
-                        </div>
+                        <div className="py-4">Are you sure you want to delete this entry?</div>
                         <DialogFooter>
-                          <DialogClose className="px-4 py-2 border rounded-lg">
-                            Cancel
-                          </DialogClose>
-                          <button
-                            onClick={confirmDelete}
-                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                          >
-                            Delete
-                          </button>
+                          <DialogClose className="px-4 py-2 border rounded-lg">Cancel</DialogClose>
+                          <button onClick={() => deleteMutation.mutate(entry.id!)} className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Delete</button>
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
@@ -453,4 +370,3 @@ const fetchEntries = async () => {
 };
 
 export default AccountReceivable;
-
