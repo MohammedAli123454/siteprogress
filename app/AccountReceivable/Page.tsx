@@ -22,6 +22,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const entrySchema = z.object({
   id: z.number().optional(),
@@ -69,8 +70,6 @@ const AccountReceivable = () => {
       amount: 0,
     },
   });
-
-  const [customersList, setCustomersList] = useState<CustomerOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -80,24 +79,17 @@ const AccountReceivable = () => {
     return !isNaN(date.getTime());
   };
 
-  const fetchCustomers = async () => {
-    try {
-      const data = await db
-        .select({ label: customer.name, value: customer.id })
-        .from(customer);
+ // Fetch customers with TanStack Query
+ const { data: customers, isLoading: isCustomersLoading } = useQuery<CustomerOption[]>({
+  queryKey: ['customers'],
+  queryFn: async () => {
+    const data = await db
+      .select({ label: customer.name, value: customer.id })
+      .from(customer);
+    return data.map(c => ({ label: c.label, value: c.value.toString() }));
+  },
 
-      setCustomersList(
-        data.map((customer) => ({
-          label: customer.label,
-          value: customer.value.toString(),
-        }))
-      );
-    } catch (error) {
-      toast.error("Failed to fetch customers");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+});
 
   // Update the fetchEntries function to handle invalid dates
 const fetchEntries = async () => {
@@ -205,7 +197,6 @@ const fetchEntries = async () => {
     setValue("amount", entry.amount);
   };
   useEffect(() => {
-    fetchCustomers();
     fetchEntries();
   }, []);
 
@@ -266,12 +257,12 @@ const fetchEntries = async () => {
                 name="customerId"
                 control={control}
                 render={({ field }) => (
-                  <Select
-                    options={customersList}
-                    onChange={(selectedOption) => field.onChange(selectedOption?.value)}
-                    value={customersList.find((customer) => customer.value === field.value)}
+                 <Select
+                    options={customers}
+                    onChange={(option) => field.onChange(option?.value)}
+                    value={customers?.find(c => c.value === field.value)}
                     placeholder="Select Customer"
-                    isLoading={isLoading}
+                    isLoading={isCustomersLoading}
                     className="react-select-container"
                     classNamePrefix="react-select"
                   />
@@ -408,7 +399,7 @@ const fetchEntries = async () => {
   {isValidDate(entry.date) ? format(entry.date, "yyyy-MM-dd") : 'Invalid Date'}
 </td>
 
-                  <td className="px-4 py-2 border-b">{customersList.find(c => c.value === entry.customerId)?.label}</td>
+                  <td className="px-4 py-2 border-b">{customers?.find(c => c.value === entry.customerId)?.label}</td>
                   <td className="px-4 py-2 border-b">{entry.documentno}</td>
                   <td className="px-4 py-2 border-b">{entry.documenttype}</td>
                   <td className="px-4 py-2 border-b">{entry.description}</td>
