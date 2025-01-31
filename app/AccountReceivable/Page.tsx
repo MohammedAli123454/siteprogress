@@ -163,7 +163,7 @@ const AccountReceivable = () => {
   return (
     <div className="container mx-auto p-4 bg-gray-50 flex justify-center">
       <ToastContainer />
-      <div className="w-full max-w-5xl">
+      <div className="w-full max-w-6xl">
         <form onSubmit={handleSubmit(onSubmit)} className="mb-4 border p-6 rounded-lg shadow-lg bg-white space-y-4">
           <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">Account Receivable</h1>
           {/* Form fields remain unchanged */}
@@ -337,9 +337,9 @@ const AccountReceivable = () => {
 
         </form>
         {/* Entries Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border rounded-lg shadow-sm">
-            <thead>
+        <div className="overflow-auto max-h-[500px] relative shadow-sm rounded-lg">
+          <table className="min-w-full bg-white">
+            <thead className="sticky top-0 bg-white shadow-sm z-10">
               <tr>
                 <th className="px-4 py-2 border-b">Date</th>
                 <th className="px-4 py-2 border-b">Customer</th>
