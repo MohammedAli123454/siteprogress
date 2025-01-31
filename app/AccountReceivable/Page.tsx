@@ -37,7 +37,8 @@ const entrySchema = z.object({
     .gt(0, "Amount must be greater than 0"),
 });
 
-type Entry = z.infer<typeof entrySchema>;
+
+type Entry = z.infer<typeof entrySchema>
 type CustomerOption = { label: string; value: string; };
 
 const AccountReceivable = () => {
@@ -49,10 +50,9 @@ const AccountReceivable = () => {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<number | null>(null);
 
-  const isValidDate = (date: Date) => {
-    return !isNaN(date.getTime());
+  const isValidDate = (date: Date | null) => {
+    return date && !isNaN(date.getTime());  // Returns true for valid Date objects
   };
-
 
   const { data: customers, isLoading: isCustomersLoading } = useQuery<CustomerOption[]>({
     queryKey: ['customers'],
@@ -62,21 +62,65 @@ const AccountReceivable = () => {
     },
   });
 
-  const { data: entries } = useQuery<Entry[]>({
+  const { data: entries, isLoading: isEntriesLoading } = useQuery<Entry[]>({
     queryKey: ['entries'],
     queryFn: async () => {
-      const data = await db.select().from(accountReceivable);
-      return data.map(entry => ({
-        id: entry.id,
-        date: new Date(entry.date),
-        customerId: entry.customerId?.toString() || "", // Fallback to empty string if null
-        documentno: entry.documentNo,
-        documenttype: entry.documentType as "Invoice" | "Receipt",
-        description: entry.description,
-        amount: entry.amount,
-      }));
+      // Fetching data from the database
+      const data = await db.select({
+        id: accountReceivable.id,
+        date: accountReceivable.date,
+        customerId: accountReceivable.customerId,
+        documentNo: accountReceivable.documentNo,
+        documentType: accountReceivable.documentType,
+        description: accountReceivable.description,
+        amount: accountReceivable.amount,
+      }).from(accountReceivable);
+  
+      // Log raw database response to inspect the date format
+      console.log("Raw database response:", data);  
+  
+      const processedData = data.map(entry => {
+        let parsedDate = entry.date;
+  
+        console.log(`Raw Date for entry ${entry.id}:`, parsedDate);
+  
+        // If the date is a string, try parsing it
+        if (typeof parsedDate === "string" && parsedDate) {
+          // Check if the date is a valid ISO format (yyyy-MM-dd)
+          parsedDate = new Date(parsedDate);  // Try to parse string
+        }
+  
+        // If still invalid, try to parse it as a Unix timestamp
+        if (isNaN(parsedDate.getTime()) && !isNaN(Number(parsedDate))) {
+          parsedDate = new Date(Number(parsedDate));  // Parse as Unix timestamp
+        }
+  
+        // Fallback to the current date if still invalid
+        if (isNaN(parsedDate.getTime())) {
+          parsedDate = new Date();  // Use current date
+        }
+  
+        return {
+          id: entry.id,
+          date: parsedDate,  // Valid or fallback date
+          customerId: entry.customerId?.toString() || "",
+          documentno: entry.documentNo,
+          documenttype: entry.documentType as "Invoice" | "Receipt",
+          description: entry.description,
+          amount: entry.amount,
+        };
+      });
+  
+      console.log("Processed data:", processedData);  // Log the transformed data
+      return processedData;  // Return the processed data to be used by the query
     },
   });
+  
+  
+  
+  
+  
+  
 
   const addMutation = useMutation({
     mutationFn: (entry: Entry) => db.insert(accountReceivable).values({
@@ -140,7 +184,6 @@ const AccountReceivable = () => {
     setValue("description", entry.description);
     setValue("amount", entry.amount);
   };
-
 
   return (
     <div className="container mx-auto p-4 bg-gray-50 flex justify-center">
@@ -333,19 +376,37 @@ const AccountReceivable = () => {
               </tr>
             </thead>
             <tbody>
-              {entries?.map((entry) => (
+              {isEntriesLoading ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-4">
+                    <FaSpinner className="animate-spin h-5 w-5 inline-block" />
+                  </td>
+                </tr>
+              ) : entries?.map((entry) => (
                 <tr key={entry.id}>
                   <td className="px-4 py-2 border-b">{isValidDate(entry.date) ? format(entry.date, "yyyy-MM-dd") : "Invalid Date"}</td>
                   <td className="px-4 py-2 border-b">{customers?.find(c => c.value === entry.customerId)?.label}</td>
                   <td className="px-4 py-2 border-b">{entry.documentno}</td>
                   <td className="px-4 py-2 border-b">{entry.documenttype}</td>
                   <td className="px-4 py-2 border-b">{entry.description}</td>
-                  <td className="px-4 py-2 border-b">{entry.amount}</td>
+                  <td className="px-4 py-2 border-b">{entry.amount.toFixed(2)}</td>
                   <td className="px-4 py-2 border-b">
-                    <button onClick={() => onEdit(entry)} className="text-blue-500 hover:text-blue-700 mr-2"><FaEdit /></button>
+                    <button 
+                      onClick={() => onEdit(entry)} 
+                      className="text-blue-500 hover:text-blue-700 mr-2"
+                      disabled={isSubmitting}
+                    >
+                      <FaEdit />
+                    </button>
                     <Dialog>
                       <DialogTrigger asChild>
-                        <button onClick={() => setEntryToDelete(entry.id!)} className="text-red-500 hover:text-red-700"><FaTrash /></button>
+                        <button 
+                          onClick={() => setEntryToDelete(entry.id!)} 
+                          className="text-red-500 hover:text-red-700"
+                          disabled={isSubmitting}
+                        >
+                          <FaTrash />
+                        </button>
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
@@ -354,7 +415,16 @@ const AccountReceivable = () => {
                         <div className="py-4">Are you sure you want to delete this entry?</div>
                         <DialogFooter>
                           <DialogClose className="px-4 py-2 border rounded-lg">Cancel</DialogClose>
-                          <button onClick={() => deleteMutation.mutate(entry.id!)} className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Delete</button>
+                          <button 
+                            onClick={() => deleteMutation.mutate(entry.id!)} 
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-red-300 flex items-center justify-center"
+                            disabled={deleteMutation.isPending}
+                          >
+                            {deleteMutation.isPending && (
+                              <FaSpinner className="animate-spin mr-2" />
+                            )}
+                            Delete
+                          </button>
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
@@ -370,3 +440,4 @@ const AccountReceivable = () => {
 };
 
 export default AccountReceivable;
+
