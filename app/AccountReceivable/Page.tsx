@@ -164,178 +164,197 @@ const AccountReceivable = () => {
     <div className="container mx-auto p-4 bg-gray-50 flex justify-center">
       <ToastContainer />
       <div className="w-full max-w-6xl">
-        <form onSubmit={handleSubmit(onSubmit)} className="mb-4 border p-6 rounded-lg shadow-lg bg-white space-y-4">
-          <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">Account Receivable</h1>
-          {/* Form fields remain unchanged */}
-        {/* Date Field */}
-        <div className="grid grid-cols-5 gap-4 items-center">
-            <label htmlFor="date" className="col-span-1 text-lg font-medium text-gray-700">Date</label>
-            <div className="col-span-4">
-              <Controller
-                name="date"
-                control={control}
-                render={({ field }) => (
-                  <div className="relative">
-                    <input
-                      type="text"
-                      readOnly
-                      value={field.value && isValidDate(field.value) ? format(field.value, "yyyy-MM-dd") : ""}
-                
-                      onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-                      className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                      placeholder="Select Date"
+      <form onSubmit={handleSubmit(onSubmit)} className="mb-4 border p-6 rounded-lg shadow-lg bg-white space-y-4">
+  <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">Account Receivable Entry Form</h1>
+
+  {/* Form fields remain unchanged */}
+  <div className="flex w-full gap-6">
+    {/* Date Field */}
+    <div className="flex-1">
+      <div className="grid grid-cols-7 gap-4 items-center">
+        <label htmlFor="date" className="col-span-2 text-lg font-medium text-gray-700">Date</label>
+        <div className="col-span-5">
+          <Controller
+            name="date"
+            control={control}
+            render={({ field }) => (
+              <div className="relative">
+                <input
+                  type="text"
+                  readOnly
+                  value={field.value && isValidDate(field.value) ? format(field.value, "yyyy-MM-dd") : ""}
+                  onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                  className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  placeholder="Select Date"
+                />
+                <FaCalendarAlt className="absolute top-3 right-3 text-gray-500 cursor-pointer" onClick={() => setIsCalendarOpen(!isCalendarOpen)} />
+                {isCalendarOpen && (
+                  <div className="absolute z-10 mt-2">
+                    <Calendar
+                      onChange={(date) => {
+                        field.onChange(date);
+                        setIsCalendarOpen(false);
+                      }}
+                      value={field.value}
+                      className="border rounded-lg shadow-sm"
                     />
-                    <FaCalendarAlt className="absolute top-3 right-3 text-gray-500 cursor-pointer" onClick={() => setIsCalendarOpen(!isCalendarOpen)} />
-                    {isCalendarOpen && (
-                      <div className="absolute z-10 mt-2">
-                        <Calendar
-                          onChange={(date) => {
-                            field.onChange(date);
-                            setIsCalendarOpen(false);
-                          }}
-                          value={field.value}
-                          className="border rounded-lg shadow-sm"
-                        />
-                      </div>
-                    )}
                   </div>
                 )}
-              />
-              {errors.date && (
-                <p className="text-red-500 text-sm mt-1">{errors.date.message}</p>
-              )}
-            </div>
-          </div>
+              </div>
+            )}
+          />
+          {errors.date && (
+            <p className="text-red-500 text-sm mt-1">{errors.date.message}</p>
+          )}
+        </div>
+      </div>
+    </div>
 
-          {/* Customer Field */}
-          <div className="grid grid-cols-5 gap-4 items-center">
-            <label htmlFor="customerId" className="col-span-1 text-lg font-medium text-gray-700">Customer</label>
-            <div className="col-span-4">
-              <Controller
-                name="customerId"
-                control={control}
-                render={({ field }) => (
-                 <Select
-                    options={customers}
-                    onChange={(option) => field.onChange(option?.value)}
-                    value={customers?.find(c => c.value === field.value)}
-                    placeholder="Select Customer"
-                    isLoading={isCustomersLoading}
-                    className="react-select-container"
-                    classNamePrefix="react-select"
-                  />
-                )}
+    {/* Customer Field */}
+    <div className="flex-1">
+      <div className="grid grid-cols-7 gap-4 items-center">
+        <label htmlFor="customerId" className="col-span-2 text-lg font-medium text-gray-700">Customer</label>
+        <div className="col-span-5">
+          <Controller
+            name="customerId"
+            control={control}
+            render={({ field }) => (
+              <Select
+                options={customers}
+                onChange={(option) => field.onChange(option?.value)}
+                value={customers?.find(c => c.value === field.value)}
+                placeholder="Select Customer"
+                isLoading={isCustomersLoading}
+                className="react-select-container"
+                classNamePrefix="react-select"
               />
-              {errors.customerId && (
-                <p className="text-red-500 text-sm mt-1">{errors.customerId.message}</p>
-              )}
-            </div>
-          </div>
+            )}
+          />
+          {errors.customerId && (
+            <p className="text-red-500 text-sm mt-1">{errors.customerId.message}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
 
-          {/* Document No */}
-          <div className="grid grid-cols-5 gap-4 items-center">
-            <label htmlFor="documentno" className="col-span-1 text-lg font-medium text-gray-700">Document No</label>
-            <div className="col-span-4">
-              <Controller
-                name="documentno"
-                control={control}
-                render={({ field }) => (
-                  <input
-                    {...field}
-                    type="text"
-                    className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
-                    placeholder="Document No"
-                  />
-                )}
-              />
-              {errors.documentno && (
-                <p className="text-red-500 text-sm mt-1">{errors.documentno.message}</p>
-              )}
-            </div>
-          </div>
+ {/* Document No and Document Type in one row */}
+<div className="flex w-full gap-6">
+  {/* Document No Field */}
+  <div className="flex-1">
+    <div className="grid grid-cols-7 gap-4 items-center">
+      <label htmlFor="documentno" className="col-span-2 text-lg font-medium text-gray-700">Document No</label>
+      <div className="col-span-5">
+        <Controller
+          name="documentno"
+          control={control}
+          render={({ field }) => (
+            <input
+              {...field}
+              type="text"
+              className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
+              placeholder="Document No"
+            />
+          )}
+        />
+        {errors.documentno && (
+          <p className="text-red-500 text-sm mt-1">{errors.documentno.message}</p>
+        )}
+      </div>
+    </div>
+  </div>
 
-          {/* Document Type */}
-          <div className="grid grid-cols-5 gap-4 items-center">
-            <label htmlFor="documenttype" className="col-span-1 text-lg font-medium text-gray-700">Document Type</label>
-            <div className="col-span-4">
-              <Controller
-                name="documenttype"
-                control={control}
-                render={({ field }) => (
-                  <select
-                    {...field}
-                    className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="Invoice">Invoice</option>
-                    <option value="Receipt">Receipt</option>
-                  </select>
-                )}
-              />
-            </div>
-          </div>
+  {/* Document Type Field */}
+  <div className="flex-1">
+    <div className="grid grid-cols-7 gap-4 items-center">
+      <label htmlFor="documenttype" className="col-span-2 text-lg font-medium text-gray-700">Document Type</label>
+      <div className="col-span-5">
+        <Controller
+          name="documenttype"
+          control={control}
+          render={({ field }) => (
+            <select
+              {...field}
+              className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="Invoice">Invoice</option>
+              <option value="Receipt">Receipt</option>
+            </select>
+          )}
+        />
+      </div>
+    </div>
+  </div>
+</div>
 
-          {/* Description */}
-          <div className="grid grid-cols-5 gap-4 items-center">
-            <label htmlFor="description" className="col-span-1 text-lg font-medium text-gray-700">Description</label>
-            <div className="col-span-4">
-              <Controller
-                name="description"
-                control={control}
-                render={({ field }) => (
-                  <input
-                    {...field}
-                    type="text"
-                    className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
-                    placeholder="Description"
-                  />
-                )}
-              />
-              {errors.description && (
-                <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
-              )}
-            </div>
-          </div>
 
-          {/* Amount */}
-          <div className="grid grid-cols-5 gap-4 items-center">
-            <label htmlFor="amount" className="col-span-1 text-lg font-medium text-gray-700">Amount</label>
-            <div className="col-span-3">
-              <Controller
-                name="amount"
-                control={control}
-                render={({ field }) => (
-                  <input
-                    {...field}
-                    type="number"
-                    step="0.01"
-                    className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
-                    placeholder="Amount"
-                    value={field.value || ''}
-                    onChange={(e) => {
-                      field.onChange(parseFloat(e.target.value) || 0);
-                    }}
-                  />
-                )}
-              />
-              {errors.amount && (
-                <p className="text-red-500 text-sm mt-1">{errors.amount.message}</p>
-              )}
-            </div>
-            <div className="col-span-1">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 flex items-center justify-center"
-              >
-                {isSubmitting ? (
-                  <FaSpinner className="animate-spin mr-2" />
-                ) : null}
-                {control._formValues.id ? "Update" : "Add"}
-              </button>
-            </div>
-          </div>
+{/* Description */}
+<div className="w-full">
+  <div className="grid grid-cols-7 gap-4 items-center">
+    <label htmlFor="description" className="col-span-1 text-lg font-medium text-gray-700">Description</label>
+    <div className="col-span-6">
+      <Controller
+        name="description"
+        control={control}
+        render={({ field }) => (
+          <input
+            {...field}
+            type="text"
+            className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
+            placeholder="Description"
+          />
+        )}
+      />
+      {errors.description && (
+        <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
+      )}
+    </div>
+  </div>
+</div>
 
-        </form>
+
+
+  {/* Amount */}
+  <div className="grid grid-cols-7 gap-4 items-center">
+    <label htmlFor="amount" className="col-span-1 text-lg font-medium text-gray-700">Amount</label>
+    <div className="col-span-4">
+      <Controller
+        name="amount"
+        control={control}
+        render={({ field }) => (
+          <input
+            {...field}
+            type="number"
+            step="0.01"
+            className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
+            placeholder="Amount"
+            value={field.value || ''}
+            onChange={(e) => {
+              field.onChange(parseFloat(e.target.value) || 0);
+            }}
+          />
+        )}
+      />
+      {errors.amount && (
+        <p className="text-red-500 text-sm mt-1">{errors.amount.message}</p>
+      )}
+    </div>
+    <div className="col-span-2">
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 flex items-center justify-center"
+      >
+        {isSubmitting ? (
+          <FaSpinner className="animate-spin mr-2" />
+        ) : null}
+        {control._formValues.id ? "Update" : "Add"}
+      </button>
+    </div>
+  </div>
+
+</form>
+
         {/* Entries Table */}
         <div className="overflow-auto max-h-[500px] relative shadow-sm rounded-lg">
           <table className="min-w-full bg-white">
