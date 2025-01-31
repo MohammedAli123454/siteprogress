@@ -120,7 +120,7 @@ export const customer = pgTable("customer", {
 // Example schema configuration (e.g., using Drizzle ORM)
 export const accountReceivable = pgTable('account_receivable', {
   id: serial('id').primaryKey(),
-  date: timestamp('date', { mode: 'date' }).notNull(), // Use 'date' mode for Date objects
+  date: date("date").notNull(),
   documentNo: varchar('documentno', { length: 256 }).notNull(),
   documentType: varchar('documenttype', { length: 50 }).notNull(),
   description: varchar('description').notNull(),

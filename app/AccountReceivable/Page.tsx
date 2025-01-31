@@ -65,66 +65,39 @@ const AccountReceivable = () => {
   const { data: entries, isLoading: isEntriesLoading } = useQuery<Entry[]>({
     queryKey: ['entries'],
     queryFn: async () => {
-      // Fetching data from the database
-      const data = await db.select({
-        id: accountReceivable.id,
-        date: accountReceivable.date,
-        customerId: accountReceivable.customerId,
-        documentNo: accountReceivable.documentNo,
-        documentType: accountReceivable.documentType,
-        description: accountReceivable.description,
-        amount: accountReceivable.amount,
-      }).from(accountReceivable);
+      const data = await db
+        .select({
+          id: accountReceivable.id,
+          date: accountReceivable.date,  // Fetch as is
+          customerId: accountReceivable.customerId,
+          documentNo: accountReceivable.documentNo,
+          documentType: accountReceivable.documentType,
+          description: accountReceivable.description,
+          amount: accountReceivable.amount,
+          debit: accountReceivable.debit,
+          credit: accountReceivable.credit,
+        })
+        .from(accountReceivable);
   
-      // Log raw database response to inspect the date format
-      console.log("Raw database response:", data);  
-  
-      const processedData = data.map(entry => {
-        let parsedDate = entry.date;
-  
-        console.log(`Raw Date for entry ${entry.id}:`, parsedDate);
-  
-        // If the date is a string, try parsing it
-        if (typeof parsedDate === "string" && parsedDate) {
-          // Check if the date is a valid ISO format (yyyy-MM-dd)
-          parsedDate = new Date(parsedDate);  // Try to parse string
-        }
-  
-        // If still invalid, try to parse it as a Unix timestamp
-        if (isNaN(parsedDate.getTime()) && !isNaN(Number(parsedDate))) {
-          parsedDate = new Date(Number(parsedDate));  // Parse as Unix timestamp
-        }
-  
-        // Fallback to the current date if still invalid
-        if (isNaN(parsedDate.getTime())) {
-          parsedDate = new Date();  // Use current date
-        }
-  
-        return {
-          id: entry.id,
-          date: parsedDate,  // Valid or fallback date
-          customerId: entry.customerId?.toString() || "",
-          documentno: entry.documentNo,
-          documenttype: entry.documentType as "Invoice" | "Receipt",
-          description: entry.description,
-          amount: entry.amount,
-        };
-      });
-  
-      console.log("Processed data:", processedData);  // Log the transformed data
-      return processedData;  // Return the processed data to be used by the query
+      return data.map(entry => ({
+        id: entry.id,
+        date: entry.date ? new Date(entry.date) : new Date(),  //  Ensure a Date object
+        customerId: entry.customerId?.toString() || "",  //  Convert to string if needed
+        documentno: entry.documentNo,  //  Ensure consistent field names
+        documenttype: entry.documentType as "Invoice" | "Receipt",
+        description: entry.description,
+        amount: entry.amount,
+        debit: entry.debit ?? 0,  //  Ensure default values if null
+        credit: entry.credit ?? 0,
+      }));
     },
   });
   
-  
-  
-  
-  
-  
+
 
   const addMutation = useMutation({
     mutationFn: (entry: Entry) => db.insert(accountReceivable).values({
-      date: entry.date,
+      date: entry.date.toLocaleDateString('en-CA'),
       documentNo: entry.documentno,
       documentType: entry.documenttype,
       description: entry.description,
@@ -134,15 +107,17 @@ const AccountReceivable = () => {
       customerId: Number(entry.customerId),
     }),
     onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['entries'] });
-        toast.success("Entry added successfully");
-        reset();
+      queryClient.invalidateQueries({ queryKey: ['entries'] });
+      toast.success("Entry added successfully");
+      reset();
     },
   });
+  
+  
 
   const updateMutation = useMutation({
     mutationFn: (entry: Entry) => db.update(accountReceivable).set({
-      date: entry.date,
+      date: entry.date.toLocaleDateString('en-CA'),
       documentNo: entry.documentno,
       documentType: entry.documenttype,
       description: entry.description,
@@ -188,7 +163,7 @@ const AccountReceivable = () => {
   return (
     <div className="container mx-auto p-4 bg-gray-50 flex justify-center">
       <ToastContainer />
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-5xl">
         <form onSubmit={handleSubmit(onSubmit)} className="mb-4 border p-6 rounded-lg shadow-lg bg-white space-y-4">
           <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">Account Receivable</h1>
           {/* Form fields remain unchanged */}
@@ -440,4 +415,3 @@ const AccountReceivable = () => {
 };
 
 export default AccountReceivable;
-
