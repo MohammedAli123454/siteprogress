@@ -162,16 +162,19 @@ const AccountReceivable = () => {
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
-    <ToastContainer position="top-right" autoClose={3000} />
-    <div className="flex-1 flex flex-col min-h-0 p-4">
-      <div className="max-w-7xl w-full mx-auto flex flex-col h-full gap-4 min-h-0">
-        {/* Form Section with Fixed Height */}
-        <form 
-          onSubmit={handleSubmit(onSubmit)} 
-          className="border p-6 rounded-lg shadow-lg bg-white space-y-4 flex-shrink-0"
-        >
-          <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">Account Receivable Entry Form</h1>
-          {/* Form fields remain unchanged */}
+  <ToastContainer position="top-right" autoClose={3000} />
+  
+  {/* Main Container */}
+    <div className="max-w-7xl w-full mx-auto flex flex-col h-full gap-4 min-h-0 p-4">
+
+      {/* Form Section Container */}
+      <div className="border p-6 rounded-lg shadow-lg bg-white flex-shrink-0">
+        <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">Account Receivable Entry Form</h1>
+        
+        {/* Form Fields Container */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          
+          {/* Date and Customer Fields */}
           <div className="flex w-full gap-6">
             {/* Date Field */}
             <div className="flex-1">
@@ -191,7 +194,10 @@ const AccountReceivable = () => {
                           className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500 cursor-pointer"
                           placeholder="Select Date"
                         />
-                        <FaCalendarAlt className="absolute top-3 right-3 text-gray-500 cursor-pointer" onClick={() => setIsCalendarOpen(!isCalendarOpen)} />
+                        <FaCalendarAlt
+                          className="absolute top-3 right-3 text-gray-500 cursor-pointer"
+                          onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                        />
                         {isCalendarOpen && (
                           <div className="absolute z-10 mt-2">
                             <Calendar
@@ -242,7 +248,7 @@ const AccountReceivable = () => {
             </div>
           </div>
 
-          {/* Document No and Document Type in one row */}
+          {/* Document Fields (No and Type) */}
           <div className="flex w-full gap-6">
             {/* Document No Field */}
             <div className="flex-1">
@@ -291,8 +297,7 @@ const AccountReceivable = () => {
             </div>
           </div>
 
-
-          {/* Description */}
+          {/* Description Field */}
           <div className="w-full">
             <div className="grid grid-cols-7 gap-4 items-center">
               <label htmlFor="description" className="col-span-1 text-lg font-medium text-gray-700">Description</label>
@@ -316,9 +321,7 @@ const AccountReceivable = () => {
             </div>
           </div>
 
-
-
-          {/* Amount */}
+          {/* Amount Field and Submit Button */}
           <div className="grid grid-cols-7 gap-4 items-center">
             <label htmlFor="amount" className="col-span-1 text-lg font-medium text-gray-700">Amount</label>
             <div className="col-span-4">
@@ -333,9 +336,7 @@ const AccountReceivable = () => {
                     className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
                     placeholder="Amount"
                     value={field.value || ''}
-                    onChange={(e) => {
-                      field.onChange(parseFloat(e.target.value) || 0);
-                    }}
+                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                   />
                 )}
               />
@@ -349,21 +350,20 @@ const AccountReceivable = () => {
                 disabled={isSubmitting}
                 className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 flex items-center justify-center"
               >
-                {isSubmitting ? (
-                  <FaSpinner className="animate-spin mr-2" />
-                ) : null}
+                {isSubmitting ? <FaSpinner className="animate-spin mr-2" /> : null}
                 {control._formValues.id ? "Update" : "Add"}
               </button>
             </div>
           </div>
 
         </form>
+      </div>
 
-        {/* Table Section */}
-        <div className="flex-1 flex flex-col min-h-0 border rounded-lg shadow-lg bg-white">
-            <div className="overflow-auto flex-1 min-h-0">
-              <table className="min-w-full relative">
-                <thead className="sticky top-0 bg-white shadow-sm z-10">
+      {/* Table Section Container */}
+      <div className="flex-1 flex flex-col min-h-0 border rounded-lg shadow-lg bg-white">
+        <div className="overflow-auto flex-1 min-h-0">
+          <table className="min-w-full relative">
+            <thead className="sticky top-0 bg-white shadow-sm z-10">
               <tr>
                 <th className="px-4 py-2 border-b">Date</th>
                 <th className="px-4 py-2 border-b">Customer</th>
@@ -419,9 +419,7 @@ const AccountReceivable = () => {
                             className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-red-300 flex items-center justify-center"
                             disabled={deleteMutation.isPending}
                           >
-                            {deleteMutation.isPending && (
-                              <FaSpinner className="animate-spin mr-2" />
-                            )}
+                            {deleteMutation.isPending && <FaSpinner className="animate-spin mr-2" />}
                             Delete
                           </button>
                         </DialogFooter>
@@ -430,13 +428,14 @@ const AccountReceivable = () => {
                   </td>
                 </tr>
               ))}
-           </tbody>
-              </table>
-            </div>
-          </div>
+            </tbody>
+          </table>
         </div>
       </div>
+
     </div>
+  
+</div>
   );
 };
 export default AccountReceivable;
