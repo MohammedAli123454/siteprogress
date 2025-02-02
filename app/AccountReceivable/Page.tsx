@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useInView } from "react-intersection-observer";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +23,10 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+
+
+
 
 const DOCUMENT_TYPES = ["Invoice", "Receipt"] as const;
 
@@ -63,20 +67,29 @@ const AccountReceivable = () => {
     },
     mode: "onChange",
   });
-
+  const tableContainerRef = useRef<HTMLDivElement>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  // Added search term state for filtering table entries
+  const [searchTerm, setSearchTerm] = useState("");
+  const { ref: loadMoreRef, inView } = useInView({
 
-  const { data: customers, isLoading: isCustomersLoading } = useQuery<CustomerOption[]>({
-    queryKey: ["customers"],
-    queryFn: async () => {
-      const data = await db.select({ label: customer.name, value: customer.id }).from(customer);
-      return data.map(c => ({ label: c.label, value: c.value.toString() }));
-    },
+    root: tableContainerRef.current,
+    rootMargin: "200px",
+    threshold: 0.1,
   });
 
-  const { data: entries, isLoading: isEntriesLoading } = useQuery<Entry[]>({
+  // Infinite query implementation
+  const {
+    data: entriesPages,
+    isLoading: isEntriesLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["entries"],
-    queryFn: async () => {
+    queryFn: async ({ pageParam = 0 }) => {
+      const limit = 5;
+      const offset = pageParam * limit;
       const data = await db
         .select({
           id: accountReceivable.id,
@@ -87,8 +100,13 @@ const AccountReceivable = () => {
           description: accountReceivable.description,
           amount: accountReceivable.amount,
         })
-        .from(accountReceivable);
+        .from(accountReceivable)
+        .orderBy(accountReceivable.id)
+        .limit(limit)
+        .offset(offset);
 
+        console.log("Fetched page data:", data); // Log fetched page data
+   
       return data.map(entry => ({
         ...entry,
         date: entry.date ? parseISO(entry.date.toString()) : new Date(),
@@ -97,8 +115,32 @@ const AccountReceivable = () => {
         documenttype: entry.documentType as typeof DOCUMENT_TYPES[number],
       }));
     },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+       // Correctly check if last page has 7 items
+       return lastPage.length === 5 ? allPages.length : undefined;
+    },
   });
 
+  
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const allEntries = entriesPages?.pages.flatMap(page => page) || [];
+  
+  // Customers query remains the same
+  const { data: customers, isLoading: isCustomersLoading } = useQuery<CustomerOption[]>({
+    queryKey: ["customers"],
+    queryFn: async () => {
+      const data = await db.select({ label: customer.name, value: customer.id }).from(customer);
+      return data.map(c => ({ label: c.label, value: c.value.toString() }));
+    },
+  });
+
+  // Mutations remain the same
   const addMutation = useMutation({
     mutationFn: (entry: Entry) =>
       db.insert(accountReceivable).values({
@@ -151,6 +193,22 @@ const AccountReceivable = () => {
     onError: () => toast.error("Failed to delete entry"),
   });
 
+  // Filtering logic remains the same
+  const filteredEntries = allEntries.filter((entry) => {
+    const search = searchTerm.toLowerCase();
+    const customerName =
+      customers?.find((c) => c.value === entry.customerId)?.label.toLowerCase() || "";
+    return (
+      format(entry.date, "yyyy-MM-dd").includes(search) ||
+      customerName.includes(search) ||
+      entry.documentno.toLowerCase().includes(search) ||
+      entry.documenttype.toLowerCase().includes(search) ||
+      entry.description.toLowerCase().includes(search) ||
+      entry.amount.toString().includes(search)
+    );
+  });
+
+  // Form submission handlers remain the same
   const onSubmit = (data: Entry) => {
     data.id ? updateMutation.mutate(data) : addMutation.mutate(data);
   };
@@ -162,6 +220,8 @@ const AccountReceivable = () => {
   };
 
   const handleCancel = () => reset();
+
+
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
@@ -180,8 +240,10 @@ const AccountReceivable = () => {
               {/* Date Picker */}
               <div className="flex-1">
                 <div className="grid grid-cols-7 gap-4 items-center">
-                  <label htmlFor="date" className="col-span-2 text-lg font-medium text-gray-700">Date</label>
-                  <div className="col-span-5">
+                  <label htmlFor="date" className="col-span-2 text-lg font-medium text-gray-700">
+                    Date
+                  </label>
+                  <div className="col-span-5 relative">
                     <Controller
                       name="date"
                       control={control}
@@ -222,7 +284,9 @@ const AccountReceivable = () => {
               {/* Customer Select */}
               <div className="flex-1">
                 <div className="grid grid-cols-7 gap-4 items-center">
-                  <label htmlFor="date" className="col-span-2 text-lg font-medium text-gray-700">Customer</label>
+                  <label htmlFor="customer" className="col-span-2 text-lg font-medium text-gray-700">
+                    Customer
+                  </label>
                   <div className="col-span-5">
                     <Controller
                       name="customerId"
@@ -231,7 +295,7 @@ const AccountReceivable = () => {
                         <Select
                           options={customers}
                           onChange={(option) => field.onChange(option?.value)}
-                          value={customers?.find(c => c.value === field.value)}
+                          value={customers?.find((c) => c.value === field.value)}
                           placeholder="Select Customer"
                           isLoading={isCustomersLoading}
                           loadingMessage={() => "Loading customers..."}
@@ -253,7 +317,9 @@ const AccountReceivable = () => {
               {/* Document Number */}
               <div className="flex-1">
                 <div className="grid grid-cols-7 gap-4 items-center">
-                  <label htmlFor="date" className="col-span-2 text-lg font-medium text-gray-700">Document No</label>
+                  <label htmlFor="documentno" className="col-span-2 text-lg font-medium text-gray-700">
+                    Document No
+                  </label>
                   <div className="col-span-5">
                     <Controller
                       name="documentno"
@@ -276,7 +342,9 @@ const AccountReceivable = () => {
               {/* Document Type */}
               <div className="flex-1">
                 <div className="grid grid-cols-7 gap-4 items-center">
-                  <label htmlFor="date" className="col-span-2 text-lg font-medium text-gray-700">Document Type</label>
+                  <label htmlFor="documenttype" className="col-span-2 text-lg font-medium text-gray-700">
+                    Document Type
+                  </label>
                   <div className="col-span-5">
                     <Controller
                       name="documenttype"
@@ -299,11 +367,15 @@ const AccountReceivable = () => {
               </div>
             </div>
 
-
             {/* Description Field */}
             <div className="w-full">
               <div className="grid grid-cols-7 gap-4 items-center">
-                <label htmlFor="description" className="col-span-1 text-lg font-medium text-gray-700">Description</label>
+                <label
+                  htmlFor="description"
+                  className="col-span-1 text-lg font-medium text-gray-700"
+                >
+                  Description
+                </label>
                 <div className="col-span-6">
                   <Controller
                     name="description"
@@ -324,10 +396,11 @@ const AccountReceivable = () => {
               </div>
             </div>
 
-
             {/* Amount Field and Submit Button */}
             <div className="grid grid-cols-7 gap-4 items-center">
-              <label htmlFor="amount" className="col-span-1 text-lg font-medium text-gray-700">Amount</label>
+              <label htmlFor="amount" className="col-span-1 text-lg font-medium text-gray-700">
+                Amount
+              </label>
               <div className="col-span-3">
                 <Controller
                   name="amount"
@@ -339,7 +412,7 @@ const AccountReceivable = () => {
                       step="0.01"
                       className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
                       placeholder="Amount"
-                      value={field.value || ''}
+                      value={field.value || ""}
                       onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                     />
                   )}
@@ -379,15 +452,28 @@ const AccountReceivable = () => {
                 )}
               </div>
             </div>
-
           </form>
         </div>
 
         {/* Entries Table */}
         <div className="flex-1 flex flex-col border rounded-lg shadow-lg bg-white overflow-hidden">
-          <div className="overflow-auto">
-            <table className="min-w-full">
-              <thead className="bg-gray-50 sticky top-0">
+          <div className="p-4">
+            <input
+              type="text"
+              placeholder="Search entries..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full border rounded-md p-2 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div 
+    className="overflow-auto" 
+    ref={tableContainerRef}
+    style={{ height: "500px" }}
+  >
+          <table className="min-w-full relative">
+          <thead className="bg-gray-50 sticky top-0">
                 <tr>
                   {["Date", "Customer", "Document No", "Type", "Description", "Amount", "Actions"].map(
                     (header) => (
@@ -408,71 +494,75 @@ const AccountReceivable = () => {
                       <FaSpinner className="animate-spin inline-block" />
                     </td>
                   </tr>
-                ) : entries?.length === 0 ? (
+                ) : filteredEntries.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center py-4 text-gray-500">
                       No entries found
                     </td>
                   </tr>
                 ) : (
-                  entries?.map((entry) => (
-                    <tr key={entry.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm">
-                        {format(entry.date, "yyyy-MM-dd")}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {customers?.find((c) => c.value === entry.customerId)?.label || "N/A"}
-                      </td>
-                      <td className="px-4 py-3 text-sm">{entry.documentno}</td>
-                      <td className="px-4 py-3 text-sm">{entry.documenttype}</td>
-                      <td className="px-4 py-3 text-sm">{entry.description}</td>
-                      <td className="px-4 py-3 text-sm font-medium">
-                        {entry.amount.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-3 text-sm space-x-2">
-                        <button
-                          onClick={() => onEdit(entry)}
-                          className="text-blue-600 hover:text-blue-800"
-                          title="Edit"
-                        >
-                          <FaEdit />
-                        </button>
-                        <Dialog>
-                          <DialogTrigger>
-                            <button
-                              className="text-red-600 hover:text-red-800"
-                              title="Delete"
-                            >
-                              <FaTrash />
-                            </button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Confirm Deletion</DialogTitle>
-                            </DialogHeader>
-                            <div className="py-4 text-gray-600">
-                              Are you sure you want to delete this entry?
-                            </div>
-                            <DialogFooter>
-                              <DialogClose className="px-4 py-2 border rounded-md">
-                                Cancel
-                              </DialogClose>
-                              <button
-                                onClick={() => deleteMutation.mutate(entry.id!)}
-                                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-red-300"
-                                disabled={deleteMutation.isPending}
-                              >
-                                {deleteMutation.isPending && (
-                                  <FaSpinner className="animate-spin mr-2" />
-                                )}
-                                Delete
+                  <>
+                    {filteredEntries.map((entry) => (
+                      <tr key={entry.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm">
+                          {format(entry.date, "yyyy-MM-dd")}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {customers?.find((c) => c.value === entry.customerId)?.label || "N/A"}
+                        </td>
+                        <td className="px-4 py-3 text-sm">{entry.documentno}</td>
+                        <td className="px-4 py-3 text-sm">{entry.documenttype}</td>
+                        <td className="px-4 py-3 text-sm">{entry.description}</td>
+                        <td className="px-4 py-3 text-sm font-medium">
+                          {entry.amount.toFixed(2)}
+                        </td>
+                        <td className="px-4 py-3 text-sm space-x-2">
+                          <button
+                            onClick={() => onEdit(entry)}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="Edit"
+                          >
+                            <FaEdit />
+                          </button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <button className="text-red-600 hover:text-red-800" title="Delete">
+                                <FaTrash />
                               </button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Confirm Deletion</DialogTitle>
+                              </DialogHeader>
+                              <div className="py-4 text-gray-600">
+                                Are you sure you want to delete this entry?
+                              </div>
+                              <DialogFooter>
+                                <DialogClose className="px-4 py-2 border rounded-md">
+                                  Cancel
+                                </DialogClose>
+                                <button
+                                  onClick={() => deleteMutation.mutate(entry.id!)}
+                                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-red-300"
+                                  disabled={deleteMutation.isPending}
+                                >
+                                  {deleteMutation.isPending && <FaSpinner className="animate-spin mr-2" />}
+                                  Delete
+                                </button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </td>
+                      </tr>
+                    ))}
+                   {/* Sentinel row for infinite scrolling */}
+                   <tr ref={loadMoreRef}>
+                      <td colSpan={7} className="text-center p-4">
+                        {isFetchingNextPage && <FaSpinner className="animate-spin" />}
+                        {!isFetchingNextPage && hasNextPage && "Scroll to load more"}
                       </td>
                     </tr>
-                  ))
+                  </>
                 )}
               </tbody>
             </table>
