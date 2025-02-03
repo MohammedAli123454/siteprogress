@@ -1,21 +1,21 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { useInView } from "react-intersection-observer";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, FormProvider } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { db } from "../configs/db";
 import { accountReceivable, customer } from "../configs/schema";
-import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import Select from "react-select";
 import { format, parseISO } from "date-fns";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FaCalendarAlt, FaSpinner, FaEdit, FaTrash } from "react-icons/fa";
+import { FaSpinner, FaEdit } from "react-icons/fa";
 import { eq } from "drizzle-orm";
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog";
+import { DatePickerField } from "@/components/ui/DatePickerField";
 
 const DOCUMENT_TYPES = ["Invoice", "Receipt"] as const;
 
@@ -94,8 +94,8 @@ const AccountReceivable = () => {
         .limit(limit)
         .offset(offset);
 
-        console.log("Fetched page data:", data); // Log fetched page data
-   
+      console.log("Fetched page data:", data); // Log fetched page data
+
       return data.map(entry => ({
         ...entry,
         date: entry.date ? parseISO(entry.date.toString()) : new Date(),
@@ -106,12 +106,12 @@ const AccountReceivable = () => {
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
-       // Correctly check if last page has 7 items
-       return lastPage.length === 5 ? allPages.length : undefined;
+      // Correctly check if last page has 7 items
+      return lastPage.length === 5 ? allPages.length : undefined;
     },
   });
 
-  
+
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
@@ -119,7 +119,7 @@ const AccountReceivable = () => {
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const allEntries = entriesPages?.pages.flatMap(page => page) || [];
-  
+
   // Customers query remains the same
   const { data: customers, isLoading: isCustomersLoading } = useQuery<CustomerOption[]>({
     queryKey: ["customers"],
@@ -210,7 +210,7 @@ const AccountReceivable = () => {
 
   const handleCancel = () => reset();
 
-
+  const formMethods = useForm(); // Get form methods
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
@@ -222,52 +222,18 @@ const AccountReceivable = () => {
           <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
             Account Receivable Entry Form
           </h1>
-
+          <FormProvider {...formMethods}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Date & Customer Row */}
             <div className="flex gap-6">
               {/* Date Picker */}
               <div className="flex-1">
-                <div className="grid grid-cols-7 gap-4 items-center">
-                  <label htmlFor="date" className="col-span-2 text-lg font-medium text-gray-700">
-                    Date
-                  </label>
-                  <div className="col-span-5 relative">
-                    <Controller
-                      name="date"
-                      control={control}
-                      render={({ field }) => (
-                        <div>
-                          <input
-                            readOnly
-                            value={format(field.value, "yyyy-MM-dd")}
-                            onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-                            className="w-full border rounded-md p-2 shadow-sm focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                          />
-                          <FaCalendarAlt
-                            className="absolute top-3 right-3 text-gray-500 cursor-pointer"
-                            onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-                          />
-                          {isCalendarOpen && (
-                            <div className="absolute z-10 mt-2 shadow-lg">
-                              <Calendar
-                                onChange={(date) => {
-                                  field.onChange(date);
-                                  setIsCalendarOpen(false);
-                                }}
-                                value={field.value}
-                                className="border rounded-md"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    />
-                  </div>
-                </div>
-                {errors.date && (
-                  <p className="text-red-500 text-sm mt-1">{errors.date.message}</p>
-                )}
+                <DatePickerField
+                  name="date"
+                  label="Date"
+                  className="flex-1"
+                  inputClassName="w-full border rounded-md p-2 shadow-sm focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                />
               </div>
 
               {/* Customer Select */}
@@ -442,6 +408,7 @@ const AccountReceivable = () => {
               </div>
             </div>
           </form>
+          </FormProvider>
         </div>
 
         {/* Entries Table */}
@@ -456,13 +423,13 @@ const AccountReceivable = () => {
             />
           </div>
 
-          <div 
-    className="overflow-auto" 
-    ref={tableContainerRef}
-    style={{ height: "500px" }}
-  >
-          <table className="min-w-full relative">
-          <thead className="bg-gray-50 sticky top-0">
+          <div
+            className="overflow-auto"
+            ref={tableContainerRef}
+            style={{ height: "500px" }}
+          >
+            <table className="min-w-full relative">
+              <thead className="bg-gray-50 sticky top-0">
                 <tr>
                   {["Date", "Customer", "Document No", "Type", "Description", "Amount", "Actions"].map(
                     (header) => (
@@ -514,15 +481,15 @@ const AccountReceivable = () => {
                             <FaEdit />
                           </button>
                           <DeleteConfirmationDialog
-                entryId={entry.id!}
-                onDelete={deleteMutation.mutate}
-                isDeleting={deleteMutation.isPending}
-              />
+                            entryId={entry.id!}
+                            onDelete={deleteMutation.mutate}
+                            isDeleting={deleteMutation.isPending}
+                          />
                         </td>
                       </tr>
                     ))}
-                   {/* Sentinel row for infinite scrolling */}
-                   <tr ref={loadMoreRef}>
+                    {/* Sentinel row for infinite scrolling */}
+                    <tr ref={loadMoreRef}>
                       <td colSpan={7} className="text-center p-4">
                         {isFetchingNextPage && <FaSpinner className="animate-spin" />}
                         {!isFetchingNextPage && hasNextPage && "Scroll to load more"}
