@@ -14,19 +14,8 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaCalendarAlt, FaSpinner, FaEdit, FaTrash } from "react-icons/fa";
 import { eq } from "drizzle-orm";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
-
-
-
+import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog";
 
 const DOCUMENT_TYPES = ["Invoice", "Receipt"] as const;
 
@@ -524,34 +513,11 @@ const AccountReceivable = () => {
                           >
                             <FaEdit />
                           </button>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <button className="text-red-600 hover:text-red-800" title="Delete">
-                                <FaTrash />
-                              </button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Confirm Deletion</DialogTitle>
-                              </DialogHeader>
-                              <div className="py-4 text-gray-600">
-                                Are you sure you want to delete this entry?
-                              </div>
-                              <DialogFooter>
-                                <DialogClose className="px-4 py-2 border rounded-md">
-                                  Cancel
-                                </DialogClose>
-                                <button
-                                  onClick={() => deleteMutation.mutate(entry.id!)}
-                                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-red-300"
-                                  disabled={deleteMutation.isPending}
-                                >
-                                  {deleteMutation.isPending && <FaSpinner className="animate-spin mr-2" />}
-                                  Delete
-                                </button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
+                          <DeleteConfirmationDialog
+                entryId={entry.id!}
+                onDelete={deleteMutation.mutate}
+                isDeleting={deleteMutation.isPending}
+              />
                         </td>
                       </tr>
                     ))}
