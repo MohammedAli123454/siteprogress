@@ -3,19 +3,20 @@ import React from "react";
 import { useFormContext, Controller } from "react-hook-form";
 import Select from "react-select";
 
-interface SelectComponentProps {
+interface SelectComponentProps<T = string> {
   name: string;
   label: string;
-  options: Array<{ label: string; value: string }>;
+  options: Array<{ label: string; value: T }>;
   isLoading?: boolean;
+  isPredefined?: boolean;
 }
 
-export const SelectComponent = ({
+export const SelectComponent = <T extends string>({
   name,
   label,
   options,
   isLoading,
-}: SelectComponentProps) => {
+}: SelectComponentProps<T>) => {
   const { control, formState: { errors } } = useFormContext();
 
   return (
@@ -32,12 +33,13 @@ export const SelectComponent = ({
               <Select
                 options={options}
                 onChange={(option) => field.onChange(option?.value)}
-                value={options?.find((c) => c.value === field.value)}
+                value={options.find((c) => c.value === field.value)}
                 placeholder={`Select ${label}`}
                 isLoading={isLoading}
                 loadingMessage={() => `Loading ${label.toLowerCase()}s...`}
                 className="react-select-container"
                 classNamePrefix="react-select"
+                isSearchable={!isLoading}
               />
             )}
           />

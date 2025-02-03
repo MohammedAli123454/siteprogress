@@ -20,6 +20,11 @@ import { InputComponent } from "@/components/ui/InputComponent";
 
 const DOCUMENT_TYPES = ["Invoice", "Receipt"] as const;
 
+const DOCUMENT_TYPE_OPTIONS = DOCUMENT_TYPES.map(type => ({
+  label: type,
+  value: type,
+}));
+
 const entrySchema = z.object({
   id: z.number().optional(),
   date: z.date({ required_error: "Date is required" }),
@@ -58,7 +63,6 @@ const AccountReceivable = () => {
     mode: "onChange",
   });
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   // Added search term state for filtering table entries
   const [searchTerm, setSearchTerm] = useState("");
   const { ref: loadMoreRef, inView } = useInView({
@@ -259,32 +263,15 @@ const AccountReceivable = () => {
                   />
                 </div>
 
-                {/* Document Type */}
                 <div className="flex-1">
-                  <div className="grid grid-cols-7 gap-4 items-center">
-                    <label htmlFor="documenttype" className="col-span-2 text-lg font-medium text-gray-700">
-                      Document Type
-                    </label>
-                    <div className="col-span-5">
-                      <Controller
-                        name="documenttype"
-                        control={control}
-                        render={({ field }) => (
-                          <select
-                            {...field}
-                            className="w-full border rounded-md p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
-                          >
-                            {DOCUMENT_TYPES.map((type) => (
-                              <option key={type} value={type}>
-                                {type}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      />
-                    </div>
-                  </div>
+                  <SelectComponent
+                    name="documenttype"
+                    label="Document Type"
+                    options={DOCUMENT_TYPE_OPTIONS}
+                    isPredefined
+                  />
                 </div>
+
               </div>
 
               {/* Description Field */}
