@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { db } from "../configs/db";
 import { accountReceivable, customer } from "../configs/schema";
 import "react-calendar/dist/Calendar.css";
-import Select from "react-select";
 import { format, parseISO } from "date-fns";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -16,6 +15,8 @@ import { eq } from "drizzle-orm";
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog";
 import { DatePickerField } from "@/components/ui/DatePickerField";
+import { SelectComponent } from "@/components/ui/SelectComponent";
+import { InputComponent } from "@/components/ui/InputComponent";
 
 const DOCUMENT_TYPES = ["Invoice", "Receipt"] as const;
 
@@ -223,191 +224,138 @@ const AccountReceivable = () => {
             Account Receivable Entry Form
           </h1>
           <FormProvider {...formMethods}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Date & Customer Row */}
-            <div className="flex gap-6">
-              {/* Date Picker */}
-              <div className="flex-1">
-                <DatePickerField
-                  name="date"
-                  label="Date"
-                  className="flex-1"
-                  inputClassName="w-full border rounded-md p-2 shadow-sm focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div className="flex gap-6">
+
+                <div className="flex-1">
+                  <DatePickerField
+                    name="date"
+                    label="Date"
+                    className="flex-1"
+                    inputClassName="w-full border rounded-md p-2 shadow-sm focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  />
+                </div>
+
+                <div className="flex-1">
+                  <SelectComponent
+                    name="customerId"
+                    label="Customer"
+                    options={customers || []}
+                    isLoading={isCustomersLoading}
+                  />
+                </div>
+
+              </div>
+
+              {/* Document No & Document Type Row */}
+              <div className="flex gap-6">
+                <div className="flex-1">
+                  <InputComponent
+                    name="documentno"
+                    label="Document No"
+                    placeholder="Document No"
+                    labelCols={2}
+                    inputCols={5}
+                  />
+                </div>
+
+                {/* Document Type */}
+                <div className="flex-1">
+                  <div className="grid grid-cols-7 gap-4 items-center">
+                    <label htmlFor="documenttype" className="col-span-2 text-lg font-medium text-gray-700">
+                      Document Type
+                    </label>
+                    <div className="col-span-5">
+                      <Controller
+                        name="documenttype"
+                        control={control}
+                        render={({ field }) => (
+                          <select
+                            {...field}
+                            className="w-full border rounded-md p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
+                          >
+                            {DOCUMENT_TYPES.map((type) => (
+                              <option key={type} value={type}>
+                                {type}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description Field */}
+              <div className="w-full">
+                <InputComponent
+                  name="description"
+                  label="Description"
+                  placeholder="Description"
+                  className="w-full"
+                  labelCols={1}
+                  inputCols={6}
                 />
               </div>
 
-              {/* Customer Select */}
-              <div className="flex-1">
-                <div className="grid grid-cols-7 gap-4 items-center">
-                  <label htmlFor="customer" className="col-span-2 text-lg font-medium text-gray-700">
-                    Customer
-                  </label>
-                  <div className="col-span-5">
-                    <Controller
-                      name="customerId"
-                      control={control}
-                      render={({ field }) => (
-                        <Select
-                          options={customers}
-                          onChange={(option) => field.onChange(option?.value)}
-                          value={customers?.find((c) => c.value === field.value)}
-                          placeholder="Select Customer"
-                          isLoading={isCustomersLoading}
-                          loadingMessage={() => "Loading customers..."}
-                          className="react-select-container"
-                          classNamePrefix="react-select"
-                        />
-                      )}
-                    />
-                  </div>
-                </div>
-                {errors.customerId && (
-                  <p className="text-red-500 text-sm mt-1">{errors.customerId.message}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Document No & Document Type Row */}
-            <div className="flex gap-6">
-              {/* Document Number */}
-              <div className="flex-1">
-                <div className="grid grid-cols-7 gap-4 items-center">
-                  <label htmlFor="documentno" className="col-span-2 text-lg font-medium text-gray-700">
-                    Document No
-                  </label>
-                  <div className="col-span-5">
-                    <Controller
-                      name="documentno"
-                      control={control}
-                      render={({ field }) => (
-                        <input
-                          {...field}
-                          className="w-full border rounded-md p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
-                          placeholder="Document No"
-                        />
-                      )}
-                    />
-                  </div>
-                </div>
-                {errors.documentno && (
-                  <p className="text-red-500 text-sm mt-1">{errors.documentno.message}</p>
-                )}
-              </div>
-
-              {/* Document Type */}
-              <div className="flex-1">
-                <div className="grid grid-cols-7 gap-4 items-center">
-                  <label htmlFor="documenttype" className="col-span-2 text-lg font-medium text-gray-700">
-                    Document Type
-                  </label>
-                  <div className="col-span-5">
-                    <Controller
-                      name="documenttype"
-                      control={control}
-                      render={({ field }) => (
-                        <select
-                          {...field}
-                          className="w-full border rounded-md p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
-                        >
-                          {DOCUMENT_TYPES.map((type) => (
-                            <option key={type} value={type}>
-                              {type}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Description Field */}
-            <div className="w-full">
+              {/* Amount Field and Submit Button */}
               <div className="grid grid-cols-7 gap-4 items-center">
-                <label
-                  htmlFor="description"
-                  className="col-span-1 text-lg font-medium text-gray-700"
-                >
-                  Description
+                <label htmlFor="amount" className="col-span-1 text-lg font-medium text-gray-700">
+                  Amount
                 </label>
-                <div className="col-span-6">
+                <div className="col-span-3">
                   <Controller
-                    name="description"
+                    name="amount"
                     control={control}
                     render={({ field }) => (
                       <input
                         {...field}
-                        type="text"
+                        type="number"
+                        step="0.01"
                         className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
-                        placeholder="Description"
+                        placeholder="Amount"
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                       />
                     )}
                   />
-                  {errors.description && (
-                    <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
+                  {errors.amount && (
+                    <p className="text-red-500 text-sm mt-1">{errors.amount.message}</p>
                   )}
                 </div>
-              </div>
-            </div>
-
-            {/* Amount Field and Submit Button */}
-            <div className="grid grid-cols-7 gap-4 items-center">
-              <label htmlFor="amount" className="col-span-1 text-lg font-medium text-gray-700">
-                Amount
-              </label>
-              <div className="col-span-3">
-                <Controller
-                  name="amount"
-                  control={control}
-                  render={({ field }) => (
-                    <input
-                      {...field}
-                      type="number"
-                      step="0.01"
-                      className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
-                      placeholder="Amount"
-                      value={field.value || ""}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                    />
-                  )}
-                />
-                {errors.amount && (
-                  <p className="text-red-500 text-sm mt-1">{errors.amount.message}</p>
-                )}
-              </div>
-              <div className="col-span-3 flex gap-2">
-                {watch("id") ? (
-                  <>
+                <div className="col-span-3 flex gap-2">
+                  {watch("id") ? (
+                    <>
+                      <button
+                        type="submit"
+                        disabled={!isValid || isSubmitting}
+                        className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
+                      >
+                        {isSubmitting ? <FaSpinner className="animate-spin mr-2" /> : null}
+                        Update
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancel}
+                        className="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
                     <button
                       type="submit"
                       disabled={!isValid || isSubmitting}
                       className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
                     >
                       {isSubmitting ? <FaSpinner className="animate-spin mr-2" /> : null}
-                      Update
+                      Add Entry
                     </button>
-                    <button
-                      type="button"
-                      onClick={handleCancel}
-                      className="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="submit"
-                    disabled={!isValid || isSubmitting}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
-                  >
-                    {isSubmitting ? <FaSpinner className="animate-spin mr-2" /> : null}
-                    Add Entry
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          </form>
+            </form>
           </FormProvider>
         </div>
 
