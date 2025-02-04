@@ -2,55 +2,27 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useInView } from "react-intersection-observer";
 import { useForm, Controller, FormProvider } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { db } from "../configs/db";
-import { accountReceivable, customer } from "../configs/schema";
 import "react-calendar/dist/Calendar.css";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaSpinner, FaEdit } from "react-icons/fa";
-import { eq } from "drizzle-orm";
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog";
 import { DatePickerField } from "@/components/ui/DatePickerField";
 import { SelectComponent } from "@/components/ui/SelectComponent";
 import { InputComponent } from "@/components/ui/InputComponent";
-
-const DOCUMENT_TYPES = ["Invoice", "Receipt"] as const;
-
+import { Entry, entrySchema, DOCUMENT_TYPES } from "@/lib/schemas";
+import { getEntries, getCustomers, addEntry, updateEntry, deleteEntry } from "@/lib/actions/accountReceivable";
 const DOCUMENT_TYPE_OPTIONS = DOCUMENT_TYPES.map(type => ({
   label: type,
   value: type,
 }));
-
-const entrySchema = z.object({
-  id: z.number().optional(),
-  date: z.date({ required_error: "Date is required" }),
-  customerId: z.string().min(1, "Customer is required"),
-  documentno: z.string().min(1, "Document No is required"),
-  documenttype: z.enum(DOCUMENT_TYPES, { required_error: "Document Type is invalid" }),
-  description: z.string().min(1, "Description is required"),
-  amount: z.coerce
-    .number()
-    .positive("Amount must be greater than 0")
-    .max(999999999, "Amount is too large"),
-});
-
-type Entry = z.infer<typeof entrySchema>;
 type CustomerOption = { label: string; value: string };
-
 const AccountReceivable = () => {
   const queryClient = useQueryClient();
-  const {
-    control,
-    handleSubmit,
-    reset,
-    setValue,
-    formState: { errors, isSubmitting, isValid },
-    watch,
-  } = useForm<Entry>({
+  const methods = useForm<Entry>({
     resolver: zodResolver(entrySchema),
     defaultValues: {
       date: new Date(),
@@ -58,10 +30,19 @@ const AccountReceivable = () => {
       documentno: "",
       documenttype: "Invoice",
       description: "",
-      amount: undefined,
+      amount: undefined, // Schema expects a number, but initial undefined may cause issues
     },
     mode: "onChange",
   });
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors, isSubmitting, isValid },
+    watch,
+  } = methods;
   const tableContainerRef = useRef<HTMLDivElement>(null);
   // Added search term state for filtering table entries
   const [searchTerm, setSearchTerm] = useState("");
@@ -81,39 +62,9 @@ const AccountReceivable = () => {
     isFetchingNextPage,
   } = useInfiniteQuery({
     queryKey: ["entries"],
-    queryFn: async ({ pageParam = 0 }) => {
-      const limit = 5;
-      const offset = pageParam * limit;
-      const data = await db
-        .select({
-          id: accountReceivable.id,
-          date: accountReceivable.date,
-          customerId: accountReceivable.customerId,
-          documentNo: accountReceivable.documentNo,
-          documentType: accountReceivable.documentType,
-          description: accountReceivable.description,
-          amount: accountReceivable.amount,
-        })
-        .from(accountReceivable)
-        .orderBy(accountReceivable.id)
-        .limit(limit)
-        .offset(offset);
-
-      console.log("Fetched page data:", data); // Log fetched page data
-
-      return data.map(entry => ({
-        ...entry,
-        date: entry.date ? parseISO(entry.date.toString()) : new Date(),
-        customerId: entry.customerId?.toString() || "",
-        documentno: entry.documentNo,
-        documenttype: entry.documentType as typeof DOCUMENT_TYPES[number],
-      }));
-    },
+    queryFn: async ({ pageParam = 0 }) => await getEntries(pageParam),
     initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) => {
-      // Correctly check if last page has 7 items
-      return lastPage.length === 5 ? allPages.length : undefined;
-    },
+    getNextPageParam: (lastPage, allPages) => lastPage.length === 5 ? allPages.length : undefined,
   });
 
 
@@ -128,25 +79,13 @@ const AccountReceivable = () => {
   // Customers query remains the same
   const { data: customers, isLoading: isCustomersLoading } = useQuery<CustomerOption[]>({
     queryKey: ["customers"],
-    queryFn: async () => {
-      const data = await db.select({ label: customer.name, value: customer.id }).from(customer);
-      return data.map(c => ({ label: c.label, value: c.value.toString() }));
-    },
+    queryFn: async () => await getCustomers(),
   });
 
   // Mutations remain the same
+
   const addMutation = useMutation({
-    mutationFn: (entry: Entry) =>
-      db.insert(accountReceivable).values({
-        date: format(entry.date, "yyyy-MM-dd"),
-        documentNo: entry.documentno,
-        documentType: entry.documenttype,
-        description: entry.description,
-        amount: entry.amount,
-        debit: entry.documenttype === "Invoice" ? entry.amount : 0,
-        credit: entry.documenttype === "Receipt" ? entry.amount : 0,
-        customerId: Number(entry.customerId),
-      }),
+    mutationFn: (entry: Entry) => addEntry(entry),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["entries"] });
       toast.success("Entry added successfully");
@@ -156,20 +95,7 @@ const AccountReceivable = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (entry: Entry) =>
-      db
-        .update(accountReceivable)
-        .set({
-          date: format(entry.date, "yyyy-MM-dd"),
-          documentNo: entry.documentno,
-          documentType: entry.documenttype,
-          description: entry.description,
-          amount: entry.amount,
-          debit: entry.documenttype === "Invoice" ? entry.amount : 0,
-          credit: entry.documenttype === "Receipt" ? entry.amount : 0,
-          customerId: Number(entry.customerId),
-        })
-        .where(eq(accountReceivable.id, entry.id!)),
+    mutationFn: (entry: Entry) => updateEntry(entry),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["entries"] });
       toast.success("Entry updated successfully");
@@ -179,7 +105,7 @@ const AccountReceivable = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => db.delete(accountReceivable).where(eq(accountReceivable.id, id)),
+    mutationFn: (id: number) => deleteEntry(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["entries"] });
       toast.success("Entry deleted successfully");
@@ -227,7 +153,7 @@ const AccountReceivable = () => {
           <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
             Account Receivable Entry Form
           </h1>
-          <FormProvider {...formMethods}>
+          <FormProvider {...methods}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="flex gap-6">
 
@@ -302,8 +228,11 @@ const AccountReceivable = () => {
                         step="0.01"
                         className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
                         placeholder="Amount"
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        value={field.value ?? ""}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value);
+                          field.onChange(isNaN(value) ? undefined : value);
+                        }}
                       />
                     )}
                   />
@@ -337,7 +266,7 @@ const AccountReceivable = () => {
                       className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
                     >
                       {isSubmitting ? <FaSpinner className="animate-spin mr-2" /> : null}
-                      Add Entry
+                      {watch("id") ? "Update" : "Add Entry"}
                     </button>
                   )}
                 </div>
@@ -347,7 +276,7 @@ const AccountReceivable = () => {
         </div>
 
         {/* Entries Table */}
-        <div className="flex-1 flex flex-col border rounded-lg shadow-lg bg-white overflow-hidden">
+        <div className="flex-1 flex flex-col border p-6 rounded-lg shadow-lg bg-white overflow-hidden">
           <div className="p-4">
             <input
               type="text"
@@ -417,7 +346,7 @@ const AccountReceivable = () => {
                           </button>
                           <DeleteConfirmationDialog
                             entryId={entry.id!}
-                            onDelete={deleteMutation.mutate}
+                            onDelete={deleteMutation.mutateAsync} // Pass mutateAsync here
                             isDeleting={deleteMutation.isPending}
                           />
                         </td>
