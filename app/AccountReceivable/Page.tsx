@@ -158,7 +158,7 @@ const AccountReceivable = () => {
 
       <div className="max-w-7xl w-full mx-auto flex flex-col h-full gap-4 min-h-0 p-4">
         {/* Entry Form */}
-        <div className="border p-6 rounded-lg shadow-lg bg-white">
+        <div className="border p-6 rounded-lg bg-white">
           <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
             Account Receivable Entry Form
           </h1>
@@ -285,8 +285,8 @@ const AccountReceivable = () => {
         </div>
 
         {/* Entries Table */}
-        <div className="flex-1 flex flex-col border p-6 rounded-lg shadow-lg bg-white overflow-hidden">
-          <div className="p-4">
+        <div className="flex-1 flex flex-col border p-2 rounded-lg bg-white overflow-hidden">
+          <div className="p-2">
             <input
               type="text"
               placeholder="Search entries..."
@@ -301,16 +301,28 @@ const AccountReceivable = () => {
             ref={tableContainerRef}
             style={{ height: "500px" }}
           >
-            <table className="min-w-full relative">
-              <thead className="bg-gray-50 sticky top-0">
+            <table className="min-w-full table-fixed relative">
+              <thead className="bg-gray-100 sticky top-0">
                 <tr>
                   {["Date", "Customer", "Document No", "Type", "Description", "Amount", "Actions"].map(
                     (header) => (
                       <th
                         key={header}
-                        className="px-4 py-3 text-left text-sm font-semibold text-gray-700"
+                        className="px-4 py-3 text-sm font-bold text-gray-700"
+                        style={{
+                          width:
+                            header === 'Date' ? '10%' :
+                              header === 'Customer' ? '20%' :
+                                header === 'Document No' ? '15%' :
+                                  header === 'Type' ? '10%' :
+                                    header === 'Description' ? '25%' :
+                                      header === 'Amount' ? '10%' :
+                                        '10%' // Actions column
+                        }}
                       >
-                        {header}
+                        <div className={`text-left ${header === 'Amount' ? 'text-right' : ''}`}>
+                          {header}
+                        </div>
                       </th>
                     )
                   )}
@@ -333,19 +345,19 @@ const AccountReceivable = () => {
                   <>
                     {filteredEntries.map((entry) => (
                       <tr key={entry.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm">
+                        <td className="px-4 py-3 text-sm truncate align-middle">
                           {format(entry.date, "yyyy-MM-dd")}
                         </td>
-                        <td className="px-4 py-3 text-sm">
+                        <td className="px-4 py-3 text-sm truncate align-middle">
                           {customers?.find((c) => c.value === entry.customerId)?.label || "N/A"}
                         </td>
-                        <td className="px-4 py-3 text-sm">{entry.documentno}</td>
-                        <td className="px-4 py-3 text-sm">{entry.documenttype}</td>
-                        <td className="px-4 py-3 text-sm">{entry.description}</td>
-                        <td className="px-4 py-3 text-sm font-medium">
+                        <td className="px-4 py-3 text-sm truncate align-middle">{entry.documentno}</td>
+                        <td className="px-4 py-3 text-sm truncate align-middle">{entry.documenttype}</td>
+                        <td className="px-4 py-3 text-sm truncate align-middle">{entry.description}</td>
+                        <td className="px-4 py-3 text-sm font-medium text-right truncate align-middle">
                           {entry.amount.toFixed(2)}
                         </td>
-                        <td className="px-4 py-3 text-sm space-x-2">
+                        <td className="px-4 py-3 text-sm space-x-2 align-middle">
                           <button
                             onClick={() => onEdit(entry)}
                             className="text-blue-600 hover:text-blue-800"
@@ -354,7 +366,7 @@ const AccountReceivable = () => {
                             <FaEdit />
                           </button>
                           <DeleteConfirmationDialog
-                            key={entry.id} // Add key to reset state on unmount
+                            key={entry.id}
                             entryId={entry.id!}
                             onDelete={deleteMutation.mutateAsync}
                             isDeleting={deleteMutation.isPending}
