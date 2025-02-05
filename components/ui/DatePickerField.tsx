@@ -19,7 +19,7 @@ export const DatePickerField = ({
   label = "Date",
   dateFormat = "yyyy-MM-dd",
   className = "flex-1",
-  inputClassName = "w-full border rounded-md p-2 shadow-sm focus:ring-2 focus:ring-blue-500 cursor-pointer"
+  inputClassName = "w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-2 focus:ring-blue-500 cursor-pointer bg-gray-100 focus:bg-white transition-colors"
 }: DatePickerFieldProps) => {
   const formContext = useFormContext();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -48,9 +48,10 @@ export const DatePickerField = ({
                 value={field.value ? format(field.value, dateFormat) : ""}
                 onClick={() => setIsCalendarOpen(!isCalendarOpen)}
                 className={inputClassName}
+                style={{ backgroundColor: '#f3f4f6' }} // Directly setting bg-gray-100
               />
               <FaCalendarAlt
-                className="absolute top-3 right-3 text-gray-500 cursor-pointer"
+                className="absolute top-3 right-3 text-gray-400 cursor-pointer hover:text-gray-500"
                 onClick={() => setIsCalendarOpen(!isCalendarOpen)}
               />
               {isCalendarOpen && (
@@ -61,7 +62,7 @@ export const DatePickerField = ({
                       setIsCalendarOpen(false);
                     }}
                     value={field.value || new Date()}
-                    className="border rounded-md"
+                    className="border border-gray-200 rounded-md bg-white"
                   />
                 </div>
               )}

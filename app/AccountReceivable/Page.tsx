@@ -15,6 +15,7 @@ import { SelectComponent } from "@/components/ui/SelectComponent";
 import { InputComponent } from "@/components/ui/InputComponent";
 import { Entry, entrySchema, DOCUMENT_TYPES } from "@/lib/schemas";
 import { getEntries, getCustomers, addEntry, updateEntry, deleteEntry } from "@/lib/actions/accountReceivable";
+import { AmountField } from "@/components/ui/AmountField";
 const DOCUMENT_TYPE_OPTIONS = DOCUMENT_TYPES.map(type => ({
   label: type,
   value: type,
@@ -223,32 +224,17 @@ const AccountReceivable = () => {
 
               {/* Amount Field and Submit Button */}
               <div className="grid grid-cols-7 gap-4 items-center">
-                <label htmlFor="amount" className="col-span-1 text-lg font-medium text-gray-700">
-                  Amount
-                </label>
-                <div className="col-span-3">
-                  <Controller
-                    name="amount"
-                    control={control}
-                    render={({ field }) => (
-                      <input
-                        {...field}
-                        type="number"
-                        step="0.01"
-                        className="w-full border rounded-lg p-2 shadow-sm focus:ring-2 focus:ring-blue-500"
-                        placeholder="Amount"
-                        value={field.value ?? ""}
-                        onChange={(e) => {
-                          const value = parseFloat(e.target.value);
-                          field.onChange(isNaN(value) ? undefined : value);
-                        }}
-                      />
-                    )}
-                  />
-                  {errors.amount && (
-                    <p className="text-red-500 text-sm mt-1">{errors.amount.message}</p>
-                  )}
-                </div>
+
+                <div>
+              <AmountField 
+    name="amount"
+    label="Amount"
+    placeholder="Enter amount"
+    labelCols={1}
+    inputCols={3}
+  />
+
+</div>
                 <div className="col-span-3 flex gap-2">
                   {watch("id") ? (
                     <>

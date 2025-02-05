@@ -2,33 +2,25 @@
 import React from "react";
 import { useFormContext, Controller } from "react-hook-form";
 
-interface InputComponentProps {
+interface AmountFieldProps {
   name: string;
   label: string;
-  type?: string;
   placeholder?: string;
-  step?: string;
-  className?: string;
-  inputClassName?: string;
   labelCols?: number;
   inputCols?: number;
 }
 
-export const InputComponent = ({
+export const AmountField = ({
   name,
   label,
-  type = "text",
-  placeholder,
-  step,
-  className = "",
-  inputClassName = "",
-  labelCols = 2,
-  inputCols = 5
-}: InputComponentProps) => {
+  placeholder = "Amount",
+  labelCols = 1,
+  inputCols = 3
+}: AmountFieldProps) => {
   const { control, formState: { errors } } = useFormContext();
 
   return (
-    <div className={`flex-1 ${className}`}>
+    <div className="flex-1">
       <div className="grid grid-cols-7 gap-4 items-center">
         <label htmlFor={name} className={`col-span-${labelCols} text-lg font-medium text-gray-700`}>
           {label}
@@ -40,17 +32,14 @@ export const InputComponent = ({
             render={({ field }) => (
               <input
                 {...field}
-                type={type}
-                step={step}
+                type="number"
+                step="0.01"
                 placeholder={placeholder}
-                className={`w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-2 focus:ring-blue-500 bg-gray-100 focus:bg-white transition-colors ${inputClassName}`}
-                value={field.value || ""}
+                className="w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-2 focus:ring-blue-500 bg-gray-100 focus:bg-white transition-colors"
+                value={field.value ?? ""}
                 onChange={(e) => {
-                  if (type === "number") {
-                    field.onChange(parseFloat(e.target.value) || 0);
-                  } else {
-                    field.onChange(e.target.value);
-                  }
+                  const value = parseFloat(e.target.value);
+                  field.onChange(isNaN(value) ? undefined : value);
                 }}
               />
             )}
