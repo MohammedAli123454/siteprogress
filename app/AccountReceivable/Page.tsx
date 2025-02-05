@@ -20,6 +20,7 @@ const DOCUMENT_TYPE_OPTIONS = DOCUMENT_TYPES.map(type => ({
   value: type,
 }));
 type CustomerOption = { label: string; value: string };
+
 const AccountReceivable = () => {
   const queryClient = useQueryClient();
   const methods = useForm<Entry>({
@@ -129,8 +130,16 @@ const AccountReceivable = () => {
   });
 
   // Form submission handlers remain the same
-  const onSubmit = (data: Entry) => {
-    data.id ? updateMutation.mutate(data) : addMutation.mutate(data);
+  const onSubmit = async (data: Entry) => {
+    try {
+      if (data.id) {
+        await updateMutation.mutateAsync(data);
+      } else {
+        await addMutation.mutateAsync(data);
+      }
+    } catch (error) {
+      // Errors are handled by mutation's onError
+    }
   };
 
   const onEdit = (entry: Entry) => {
@@ -345,8 +354,9 @@ const AccountReceivable = () => {
                             <FaEdit />
                           </button>
                           <DeleteConfirmationDialog
+                            key={entry.id} // Add key to reset state on unmount
                             entryId={entry.id!}
-                            onDelete={deleteMutation.mutateAsync} // Pass mutateAsync here
+                            onDelete={deleteMutation.mutateAsync}
                             isDeleting={deleteMutation.isPending}
                           />
                         </td>
