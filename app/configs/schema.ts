@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, serial, varchar, primaryKey, integer, json,timestamp,pgEnum} from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar, primaryKey, integer, json,timestamp,pgEnum, text,  numeric,} from "drizzle-orm/pg-core";
 import { date } from 'drizzle-orm/pg-core'; // Ensure this import is included
 export const mocDetail = pgTable("mocDetail", {
   id: serial('id').primaryKey(),  // Primary key
@@ -128,4 +128,90 @@ export const accountReceivable = pgTable('account_receivable', {
   debit: integer('debit'),
   credit: integer('credit'),
   customerId: integer('customerid').references(() => customer.id),
+});
+
+
+
+// Customers table
+export const customers = pgTable('customers', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).notNull(),
+  email: varchar('email', { length: 100 }).notNull().unique(),
+  address: varchar('address', { length: 255 }).notNull(),
+});
+
+// Products table
+export const products = pgTable('products', {
+  id: serial('id').primaryKey(),
+  itemCode: varchar('item_code', { length: 20 }).notNull().unique(),
+  description: varchar('description', { length: 255 }).notNull(),
+  unit: varchar('unit', { length: 20 }).notNull(),
+  price: numeric('price', { precision: 12, scale: 2 }).notNull(),
+});
+
+// Invoices table with a foreign key to customers
+export const invoice = pgTable('invoices', {
+  id: serial('id').primaryKey(),
+  invoiceNumber: varchar('invoice_number', { length: 20 }).notNull().unique(),
+  customerId: integer('customer_id')
+    .notNull()
+    .references(() => customers.id),
+  issueDate: date('issue_date').notNull(),
+  dueDate: date('due_date').notNull(),
+  status: varchar('status', { length: 20 })
+    .notNull()
+    .default('unpaid'),
+  totalAmount: numeric('total_amount', { precision: 12, scale: 2 }).notNull(),
+  taxRate: numeric('tax_rate', { precision: 5, scale: 2 }).notNull(),
+});
+
+// Invoice Items table with foreign keys to invoices and products
+export const invoiceItems = pgTable('invoice_items', {
+  id: serial('id').primaryKey(),
+  invoiceId: integer('invoice_id')
+    .notNull()
+    .references(() => invoices.id),
+  productId: integer('product_id')
+    .notNull()
+    .references(() => products.id),
+  quantity: integer('quantity').notNull(),
+  price: numeric('price', { precision: 12, scale: 2 }).notNull(),
+});
+
+// Settings table
+export const settings = pgTable('settings', {
+  id: serial('id').primaryKey(),
+  companyName: varchar('company_name', { length: 100 }).notNull(),
+  companyAddress: varchar('company_address', { length: 255 }).notNull(),
+  taxRate: numeric('tax_rate', { precision: 5, scale: 2 }).notNull(),
+  paymentTerms: varchar('payment_terms', { length: 100 }).notNull(),
+});
+
+// Invoice Sequence table
+export const invoiceSequence = pgTable('invoice_sequence', {
+  id: serial('id').primaryKey(),
+  year: integer('year').notNull(),
+  sequence: integer('sequence').notNull(),
+});
+
+
+export const mocs = pgTable("mocs", {
+  id: serial("id").primaryKey(),
+  mocNo: text("moc_no").notNull(),
+  cwo: text("cwo").notNull(),
+  po: text("po").notNull(),
+  proposal: text("proposal").notNull(),
+  contractValue: numeric("contract_value", { precision: 12, scale: 2 }).notNull(),
+});
+
+export const partialInvoices = pgTable("partial_invoices", {
+  id: serial("id").primaryKey(),
+  mocId: integer("moc_id").references(() => mocs.id).notNull(),
+  invoiceNo: text("invoice_no").notNull(),
+  invoiceDate: date("invoice_date").notNull(),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  vat: numeric("vat", { precision: 12, scale: 2 }).notNull(),
+  retention: numeric("retention", { precision: 12, scale: 2 }).notNull(),
+  payable: numeric("payable", { precision: 12, scale: 2 }).notNull(),
+  invoiceStatus: text("invoice_status").notNull(),
 });

@@ -78,6 +78,8 @@ const SideNav = () => {
         { name: "Upload DXF File", path: "/UploadDXF" },
         { name: "Customer Statement", path: "/CustomerStatement" },
         { name: "Account Receivable", path: "/AccountReceivable" },
+        { name: "Add MOC Detail", path: "/MocForm" },
+        { name: "Invoices Entry", path: "/PartialInvoiceForm" },
 
 
         
