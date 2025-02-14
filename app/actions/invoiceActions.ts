@@ -84,104 +84,61 @@
 "use server";
 
 import { db } from "../configs/db";
-import { mocs, partialInvoices } from "../configs/schema";
+import { partialInvoices } from "../configs/schema";
 import { eq } from "drizzle-orm";
 
-/** Adds a new MOC record (base details). */
-export async function addMOC(data: {
-  mocNo: string;
-  cwo: string;
-  po: string;
-  proposal: string;
-  contractValue: number;
-}) {
-  try {
-    const result = await db.insert(mocs).values({
-      mocNo: data.mocNo,
-      cwo: data.cwo,
-      po: data.po,
-      proposal: data.proposal,
-      contractValue: data.contractValue.toString(), // Convert number to string
-    }).returning();
-    return { success: true, moc: result[0] };
-  } catch (error: any) {
-    console.error("Error adding MOC:", error);
-    return { success: false, message: error.message };
-  }
-}
-
-/**
- * Adds a new partial invoice for an existing MOC.
- * Payable = amount + vat – retention.
- */
-export async function addPartialInvoice(data: {
+export interface PartialInvoiceBase {
   mocId: number;
   invoiceNo: string;
-  invoiceDate: string; // ISO date (YYYY-MM-DD)
+  invoiceDate: string;  // Only string type here
   amount: number;
   vat: number;
   retention: number;
   invoiceStatus: string;
-}) {
+}
+
+export async function addPartialInvoice(data: PartialInvoiceBase) {
   try {
     const { amount, vat, retention, ...rest } = data;
     const payable = amount + vat - retention;
-    const result = await db
-      .insert(partialInvoices)
-      .values({
-        ...rest,
-        amount: amount.toString(),       // Convert number to string
-        vat: vat.toString(),             // Convert number to string
-        retention: retention.toString(), // Convert number to string
-        payable: payable.toString(),     // Convert computed payable to string
-      })
-      .returning();
-    return { success: true, invoice: result[0] };
+    await db.insert(partialInvoices).values({
+      ...rest,
+      amount: amount.toString(),
+      vat: vat.toString(),
+      retention: retention.toString(),
+      payable: payable.toString(),
+    });
+    return { success: true };
   } catch (error: any) {
-    console.error("Error adding partial invoice:", error);
     return { success: false, message: error.message };
   }
 }
 
-/** Updates a partial invoice record. */
-export async function updatePartialInvoice(data: {
-  id: number;
-  mocId: number;
-  invoiceNo: string;
-  invoiceDate: string;
-  amount: number;
-  vat: number;
-  retention: number;
-  invoiceStatus: string;
-}) {
+export async function updatePartialInvoice(id: number, data: PartialInvoiceBase) {
   try {
-    const { id, amount, vat, retention, ...rest } = data;
+    const { amount, vat, retention, ...rest } = data;
     const payable = amount + vat - retention;
-    const result = await db
+    await db
       .update(partialInvoices)
       .set({
         ...rest,
-        amount: amount.toString(),       // Convert number to string
-        vat: vat.toString(),             // Convert number to string
-        retention: retention.toString(), // Convert number to string
-        payable: payable.toString(),     // Convert computed payable to string
+        amount: amount.toString(),
+        vat: vat.toString(),
+        retention: retention.toString(),
+        payable: payable.toString(),
       })
-      .where(eq(partialInvoices.id, id))
-      .returning();
-    return { success: true, invoice: result[0] };
+      .where(eq(partialInvoices.id, id));
+    return { success: true };
   } catch (error: any) {
-    console.error("Error updating partial invoice:", error);
     return { success: false, message: error.message };
   }
 }
 
-/** Deletes a partial invoice record. */
-export async function deletePartialInvoice(data: { id: number }) {
+export async function deletePartialInvoice(id: number) {
   try {
-    await db.delete(partialInvoices).where(eq(partialInvoices.id, data.id));
+    await db.delete(partialInvoices).where(eq(partialInvoices.id, id));
     return { success: true };
   } catch (error: any) {
-    console.error("Error deleting partial invoice:", error);
     return { success: false, message: error.message };
   }
 }
