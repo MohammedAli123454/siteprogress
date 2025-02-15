@@ -108,6 +108,7 @@ export default function PartialInvoiceForm({
   onInvoiceAdded = () => { }
 }: PartialInvoiceFormProps) {
   // State Management
+  const [searchQuery, setSearchQuery] = useState("");
   const [isPending, startTransition] = useTransition();
   const [mocOptions, setMocOptions] = useState<MocOption[]>([]);
   const [invoices, setInvoices] = useState<PartialInvoice[]>([]);
@@ -302,13 +303,19 @@ export default function PartialInvoiceForm({
         amount: parseFloat(partial_invoices.amount),
         vat: parseFloat(partial_invoices.vat),
         retention: parseFloat(partial_invoices.retention),
-      }));
+      })).sort((a, b) => a.invoiceNo.localeCompare(b.invoiceNo)); // Add sorting here
 
       setInvoices(updatedInvoices);
     } catch (error) {
       console.error("Refresh invoices error:", error);
     }
   };
+
+  // Add filtered invoices
+  const filteredInvoices = invoices.filter(invoice =>
+    invoice.invoiceNo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    invoice.mocNo?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const resetForm = () => {
     setFormData({
@@ -349,7 +356,7 @@ export default function PartialInvoiceForm({
                     onValueChange={(value) => setFormData({ ...formData, mocId: value })}
                     required
                   >
-                    <SelectTrigger className="h-9"> {/* Reduced height */}
+                    <SelectTrigger className="h-9">
                       <SelectValue placeholder="Select MOC" />
                     </SelectTrigger>
                     <SelectContent>
@@ -437,60 +444,66 @@ export default function PartialInvoiceForm({
                   />
                 }
               />
-
-              {/* Invoice Status Field */}
-              <div className="flex-1">
-                <FormField
-                  label="Status *"
-                  content={
-                    <Select
-                      value={formData.invoiceStatus}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, invoiceStatus: value })
-                      }
-                      required
-                    >
-                      <SelectTrigger className="h-9">
-                        <SelectValue placeholder="Select Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(STATUS_COLORS).map(([status, color]) => (
-                          <SelectItem
-                            key={status}
-                            value={status}
-                            className={`text-sm ${color}`}
-                          >
-                            {status}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  }
-                />
-              </div>
-
-              {/* Form Action Buttons */}
-              <div className="flex space-x-4">
-                {editId && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={resetForm}
-                    disabled={isPending}
-                  >
-                    Cancel
-                  </Button>
-                )}
-                <Button type="submit" className="w-full md:w-auto" disabled={isPending}>
-                  {isPending ? "Processing..." : editId ? "Update Invoice" : "Add Invoice"}
-                </Button>
-              </div>
             </div>
+
+            {/* New combined row: Partial Invoices title, Invoice Status, Action Buttons, and Search Input */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+  <div>
+    <FormField
+      label="Status *"
+      content={
+        <Select
+          value={formData.invoiceStatus}
+          onValueChange={(value) =>
+            setFormData({ ...formData, invoiceStatus: value })
+          }
+          required
+        >
+          <SelectTrigger className="h-9">
+            <SelectValue placeholder="Select Status" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(STATUS_COLORS).map(([status, color]) => (
+              <SelectItem
+                key={status}
+                value={status}
+                className={`text-sm ${color}`}
+              >
+                {status}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      }
+    />
+  </div>
+  <div className="flex items-center space-x-4 justify-end">
+    {editId && (
+      <Button
+        type="button"
+        variant="outline"
+        onClick={resetForm}
+        disabled={isPending}
+      >
+        Cancel
+      </Button>
+    )}
+    <Button type="submit" className="w-full md:w-auto" disabled={isPending}>
+      {isPending ? "Processing..." : editId ? "Update Invoice" : "Add Invoice"}
+    </Button>
+    <Input
+      placeholder="Search invoices..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      className="w-64"
+    />
+  </div>
+</div>
           </form>
 
           {/* Invoices Table */}
           <InvoiceTable
-            invoices={invoices}
+            invoices={filteredInvoices}
             isLoading={isLoading}
             isPending={isPending}
             onEdit={handleEdit}
@@ -546,7 +559,8 @@ const InvoiceTable = ({
       <div className="relative h-full">
         <div className="absolute inset-0 overflow-auto">
           <Table className="border-collapse">
-            <TableHeader className="sticky top-0 bg-white shadow-sm z-10">
+            {/* Updated TableHeader: sticky with light background */}
+            <TableHeader className="sticky top-0 bg-gray-50 shadow-sm z-10">
               <TableRow className="h-8">
                 <TableHead className="font-semibold text-gray-700 py-2">MOC Number</TableHead>
                 <TableHead className="font-semibold text-gray-700 py-2">Invoice No</TableHead>
@@ -560,17 +574,17 @@ const InvoiceTable = ({
             <TableBody>
               {isLoading
                 ? Array(5)
-                  .fill(0)
-                  .map((_, i) => <SkeletonRow key={i} />)
+                    .fill(0)
+                    .map((_, i) => <SkeletonRow key={i} />)
                 : invoices.map((invoice) => (
-                  <InvoiceRow
-                    key={invoice.id}
-                    invoice={invoice}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onStatusChange={onStatusChange}
-                  />
-                ))}
+                    <InvoiceRow
+                      key={invoice.id}
+                      invoice={invoice}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      onStatusChange={onStatusChange}
+                    />
+                  ))}
             </TableBody>
           </Table>
         </div>
