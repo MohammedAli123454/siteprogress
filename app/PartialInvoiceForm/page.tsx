@@ -3,15 +3,32 @@
 import { useState, useTransition, useEffect, useCallback } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { addPartialInvoice, updatePartialInvoice, deletePartialInvoice } from "@/app/actions/invoiceActions";
+import {
+  addPartialInvoice,
+  updatePartialInvoice,
+  deletePartialInvoice
+} from "@/app/actions/invoiceActions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { db } from "../configs/db";
 import { mocs, partialInvoices } from "../configs/schema";
-import { eq } from "drizzle-orm";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { eq, sql } from "drizzle-orm";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -22,7 +39,10 @@ import {
 } from "@/components/ui/table";
 import { Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
+// Interfaces
 interface PartialInvoiceFormProps {
   onInvoiceAdded?: () => void;
 }
@@ -34,13 +54,13 @@ interface MocOption {
 }
 
 interface PartialInvoiceBase {
-  mocId: number;
-  invoiceNo: string;
-  invoiceDate: string;
-  amount: number;
-  vat: number;
-  retention: number;
-  invoiceStatus: string;
+  mocId?: number;
+  invoiceNo?: string;
+  invoiceDate?: string;
+  amount?: number;
+  vat?: number;
+  retention?: number;
+  invoiceStatus?: string;
 }
 
 interface PartialInvoice extends PartialInvoiceBase {
@@ -48,19 +68,58 @@ interface PartialInvoice extends PartialInvoiceBase {
   mocNo: string;
 }
 
-export default function PartialInvoiceForm({ 
-  onInvoiceAdded = () => {} 
+// Constants
+const STATUS_COLORS: Record<string, string> = {
+  PMT: "bg-blue-100 text-blue-800",
+  "Supply Chain": "bg-yellow-100 text-yellow-800",
+  Finance: "bg-green-100 text-green-800",
+  Paid: "bg-purple-100 text-purple-800",
+};
+
+// Helper Components
+const Spinner = () => (
+  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
+);
+
+const SkeletonRow = () => (
+  <TableRow className="h-8">
+    <TableCell>
+      <Skeleton className="h-4 w-[100px]" />
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-4 w-[150px]" />
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-4 w-[100px]" />
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-4 w-[100px]" />
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-4 w-[180px]" />
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-4 w-[100px]" />
+    </TableCell>
+  </TableRow>
+);
+
+export default function PartialInvoiceForm({
+  onInvoiceAdded = () => { }
 }: PartialInvoiceFormProps) {
+  // State Management
   const [isPending, startTransition] = useTransition();
   const [mocOptions, setMocOptions] = useState<MocOption[]>([]);
   const [invoices, setInvoices] = useState<PartialInvoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingInvoiceNo, setIsGeneratingInvoiceNo] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
-  const [openDialog, setOpenDialog] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState("");
   const [dialogMessage, setDialogMessage] = useState("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
+  // Form State
   const [formData, setFormData] = useState({
     mocId: "",
     invoiceNo: "",
@@ -71,8 +130,9 @@ export default function PartialInvoiceForm({
     invoiceStatus: "",
   });
 
+  // Data Fetching
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
       try {
         const [mocsResult, invoicesResult] = await Promise.all([
           db.select().from(mocs),
@@ -82,7 +142,7 @@ export default function PartialInvoiceForm({
         setMocOptions(mocsResult.map(moc => ({
           id: moc.id,
           mocNo: moc.mocNo,
-          cwo: moc.cwo
+          cwo: moc.cwo,
         })));
 
         const sortedInvoices = invoicesResult.map(invoice => {
@@ -90,185 +150,167 @@ export default function PartialInvoiceForm({
           return {
             ...invoice,
             mocId: invoice.mocId,
-            invoiceDate: invoice.invoiceDate, // Keep as string
+            invoiceDate: invoice.invoiceDate,
             amount: parseFloat(invoice.amount),
             vat: parseFloat(invoice.vat),
             retention: parseFloat(invoice.retention),
-            mocNo: moc?.mocNo || '',
+            mocNo: moc?.mocNo || "",
           };
         }).sort((a, b) => a.mocNo.localeCompare(b.mocNo));
 
         setInvoices(sortedInvoices);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Initial data fetch error:", error);
+        showDialog("Error", "Failed to load initial data");
       } finally {
         setIsLoading(false);
       }
     };
-    fetchData();
+
+    fetchInitialData();
   }, []);
 
-  const calculateValues = useCallback((amount: string) => {
-    const amountValue = parseFloat(amount) || 0;
-    return {
-      vat: (amountValue * 0.15).toFixed(2),
-      retention: (amountValue * 0.10).toFixed(2)
-    };
-  }, []);
+  // Business Logic
+  const calculateValues = useCallback((amount: number) => ({
+    vat: amount * 0.15,
+    retention: amount * 0.05,
+  }), []);
 
   const handleAmountChange = (value: string) => {
-    const calculated = calculateValues(value);
-    setFormData(prev => ({
-      ...prev,
-      amount: value,
-      vat: calculated.vat,
-      retention: calculated.retention
-    }));
+    const amount = parseFloat(value);
+    if (!isNaN(amount)) {
+      const { vat, retention } = calculateValues(amount);
+      setFormData((prev) => ({
+        ...prev,
+        amount: value,
+        vat: vat.toFixed(2),
+        retention: retention.toFixed(2),
+      }));
+    }
   };
 
-  useEffect(() => {
-    const generateInvoiceNumber = async () => {
-      if (!formData.mocId) return;
-      
+  const generateInvoiceNumber = useCallback(
+    async (mocId: string) => {
       setIsGeneratingInvoiceNo(true);
       try {
-        const selectedMOC = mocOptions.find(moc => moc.id.toString() === formData.mocId);
-        if (!selectedMOC) return;
+        const moc = mocOptions.find((m) => m.id.toString() === mocId);
+        if (!moc) return;
 
-        const existingInvoices = await db.select()
+        const countResult = await db
+          .select({ count: sql<number>`count(*)` })
           .from(partialInvoices)
-          .where(eq(partialInvoices.mocId, parseInt(formData.mocId)));
+          .where(eq(partialInvoices.mocId, parseInt(mocId)));
 
-        const nextSequence = existingInvoices.length + 1;
-        const paddedSequence = nextSequence.toString().padStart(3, '0');
-        const newInvoiceNo = `${selectedMOC.cwo}-C${paddedSequence}`;
-
-        setFormData(prev => ({
-          ...prev,
-          invoiceNo: newInvoiceNo
-        }));
-      } catch (error) {
-        console.error("Error generating invoice number:", error);
+        const count = countResult[0]?.count || 0;
+        const invoiceNo = `${moc.cwo}-PI-${count + 1}`;
+        setFormData((prev) => ({ ...prev, invoiceNo }));
       } finally {
         setIsGeneratingInvoiceNo(false);
       }
-    };
+    },
+    [mocOptions]
+  );
 
-    generateInvoiceNumber();
-  }, [formData.mocId, mocOptions]);
-
+  // Form Handlers
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     startTransition(async () => {
       try {
         const invoiceData = {
+          ...formData,
           mocId: parseInt(formData.mocId),
-          invoiceNo: formData.invoiceNo,
-          invoiceDate: format(formData.invoiceDate, "yyyy-MM-dd"),
           amount: parseFloat(formData.amount),
           vat: parseFloat(formData.vat),
           retention: parseFloat(formData.retention),
-          invoiceStatus: formData.invoiceStatus,
+          invoiceDate: format(formData.invoiceDate, "yyyy-MM-dd"),
         };
-  
-        const res = editId 
-          ? await updatePartialInvoice(editId, invoiceData)
-          : await addPartialInvoice(invoiceData);
 
-        if (res.success) {
-          setDialogMessage(editId ? "Invoice updated successfully!" : "Invoice created successfully!");
-          setOpenDialog(true);
-          resetForm();
-          refreshInvoices();
-          onInvoiceAdded();
+        if (editId) {
+          await updatePartialInvoice(editId, invoiceData);
+          showDialog("Success", "Invoice updated successfully!");
         } else {
-          alert("Error: " + res.message);
+          await addPartialInvoice(invoiceData);
+          showDialog("Success", "Invoice added successfully!");
         }
+
+        refreshInvoices();
+        resetForm();
+        onInvoiceAdded();
       } catch (error) {
-        console.error("Error saving invoice:", error);
-        alert("An error occurred while saving the invoice");
+        console.error("Form submission error:", error);
+        showDialog("Error", "An error occurred. Please try again.");
       }
     });
   };
 
   const handleEdit = (invoice: PartialInvoice) => {
-    setEditId(invoice.id);
     setFormData({
-      mocId: invoice.mocId.toString(),
-      invoiceNo: invoice.invoiceNo,
-      invoiceDate: new Date(invoice.invoiceDate),
-      amount: invoice.amount.toString(),
-      vat: invoice.vat.toString(),
-      retention: invoice.retention.toString(),
-      invoiceStatus: invoice.invoiceStatus,
+      mocId: invoice.mocId?.toString() || "",
+      invoiceNo: invoice.invoiceNo ?? "",
+      invoiceDate: invoice.invoiceDate ? new Date(invoice.invoiceDate) : new Date(),
+      amount: invoice.amount?.toString() || "",
+      vat: invoice.vat?.toString() || "",
+      retention: invoice.retention?.toString() || "",
+      invoiceStatus: invoice.invoiceStatus ?? "",
     });
+    setEditId(invoice.id);
   };
 
   const handleDelete = async (id: number) => {
     startTransition(async () => {
       try {
-        const res = await deletePartialInvoice(id);
-        if (res.success) {
-          setDialogMessage("Invoice deleted successfully!");
-          setOpenDialog(true);
-          refreshInvoices();
-        } else {
-          alert("Error: " + res.message);
-        }
+        await deletePartialInvoice(id);
+        refreshInvoices();
+        showDialog("Success", "Invoice deleted successfully!");
       } catch (error) {
-        console.error("Error deleting invoice:", error);
+        console.error("Delete error:", error);
+        showDialog("Error", "Failed to delete invoice.");
+      } finally {
+        setDeleteId(null);
       }
     });
   };
 
-  const handleStatusChange = async (id: number, newStatus: string) => {
+  const handleStatusChange = async (id: number, status: string) => {
     startTransition(async () => {
       try {
-        const existingInvoice = invoices.find(invoice => invoice.id === id);
-        if (!existingInvoice) return;
-
-        const updateData = {
-          ...existingInvoice,
-          invoiceDate: format(new Date(existingInvoice.invoiceDate), "yyyy-MM-dd"),
-          invoiceStatus: newStatus
-        };
-
-        const res = await updatePartialInvoice(id, updateData);
-        if (res.success) {
-          refreshInvoices();
-        } else {
-          alert("Error updating status: " + res.message);
-        }
+        await updatePartialInvoice(id, { invoiceStatus: status });
+        refreshInvoices();
       } catch (error) {
-        console.error("Error updating status:", error);
+        console.error("Status update error:", error);
       }
     });
+  };
+
+  // Helper Functions
+  const showDialog = (title: string, message: string) => {
+    setDialogTitle(title);
+    setDialogMessage(message);
+    setDialogOpen(true);
   };
 
   const refreshInvoices = async () => {
-    const [mocsResult, invoicesResult] = await Promise.all([
-      db.select().from(mocs),
-      db.select().from(partialInvoices)
-    ]);
+    try {
+      const result = await db
+        .select()
+        .from(partialInvoices)
+        .leftJoin(mocs, eq(partialInvoices.mocId, mocs.id));
 
-    const sortedInvoices = invoicesResult.map(invoice => {
-      const moc = mocsResult.find(m => m.id === invoice.mocId);
-      return {
-        ...invoice,
-        mocId: invoice.mocId,
-        invoiceDate: invoice.invoiceDate,
-        amount: parseFloat(invoice.amount),
-        vat: parseFloat(invoice.vat),
-        retention: parseFloat(invoice.retention),
-        mocNo: moc?.mocNo || '',
-      };
-    }).sort((a, b) => a.mocNo.localeCompare(b.mocNo));
+      const updatedInvoices = result.map(({ partial_invoices, mocs }) => ({
+        ...partial_invoices,
+        mocNo: mocs?.mocNo || "",
+        amount: parseFloat(partial_invoices.amount),
+        vat: parseFloat(partial_invoices.vat),
+        retention: parseFloat(partial_invoices.retention),
+      }));
 
-    setInvoices(sortedInvoices);
+      setInvoices(updatedInvoices);
+    } catch (error) {
+      console.error("Refresh invoices error:", error);
+    }
   };
 
   const resetForm = () => {
-    setEditId(null);
     setFormData({
       mocId: "",
       invoiceNo: "",
@@ -278,274 +320,376 @@ export default function PartialInvoiceForm({
       retention: "",
       invoiceStatus: "",
     });
+    setEditId(null);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-pulse text-gray-500">Loading data...</div>
-      </div>
-    );
-  }
+  // Effect Hooks
+  useEffect(() => {
+    if (formData.mocId) {
+      generateInvoiceNumber(formData.mocId);
+    }
+  }, [formData.mocId, generateInvoiceNumber]);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="w-full max-w-6xl mx-auto bg-white rounded-lg shadow-md p-8">
-        <h3 className="text-6xl font-bold text-center text-gray-800 mb-8">
-          {editId ? "Edit Partial Invoice" : "Add Partial Invoice"}
-        </h3>
+    <div className="h-screen flex flex-col bg-gray-50">
+      <div className="flex-grow max-w-7xl mx-auto w-full px-4 py-4">
+        <div className="bg-white rounded-lg shadow-lg p-2 h-full flex flex-col">
+          <h3 className="text-2xl font-bold text-gray-800 mb-4">
+            {editId ? "Edit Partial Invoice" : "Add Partial Invoice"}
+          </h3>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-sm font-medium text-gray-700">
-                MOC Number *
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={formData.mocId}
-                  onValueChange={(value) => setFormData({ ...formData, mocId: value })}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select MOC" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mocOptions.map((moc) => (
-                      <SelectItem key={moc.id} value={moc.id.toString()}>
-                        {moc.mocNo}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+          {/* Invoice Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                label="MOC Number *"
+                content={
+                  <Select
+                    value={formData.mocId}
+                    onValueChange={(value) => setFormData({ ...formData, mocId: value })}
+                    required
+                  >
+                    <SelectTrigger className="h-9"> {/* Reduced height */}
+                      <SelectValue placeholder="Select MOC" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mocOptions.map((moc) => (
+                        <SelectItem key={moc.id} value={moc.id.toString()} className="text-sm">
+                          {moc.mocNo}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                }
+              />
 
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-sm font-medium text-gray-700">
-                Invoice Number *
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  id="invoiceNo"
-                  type="text"
-                  value={formData.invoiceNo}
-                  readOnly
-                  className="bg-gray-100"
-                  placeholder={isGeneratingInvoiceNo ? "Generating..." : "Select MOC to generate"}
-                />
-              </div>
-            </div>
+              <FormField
+                label="Invoice Number *"
+                content={
+                  <Input
+                    id="invoiceNo"
+                    type="text"
+                    value={formData.invoiceNo}
+                    readOnly
+                    className="bg-gray-100"
+                    placeholder={
+                      isGeneratingInvoiceNo
+                        ? "Generating..."
+                        : "Select MOC to generate"
+                    }
+                  />
+                }
+              />
 
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-sm font-medium text-gray-700">
-                Invoice Date *
-              </Label>
-              <div className="col-span-3">
-                <DatePicker
-                  selected={formData.invoiceDate}
-                  onChange={(date: Date | null) => date && setFormData({ ...formData, invoiceDate: date })}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  dateFormat="yyyy-MM-dd"
-                  required
-                />
-              </div>
-            </div>
+              <FormField
+                label="Invoice Date *"
+                content={
+                  <DatePicker
+                    selected={formData.invoiceDate}
+                    onChange={(date) =>
+                      date && setFormData({ ...formData, invoiceDate: date })
+                    }
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    dateFormat="yyyy-MM-dd"
+                    required
+                  />
+                }
+              />
 
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-sm font-medium text-gray-700">
-                Amount (SAR) *
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  value={formData.amount}
-                  onChange={(e) => handleAmountChange(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
+              <FormField
+                label="Amount (SAR) *"
+                content={
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.amount}
+                    onChange={(e) => handleAmountChange(e.target.value)}
+                    required
+                  />
+                }
+              />
 
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-sm font-medium text-gray-700">
-                VAT (SAR) *
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  id="vat"
-                  type="number"
-                  step="0.01"
-                  value={formData.vat}
-                  disabled
-                  className="bg-gray-100"
-                />
-              </div>
-            </div>
+              <FormField
+                label="VAT (SAR) *"
+                content={
+                  <Input
+                    id="vat"
+                    type="number"
+                    step="0.01"
+                    value={formData.vat}
+                    disabled
+                    className="bg-gray-100"
+                  />
+                }
+              />
 
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-sm font-medium text-gray-700">
-                Retention (SAR) *
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  id="retention"
-                  type="number"
-                  step="0.01"
-                  value={formData.retention}
-                  disabled
-                  className="bg-gray-100"
-                />
-              </div>
-            </div>
+              <FormField
+                label="Retention (SAR) *"
+                content={
+                  <Input
+                    id="retention"
+                    type="number"
+                    step="0.01"
+                    value={formData.retention}
+                    disabled
+                    className="bg-gray-100"
+                  />
+                }
+              />
 
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-sm font-medium text-gray-700">
-                Status *
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={formData.invoiceStatus}
-                  onValueChange={(value) => setFormData({ ...formData, invoiceStatus: value })}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PMT">PMT</SelectItem>
-                    <SelectItem value="Supply Chain">Supply Chain</SelectItem>
-                    <SelectItem value="Finance">Finance</SelectItem>
-                    <SelectItem value="Paid">Paid</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-4 mt-8">
-            {editId && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={resetForm}
-                disabled={isPending}
-              >
-                Cancel
-              </Button>
-            )}
-            <Button
-              type="submit"
-              className="w-full md:w-auto"
-              disabled={isPending}
-            >
-              {isPending ? "Processing..." : editId ? "Update Invoice" : "Add Invoice"}
-            </Button>
-          </div>
-        </form>
-
-        <div className="mt-12">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>MOC Number</TableHead>
-                <TableHead>Invoice No</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoices.map((invoice) => (
-                <TableRow key={invoice.id}>
-                  <TableCell>{invoice.mocNo}</TableCell>
-                  <TableCell>{invoice.invoiceNo}</TableCell>
-                  <TableCell>
-                    {new Date(invoice.invoiceDate).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>{invoice.amount.toFixed(2)} SAR</TableCell>
-                  <TableCell>
+              {/* Invoice Status Field */}
+              <div className="flex-1">
+                <FormField
+                  label="Status *"
+                  content={
                     <Select
-                      value={invoice.invoiceStatus}
-                      onValueChange={(value) => handleStatusChange(invoice.id, value)}
+                      value={formData.invoiceStatus}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, invoiceStatus: value })
+                      }
+                      required
                     >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue />
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Select Status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="PMT">PMT</SelectItem>
-                        <SelectItem value="Supply Chain">Supply Chain</SelectItem>
-                        <SelectItem value="Finance">Finance</SelectItem>
-                        <SelectItem value="Paid">Paid</SelectItem>
+                        {Object.entries(STATUS_COLORS).map(([status, color]) => (
+                          <SelectItem
+                            key={status}
+                            value={status}
+                            className={`text-sm ${color}`}
+                          >
+                            {status}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(invoice)}
-                      >
-                        <Edit className="h-4 w-4 text-blue-600" />
-                      </Button>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeleteId(invoice.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Confirm Delete</DialogTitle>
-                            <DialogDescription>
-                              Are you sure you want to delete this invoice? This action cannot be undone.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <DialogFooter>
-                            <Button
-                              variant="outline"
-                              onClick={() => setDeleteId(null)}
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              onClick={() => deleteId && handleDelete(deleteId)}
-                            >
-                              Delete
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+                  }
+                />
+              </div>
 
-        <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Success</DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <p>{dialogMessage}</p>
+              {/* Form Action Buttons */}
+              <div className="flex space-x-4">
+                {editId && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={resetForm}
+                    disabled={isPending}
+                  >
+                    Cancel
+                  </Button>
+                )}
+                <Button type="submit" className="w-full md:w-auto" disabled={isPending}>
+                  {isPending ? "Processing..." : editId ? "Update Invoice" : "Add Invoice"}
+                </Button>
+              </div>
             </div>
-            <DialogFooter>
-              <Button onClick={() => setOpenDialog(false)}>OK</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </form>
+
+          {/* Invoices Table */}
+          <InvoiceTable
+            invoices={invoices}
+            isLoading={isLoading}
+            isPending={isPending}
+            onEdit={handleEdit}
+            onDelete={setDeleteId}
+            onStatusChange={handleStatusChange}
+          />
+
+          {/* Dialogs */}
+          <MessageDialog
+            open={dialogOpen}
+            title={dialogTitle}
+            message={dialogMessage}
+            onClose={() => setDialogOpen(false)}
+          />
+
+          <DeleteConfirmationDialog
+            deleteId={deleteId}
+            isPending={isPending}
+            onCancel={() => setDeleteId(null)}
+            onConfirm={handleDelete}
+          />
+        </div>
       </div>
     </div>
   );
 }
+
+// Sub-components
+const FormField = ({ label, content }: { label: string; content: React.ReactNode }) => (
+  <div className="grid grid-cols-4 items-center gap-4">
+    <Label className="text-sm font-medium text-gray-700">{label}</Label>
+    <div className="col-span-3">{content}</div>
+  </div>
+);
+
+const InvoiceTable = ({
+  invoices,
+  isLoading,
+  isPending,
+  onEdit,
+  onDelete,
+  onStatusChange,
+}: {
+  invoices: PartialInvoice[];
+  isLoading: boolean;
+  isPending: boolean;
+  onEdit: (invoice: PartialInvoice) => void;
+  onDelete: (id: number) => void;
+  onStatusChange: (id: number, value: string) => void;
+}) => (
+  <div className="mt-8 flex-1 flex flex-col">
+    <div className="border rounded-lg overflow-hidden flex-1">
+      <div className="relative h-full">
+        <div className="absolute inset-0 overflow-auto">
+          <Table className="border-collapse">
+            <TableHeader className="sticky top-0 bg-white shadow-sm z-10">
+              <TableRow className="h-8">
+                <TableHead className="font-semibold text-gray-700 py-2">MOC Number</TableHead>
+                <TableHead className="font-semibold text-gray-700 py-2">Invoice No</TableHead>
+                <TableHead className="font-semibold text-gray-700 py-2">Date</TableHead>
+                <TableHead className="font-semibold text-gray-700 py-2">Amount</TableHead>
+                <TableHead className="font-semibold text-gray-700 py-2">Status</TableHead>
+                <TableHead className="font-semibold text-gray-700 py-2">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {isLoading
+                ? Array(5)
+                  .fill(0)
+                  .map((_, i) => <SkeletonRow key={i} />)
+                : invoices.map((invoice) => (
+                  <InvoiceRow
+                    key={invoice.id}
+                    invoice={invoice}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onStatusChange={onStatusChange}
+                  />
+                ))}
+            </TableBody>
+          </Table>
+        </div>
+        {(isPending || isLoading) && (
+          <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center">
+            <Spinner />
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
+const InvoiceRow = ({
+  invoice,
+  onEdit,
+  onDelete,
+  onStatusChange,
+}: {
+  invoice: PartialInvoice;
+  onEdit: (invoice: PartialInvoice) => void;
+  onDelete: (id: number) => void;
+  onStatusChange: (id: number, value: string) => void;
+}) => (
+  <TableRow className="h-8 hover:bg-gray-50">
+    <TableCell className="py-1">{invoice.mocNo}</TableCell>
+    <TableCell className="p-1">{invoice.invoiceNo}</TableCell>
+    <TableCell className="p-1">
+      {invoice.invoiceDate
+        ? new Date(invoice.invoiceDate).toLocaleDateString()
+        : "N/A"}
+    </TableCell>
+    <TableCell className="font-medium">
+      {invoice.amount !== undefined
+        ? invoice.amount.toFixed(2)
+        : "0.00"}
+    </TableCell>
+    <TableCell className="p-1">
+      <Select
+        value={invoice.invoiceStatus}
+        onValueChange={(value) => onStatusChange(invoice.id, value)}
+      >
+        <SelectTrigger className="w-32">
+          <SelectValue placeholder="Select Status" />
+        </SelectTrigger>
+        <SelectContent>
+          {Object.entries(STATUS_COLORS).map(([status, color]) => (
+            <SelectItem key={status} value={status} className={color}>
+              {status}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </TableCell>
+    <TableCell className="p-1 space-x-2">
+      <Button variant="outline" size="icon" onClick={() => onEdit(invoice)}>
+        <Edit className="h-3 w-3" />
+      </Button>
+      <Button variant="destructive" size="icon" onClick={() => onDelete(invoice.id)}>
+        <Trash2 className="h-3 w-3" />
+      </Button>
+    </TableCell>
+  </TableRow>
+);
+
+const MessageDialog = ({
+  open,
+  title,
+  message,
+  onClose,
+}: {
+  open: boolean;
+  title: string;
+  message: string;
+  onClose: () => void;
+}) => (
+  <Dialog open={open} onOpenChange={onClose}>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>{title}</DialogTitle>
+        <DialogDescription>{message}</DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <Button onClick={onClose}>OK</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+);
+
+const DeleteConfirmationDialog = ({
+  deleteId,
+  isPending,
+  onCancel,
+  onConfirm,
+}: {
+  deleteId: number | null;
+  isPending: boolean;
+  onCancel: () => void;
+  onConfirm: (id: number) => void;
+}) => {
+  if (deleteId === null) return null;
+  return (
+    <Dialog open={true} onOpenChange={onCancel}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Confirm Delete</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete this invoice?
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={onCancel} disabled={isPending}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={() => onConfirm(deleteId)} disabled={isPending}>
+            {isPending ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
