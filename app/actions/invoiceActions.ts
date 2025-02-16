@@ -2,7 +2,7 @@
 "use server";
 
 import { db } from "../configs/db";
-import { partialInvoices } from "../configs/schema";
+import { partialInvoices, mocs} from "../configs/schema";
 import { eq } from "drizzle-orm";
 
 // Type for creating new invoices (all required)
@@ -25,6 +25,62 @@ export interface UpdatePartialInvoice {
   vat?: number;
   retention?: number;
   invoiceStatus?: string;
+}
+
+export type PartialInvoiceData = {
+  invoiceId: number;
+  mocId: number;
+  invoiceNo: string;
+  invoiceDate: Date;
+  amount: number;
+  vat: number;
+  retention: number;
+  invoiceStatus: string;
+  mocNo: string | null;
+  cwo: string | null;
+  po: string | null;
+  proposal: string | null;
+  contractValue: number | null;
+};
+
+export async function getPartialInvoices(): Promise<{
+  success: boolean;
+  data?: PartialInvoiceData[];
+  message?: string;
+}> {
+  try {
+    const rawData = await db
+      .select({
+        invoiceId: partialInvoices.id,
+        mocId: partialInvoices.mocId,
+        invoiceNo: partialInvoices.invoiceNo,
+        invoiceDate: partialInvoices.invoiceDate,
+        amount: partialInvoices.amount,
+        vat: partialInvoices.vat,
+        retention: partialInvoices.retention,
+        invoiceStatus: partialInvoices.invoiceStatus,
+        mocNo: mocs.mocNo,
+        cwo: mocs.cwo,
+        po: mocs.po,
+        proposal: mocs.proposal,
+        contractValue: mocs.contractValue,
+      })
+      .from(partialInvoices)
+      .leftJoin(mocs, eq(partialInvoices.mocId, mocs.id));
+
+    const processedData = rawData.map(row => ({
+      ...row,
+      amount: Number(row.amount),
+      vat: Number(row.vat),
+      retention: Number(row.retention),
+      contractValue: Number(row.contractValue),
+      invoiceDate: new Date(row.invoiceDate),
+    }));
+
+    return { success: true, data: processedData };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
 }
 
 export async function addPartialInvoice(data: CreatePartialInvoice) {

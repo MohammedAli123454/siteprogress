@@ -70,10 +70,10 @@ interface PartialInvoice extends PartialInvoiceBase {
 
 // Constants
 const STATUS_COLORS: Record<string, string> = {
-  PMT: "bg-blue-100 text-blue-800",
-  "Supply Chain": "bg-yellow-100 text-yellow-800",
-  Finance: "bg-green-100 text-green-800",
-  Paid: "bg-purple-100 text-purple-800",
+  PMD: "bg-blue-100 text-blue-800",
+  PMT: "bg-yellow-100 text-yellow-800",
+  FINANCE: "bg-green-100 text-green-800",
+  PAID: "bg-purple-100 text-purple-800",
 };
 
 // Helper Components
@@ -293,18 +293,30 @@ export default function PartialInvoiceForm({
   const refreshInvoices = async () => {
     try {
       const result = await db
-        .select()
+        .select({
+          id: partialInvoices.id,
+          mocId: partialInvoices.mocId,
+          invoiceNo: partialInvoices.invoiceNo,
+          invoiceDate: partialInvoices.invoiceDate,
+          amount: partialInvoices.amount,
+          vat: partialInvoices.vat,
+          retention: partialInvoices.retention,
+          invoiceStatus: partialInvoices.invoiceStatus, // Ensure this is selected
+          mocNo: mocs.mocNo
+        })
         .from(partialInvoices)
         .leftJoin(mocs, eq(partialInvoices.mocId, mocs.id));
-
-      const updatedInvoices = result.map(({ partial_invoices, mocs }) => ({
-        ...partial_invoices,
-        mocNo: mocs?.mocNo || "",
-        amount: parseFloat(partial_invoices.amount),
-        vat: parseFloat(partial_invoices.vat),
-        retention: parseFloat(partial_invoices.retention),
-      })).sort((a, b) => a.invoiceNo.localeCompare(b.invoiceNo)); // Add sorting here
-
+  
+      const updatedInvoices = result.map(row => ({
+        ...row,
+        mocNo: row.mocNo || "",
+        amount: parseFloat(row.amount),
+        vat: parseFloat(row.vat),
+        retention: parseFloat(row.retention),
+        // Ensure status is properly formatted
+        invoiceStatus: row.invoiceStatus.trim().toUpperCase()
+      }));
+  
       setInvoices(updatedInvoices);
     } catch (error) {
       console.error("Refresh invoices error:", error);

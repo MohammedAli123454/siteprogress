@@ -80,6 +80,7 @@ const SideNav = () => {
         { name: "Account Receivable", path: "/AccountReceivable" },
         { name: "Add MOC Detail", path: "/MocForm" },
         { name: "Invoices Entry", path: "/PartialInvoiceForm" },
+        { name: "Dash Board", path: "/dashboard" },
 
 
         
