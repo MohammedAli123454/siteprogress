@@ -115,7 +115,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
       {/* <h1 className="text-3xl font-bold text-gray-900 mb-8">Project Financial Dashboard</h1> */}
 
       {/* Status Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2 mb-8 sticky top-0 z-10 bg-gray-50">
         {/* Awarded MOCs Card */}
         <StatusCard
           label="Awarded Value"
@@ -173,32 +173,34 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
               <Loader color="blue" size={48} />;
           </div>
         ) : (
+          <div className="max-h-[600px] overflow-y-auto">
           <table className="w-full table-fixed">
       <thead className="bg-blue-50">
-        <tr>
-          <th className="w-[40px] px-2 py-3"></th>
-          <th className="w-[150px] px-3 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
-            MOC/Project No
-          </th>
-          <th className="w-[200px] px-3 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
-            Description
-          </th>
-          <th className="w-[120px] px-3 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+      <tr>
+                  <th className="sticky top-0 bg-blue-50 z-10 w-[40px] px-2 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+                  </th>
+                  <th className="sticky top-0 bg-blue-50 z-10 w-[150px] px-3 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+                    MOC/Project No
+                  </th>
+                  <th className="sticky top-0 bg-blue-50 z-10 w-[200px] px-3 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+                    Description
+                  </th>
+          <th className="sticky top-0 bg-blue-50 z-10 w-[120px] px-3 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
             CWO No
           </th>
-          <th className="w-[150px] px-3 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+          <th className="sticky top-0 bg-blue-50 z-10 w-[150px] px-3 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
             Awarded (SR)
           </th>
-          <th className="w-[180px] px-3 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+          <th className="sticky top-0 bg-blue-50 z-10 w-[180px] px-3 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
           Awarded inc. VAT(SR)
           </th>
-          <th className="w-[180px] px-3 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+          <th className="sticky top-0 bg-blue-50 z-10 w-[180px] px-3 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
           Submitted inc. VAT(SR)
           </th>
-          <th className="w-[180px] px-3 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+          <th className="sticky top-0 bg-blue-50 z-10 w-[180px] px-3 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
           Received inc. VAT(SR)
           </th>
-          <th className="w-[180px] px-3 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+          <th className="sticky top-0 bg-blue-50 z-10w-[180px] px-3 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
           Balance inc. VAT(SR)
           </th>
         </tr>
@@ -292,6 +294,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
         })}
       </tbody>
     </table>
+    </div>
       )}
     </div>
   </div>
