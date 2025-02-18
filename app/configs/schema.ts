@@ -202,6 +202,8 @@ export const mocs = pgTable("mocs", {
   po: text("po").notNull(),
   proposal: text("proposal").notNull(),
   contractValue: numeric("contract_value", { precision: 12, scale: 2 }).notNull(),
+  description: text("description"), // Optional, add .notNull() if required
+  shortDescription: varchar("short_description", { length: 255 }) // Optional, add .notNull() if required
 });
 
 export const partialInvoices = pgTable("partial_invoices", {

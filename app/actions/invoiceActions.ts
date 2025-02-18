@@ -41,6 +41,7 @@ export type PartialInvoiceData = {
   po: string | null;
   proposal: string | null;
   contractValue: number | null;
+  shortDescription: string | null; // Add this
 };
 
 export async function getPartialInvoices(): Promise<{
@@ -64,6 +65,7 @@ export async function getPartialInvoices(): Promise<{
         po: mocs.po,
         proposal: mocs.proposal,
         contractValue: mocs.contractValue,
+        shortDescription: mocs.shortDescription, // Add this line
       })
       .from(partialInvoices)
       .leftJoin(mocs, eq(partialInvoices.mocId, mocs.id));
@@ -75,6 +77,7 @@ export async function getPartialInvoices(): Promise<{
       retention: Number(row.retention),
       contractValue: Number(row.contractValue),
       invoiceDate: new Date(row.invoiceDate),
+      shortDescription: row.shortDescription, // Add this
     }));
 
     return { success: true, data: processedData };

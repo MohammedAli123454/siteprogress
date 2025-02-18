@@ -14,6 +14,7 @@ type DashboardProps = {
 type GroupedMOC = {
   mocId: number;
   mocNo: string | null;
+  shortDescription: string | null; // Added here
   cwo: string | null;
   po: string | null;
   proposal: string | null;
@@ -51,6 +52,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
       acc.set(mocId, {
         mocId,
         mocNo: invoice.mocNo,
+        shortDescription: invoice.shortDescription, // Added here
         cwo: invoice.cwo,
         po: invoice.po,
         proposal: invoice.proposal,
@@ -171,84 +173,129 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
               <Loader color="blue" size={48} />;
           </div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="w-8 px-2 py-2"></th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase">MOC/Project No</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase">CWO</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase">MOC/Project Value</th>
-                {/* <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase">Issued Invoices</th> */}
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase">Client Payable</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase">Balance Amount to Invoice</th>
+          <table className="w-full table-fixed">
+      <thead className="bg-blue-50">
+        <tr>
+          <th className="w-[40px] px-2 py-3"></th>
+          <th className="w-[150px] px-3 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+            MOC/Project No
+          </th>
+          <th className="w-[200px] px-3 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+            Description
+          </th>
+          <th className="w-[120px] px-3 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+            CWO No
+          </th>
+          <th className="w-[150px] px-3 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+            Awarded (SR)
+          </th>
+          <th className="w-[180px] px-3 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+          Awarded inc. VAT(SR)
+          </th>
+          <th className="w-[180px] px-3 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+          Submitted inc. VAT(SR)
+          </th>
+          <th className="w-[180px] px-3 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+          Received inc. VAT(SR)
+          </th>
+          <th className="w-[180px] px-3 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+          Balance inc. VAT(SR)
+          </th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-gray-200">
+        {filteredMOCs.map((moc, index) => {
+          const awardedValue = safeNumber(moc.contractValue);
+          const awardedValueWithVAT = awardedValue * 1.15;
+          const totalPayable = moc.invoices.reduce(
+            (sum, inv) => sum + (inv.amount + inv.vat - inv.retention),
+            0
+          );
+          const receivedValue = moc.invoices
+            .filter(inv => inv.invoiceStatus === "PAID")
+            .reduce((sum, inv) => sum + (inv.amount + inv.vat - inv.retention), 0);
+          const balanceAmount = awardedValueWithVAT - receivedValue;
+          const isExpanded = expandedMOCs.has(moc.mocId);
+
+          return (
+            <React.Fragment key={moc.mocId}>
+              <tr
+                className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 cursor-pointer`}
+                onClick={() => toggleMOCExpansion(moc.mocId)}
+              >
+                <td className="px-2 py-3">
+                  {isExpanded ? <ChevronUp className="w-5 h-5 text-blue-600" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                </td>
+                <td className="px-3 py-3 text-sm font-medium text-gray-900 truncate" title={safeString(moc.mocNo)}>
+                  {safeString(moc.mocNo)}
+                </td>
+                <td className="px-3 py-3 text-sm text-gray-600 truncate" title={safeString(moc.shortDescription)}>
+                  {safeString(moc.shortDescription)}
+                </td>
+                <td className="px-3 py-3 text-sm text-gray-500 truncate">
+                  {safeString(moc.cwo)}
+                </td>
+                <td className="px-3 py-3 text-sm text-gray-900 text-center font-mono">
+                  {formatMillions(awardedValue)}
+                </td>
+                <td className="px-3 py-3 text-sm text-gray-900 text-center font-mono font-medium">
+                  {formatMillions(awardedValueWithVAT)}
+                </td>
+                <td className="px-3 py-3 text-sm text-gray-900 text-center font-mono">
+                  {formatMillions(totalPayable)}
+                </td>
+                <td className="px-3 py-3 text-sm text-green-600 text-center font-mono font-semibold">
+                  {formatMillions(receivedValue)}
+                </td>
+                <td className="px-3 py-3 text-sm text-gray-900 text-center font-mono">
+                  {formatMillions(balanceAmount)}
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredMOCs.map((moc) => {
-                const totalPayable = moc.invoices.reduce(
-                  (sum, inv) => sum + (inv.amount + inv.vat - inv.retention),
-                  0
-                );
-                const balanceAmount = safeNumber(moc.contractValue) * 1.15 - totalPayable;
-                const isExpanded = expandedMOCs.has(moc.mocId);
+
+              {isExpanded && moc.invoices.map((invoice) => {
+                const payable = invoice.amount + invoice.vat - invoice.retention;
+                const statusConfig = statusMapping[invoice.invoiceStatus as StatusKey];
 
                 return (
-                  <React.Fragment key={moc.mocId}>
-                    <tr
-                      className="hover:bg-gray-50 cursor-pointer"
-                      onClick={() => toggleMOCExpansion(moc.mocId)}
-                    >
-                      <td className="px-2 py-2">
-                        {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                      </td>
-                      <td className="px-4 py-2 font-medium text-gray-900">{safeString(moc.mocNo)}</td>
-                      <td className="px-4 py-2 text-gray-600">{safeString(moc.cwo)}</td>
-                      <td className="px-4 py-2 text-gray-900">  {formatMillions(safeNumber(moc.contractValue))}</td>
-                      {/* <td className="px-4 py-2 text-gray-600">{moc.invoices.length}</td> */}
-                      <td className="px-4 py-2 font-semibold text-gray-900">{formatMillions(totalPayable)}</td>
-                      <td className="px-4 py-2 text-gray-900">{formatMillions(balanceAmount)}</td>
-                    </tr>
-
-                    {isExpanded && moc.invoices.map((invoice) => {
-                      const payable = invoice.amount + invoice.vat - invoice.retention;
-                      const statusConfig = statusMapping[invoice.invoiceStatus as StatusKey];
-
-                      return (
-                        <tr key={invoice.invoiceId} className="bg-gray-50">
-                          <td className="px-2"></td>
-                          <td className="px-4 py-1 text-sm" colSpan={6}>
-                            <div className="grid grid-cols-6 gap-4 items-center">
-                              <div className="text-gray-500">{invoice.invoiceNo}</div>
-                              <div className="text-gray-500">
-                                {new Date(invoice.invoiceDate).toLocaleDateString("en-US", {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                })}
-                              </div>
-                              <div className="col-span-2">
-                                <span className={`${statusConfig.color} font-medium`}>
-                                  {statusConfig.label}
-                                </span>
-                              </div>
-                              <div className="text-gray-900">{formatMillions(payable)}</div>
-                              <div className="text-gray-500 text-sm">
-                                Amount: {formatMillions(invoice.amount)}
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </React.Fragment>
+                  <tr key={invoice.invoiceId} className="bg-blue-50">
+                    <td className="px-2"></td>
+                    <td className="px-3 py-2 text-sm" colSpan={8}>
+                      <div className="grid grid-cols-8 gap-4 items-center">
+                        <div className="col-span-2 text-gray-500 truncate" title={invoice.invoiceNo}>
+                          {invoice.invoiceNo}
+                        </div>
+                        <div className="text-gray-500 text-sm">
+                          {new Date(invoice.invoiceDate).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </div>
+                        <div className="col-span-2">
+                          <span className={`${statusConfig.color} font-medium text-sm`}>
+                            {statusConfig.label}
+                          </span>
+                        </div>
+                        <div className="text-gray-900 text-center font-mono text-sm">
+                          {formatMillions(payable)}
+                        </div>
+                        <div className="text-gray-500 text-sm text-center font-mono">
+                          {formatMillions(invoice.amount)}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
                 );
               })}
-            </tbody>
-          </table>
-        )}
-      </div>
+            </React.Fragment>
+          );
+        })}
+      </tbody>
+    </table>
+      )}
     </div>
-  );
+  </div>
+);
 };
 
 // Reusable StatusCard component
