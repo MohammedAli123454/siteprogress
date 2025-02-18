@@ -30,19 +30,21 @@ const statusMapping = {
 
 type StatusKey = keyof typeof statusMapping;
 
-// Helper function for currency formatting without symbol
-const formatNumber = (value: number) =>
-  new Intl.NumberFormat("en-US").format(value);
+// Helper function for formatting values in millions
+const formatMillions = (value: number) => {
+  const millions = value / 1_000_000;
+  return `${millions.toLocaleString('en-US', { maximumFractionDigits: 1 })}M`;
+};
 
 const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
-  const [selectedStatus, setSelectedStatus] = useState<StatusKey | null>(null);
+  const [selectedCard, setSelectedCard] = useState<string | null>('awarded');
   const [expandedMOCs, setExpandedMOCs] = useState<Set<number>>(new Set());
 
   // Helper functions for null safety
   const safeString = (value: string | null) => value || "N/A";
   const safeNumber = (value: number | null) => value ?? 0;
 
-  // Group invoices by MOC using reduce
+  // Group invoices by MOC
   const groupedMOCs = data.reduce((acc, invoice) => {
     const mocId = invoice.mocId;
     if (!acc.has(mocId)) {
@@ -62,17 +64,18 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
 
   // Calculate aggregated sums
   type AggregatedSums = {
-    OVERALL: number;
+    AWARDED_MOCS: number;
     TOTAL_PAID: number;
-    TOTAL_CONTRACT_VALUE: number;
+    OVERALL: number;
   } & Record<StatusKey, number>;
 
   const aggregatedSums = Array.from(groupedMOCs.values()).reduce(
     (acc, moc) => {
-      acc.TOTAL_CONTRACT_VALUE += safeNumber(moc.contractValue);
+      acc.AWARDED_MOCS += safeNumber(moc.contractValue);
       return acc;
     },
     {
+      AWARDED_MOCS: 0,
       OVERALL: data.reduce((sum, row) => sum + (row.amount + row.vat - row.retention), 0),
       TOTAL_PAID: data
         .filter((row) => row.invoiceStatus === "PAID")
@@ -87,7 +90,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
   );
 
   // Calculate payment percentage
-  const paymentPercentage = aggregatedSums.TOTAL_PAID / aggregatedSums.TOTAL_CONTRACT_VALUE || 0;
+  const paymentPercentage = aggregatedSums.TOTAL_PAID / aggregatedSums.AWARDED_MOCS || 0;
 
   const toggleMOCExpansion = (mocId: number) => {
     const newExpanded = new Set(expandedMOCs);
@@ -97,37 +100,37 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
 
   const filteredMOCs = Array.from(groupedMOCs.values()).map((moc) => ({
     ...moc,
-    invoices: selectedStatus
-      ? moc.invoices.filter((invoice) => invoice.invoiceStatus === selectedStatus)
-      : moc.invoices,
-  })).filter((moc) => moc.invoices.length > 0);
+    invoices: 
+      // Handle status cards
+      Object.keys(statusMapping).includes(selectedCard || '') 
+        ? moc.invoices.filter(invoice => invoice.invoiceStatus === selectedCard)
+        // Handle special cards (show all invoices)
+        : moc.invoices,
+  })).filter(moc => moc.invoices.length > 0);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Project Financial Dashboard</h1>
+      {/* <h1 className="text-3xl font-bold text-gray-900 mb-8">Project Financial Dashboard</h1> */}
 
       {/* Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-        {/* Overall Card */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2 mb-8">
+        {/* Awarded MOCs Card */}
         <StatusCard
-          label="Total Invoices Submitted"
-          value={aggregatedSums.OVERALL}
-          isSelected={!selectedStatus}
-          onClick={() => setSelectedStatus(null)}
+          label="Awarded Value"
+          value={aggregatedSums.AWARDED_MOCS}
+          isSelected={selectedCard === 'awarded'}
+          onClick={() => setSelectedCard('awarded')}
+          compact
         />
 
-        {/* Payment Percentage Card */}
-        <div
-          onClick={() => setSelectedStatus(null)}
-          className={`p-4 rounded-lg border bg-white cursor-pointer transition-all ${
-            !selectedStatus ? "border-2 border-blue-500" : "hover:border-gray-300"
-          }`}
-        >
-          <p className="text-sm font-medium text-gray-600">Payment % Received (TA & Non-TA)</p>
-          <p className="text-xl font-bold text-gray-900">
-            {paymentPercentage.toLocaleString("en-US", { style: "percent", minimumFractionDigits: 1 })}
-          </p>
-        </div>
+        {/* Total Invoices Submitted Card */}
+        <StatusCard
+          label="Submitted Invoices"
+          value={aggregatedSums.OVERALL}
+          isSelected={selectedCard === 'submitted'}
+          onClick={() => setSelectedCard('submitted')}
+          compact
+        />
 
         {/* Status Cards */}
         {(Object.keys(statusMapping) as StatusKey[]).map((status) => (
@@ -136,10 +139,29 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
             label={statusMapping[status].label}
             value={aggregatedSums[status]}
             color={statusMapping[status].color}
-            isSelected={selectedStatus === status}
-            onClick={() => setSelectedStatus(status)}
+            isSelected={selectedCard === status}
+            onClick={() => setSelectedCard(status)}
+            compact
           />
         ))}
+
+        {/* Payment Percentage Card */}
+        <div
+          onClick={() => setSelectedCard('percentage')}
+          className={`p-2 rounded-lg border bg-white cursor-pointer transition-all ${
+            selectedCard === 'percentage' ? "border-2 border-blue-500" : "hover:border-gray-300"
+          }`}
+        >
+          <div className="flex flex-col gap-0 user-select-none">
+            <p className="text-xs font-medium text-gray-600">% Received</p>
+            <p className="text-lg font-bold text-gray-900">
+              {paymentPercentage.toLocaleString("en-US", { 
+                style: "percent", 
+                minimumFractionDigits: 1 
+              })}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* MOC Table */}
@@ -156,7 +178,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase">MOC/Project No</th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase">CWO</th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase">MOC/Project Value</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase">Issued Invoices</th>
+                {/* <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase">Issued Invoices</th> */}
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase">Client Payable</th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase">Balance Amount to Invoice</th>
               </tr>
@@ -181,10 +203,10 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
                       </td>
                       <td className="px-4 py-2 font-medium text-gray-900">{safeString(moc.mocNo)}</td>
                       <td className="px-4 py-2 text-gray-600">{safeString(moc.cwo)}</td>
-                      <td className="px-4 py-2 text-gray-900">{formatNumber(safeNumber(moc.contractValue))}</td>
-                      <td className="px-4 py-2 text-gray-600">{moc.invoices.length}</td>
-                      <td className="px-4 py-2 font-semibold text-gray-900">{formatNumber(totalPayable)}</td>
-                      <td className="px-4 py-2 text-gray-900">{formatNumber(balanceAmount)}</td>
+                      <td className="px-4 py-2 text-gray-900">  {formatMillions(safeNumber(moc.contractValue))}</td>
+                      {/* <td className="px-4 py-2 text-gray-600">{moc.invoices.length}</td> */}
+                      <td className="px-4 py-2 font-semibold text-gray-900">{formatMillions(totalPayable)}</td>
+                      <td className="px-4 py-2 text-gray-900">{formatMillions(balanceAmount)}</td>
                     </tr>
 
                     {isExpanded && moc.invoices.map((invoice) => {
@@ -209,9 +231,9 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
                                   {statusConfig.label}
                                 </span>
                               </div>
-                              <div className="text-gray-900">{formatNumber(payable)}</div>
+                              <div className="text-gray-900">{formatMillions(payable)}</div>
                               <div className="text-gray-500 text-sm">
-                                Amount: {formatNumber(invoice.amount)}
+                                Amount: {formatMillions(invoice.amount)}
                               </div>
                             </div>
                           </td>
@@ -230,18 +252,21 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
 };
 
 // Reusable StatusCard component
+
 const StatusCard = ({
   label,
   value,
   color = "text-gray-900",
   isSelected,
   onClick,
+  compact
 }: {
   label: string;
   value: number;
   color?: string;
   isSelected: boolean;
   onClick: () => void;
+  compact?: boolean;
 }) => (
   <div
     onClick={onClick}
@@ -249,8 +274,12 @@ const StatusCard = ({
       isSelected ? "border-2 border-blue-500" : "hover:border-gray-300"
     }`}
   >
-    <p className="text-sm font-medium text-gray-600">{label}</p>
-    <p className={`text-xl font-bold ${color}`}>{formatNumber(value)}</p>
+    <div className="flex flex-col gap-1 user-select-none">
+      <p className="text-sm font-medium text-gray-600">{label}</p>
+      <p className={`text-xl font-bold ${color}`}>
+        {formatMillions(value)}
+      </p>
+    </div>
   </div>
 );
 
