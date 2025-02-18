@@ -91,7 +91,9 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
     } as AggregatedSums
   );
 
+
   // Calculate payment percentage
+  const retentionValue = aggregatedSums.TOTAL_PAID * 0.1;
   const paymentPercentage = aggregatedSums.TOTAL_PAID / aggregatedSums.AWARDED_MOCS || 0;
 
   const toggleMOCExpansion = (mocId: number) => {
@@ -115,7 +117,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
       {/* <h1 className="text-3xl font-bold text-gray-900 mb-8">Project Financial Dashboard</h1> */}
 
       {/* Status Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2 mb-8 sticky top-0 z-10 bg-gray-50">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8 sticky top-0 z-10 bg-gray-50">
         {/* Awarded MOCs Card */}
         <StatusCard
           label="Awarded Value"
@@ -146,6 +148,15 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
             compact
           />
         ))}
+
+        <StatusCard
+          label="Retention"
+          value={retentionValue}
+          isSelected={selectedCard === 'retention'}
+          onClick={() => setSelectedCard('retention')}
+          compact
+          color="text-amber-600"
+        />
 
         {/* Payment Percentage Card */}
         <div
