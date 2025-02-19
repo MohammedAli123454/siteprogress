@@ -331,12 +331,16 @@ const MergedCard: React.FC<MergedCardProps> = ({
     >
       <CardHeader className="pb-2">
       <CardTitle 
-  className="text-center text-[15px] font-medium bg-gradient-to-r from-blue-50 to-blue-100 
-            text-blue-800 border-b border-b-blue-100 py-2 px-4 rounded-t-lg shadow-sm
-            transition-all duration-200 hover:bg-blue-50/90"
->
-  {title}
-</CardTitle>
+        className={`text-center text-[15px] font-medium text-blue-900/90 py-1.5 px-3.5
+          border-b border-blue-200/30 bg-gradient-to-r from-blue-100/70 to-blue-100/30
+          backdrop-blur-sm rounded-t-xl transition-all duration-300 ${
+            isSelected 
+              ? "bg-blue-100/50 border-b-blue-300/30" 
+              : "hover:bg-blue-100/40"
+          }`}
+      >
+        {title}
+      </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
