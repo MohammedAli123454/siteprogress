@@ -11,6 +11,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 type DashboardProps = {
@@ -48,6 +54,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
   const [selectedCard, setSelectedCard] = useState<string | null>('awarded');
   const [expandedMOCs, setExpandedMOCs] = useState<Set<number>>(new Set());
   const [selectedType, setSelectedType] = useState<string>('Overall');
+  const [selectedMoc, setSelectedMoc] = useState<GroupedMOC | null>(null);
 
   const safeString = (value: string | null) => value || "N/A";
   const safeNumber = (value: number | null) => value ?? 0;
@@ -103,21 +110,21 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
   const retentionValue = aggregatedSums.TOTAL_PAID * 0.1;
   const paymentPercentage = aggregatedSums.PAID / aggregatedSums.OVERALL || 0;
 
-  const toggleMOCExpansion = (mocId: number) => {
-    const newExpanded = new Set(expandedMOCs);
-    newExpanded.has(mocId) ? newExpanded.delete(mocId) : newExpanded.add(mocId);
-    setExpandedMOCs(newExpanded);
-  };
+  // const toggleMOCExpansion = (mocId: number) => {
+  //   const newExpanded = new Set(expandedMOCs);
+  //   newExpanded.has(mocId) ? newExpanded.delete(mocId) : newExpanded.add(mocId);
+  //   setExpandedMOCs(newExpanded);
+  // };
 
   const filteredMOCs = Array.from(groupedMOCs.values())
-    .filter(moc => selectedType === 'Overall' || moc.type === selectedType)
-    .map((moc) => ({
-      ...moc,
-      invoices: Object.keys(statusMapping).includes(selectedCard || '') 
-        ? moc.invoices.filter(invoice => invoice.invoiceStatus === selectedCard)
-        : moc.invoices
-    }))
-    .filter(moc => moc.invoices.length > 0);
+  .filter(moc => selectedType === 'Overall' || moc.type === selectedType)
+  .map((moc) => ({
+    ...moc,
+    invoices: Object.keys(statusMapping).includes(selectedCard || '') 
+      ? moc.invoices.filter(invoice => invoice.invoiceStatus === selectedCard)
+      : moc.invoices
+  }))
+  .filter(moc => moc.invoices.length > 0);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -190,22 +197,22 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
         />
       </div>
 
-      {/* MOC Table */}
-      <div className="bg-white rounded-lg border overflow-hidden">
+    
+         {/* MOC Table */}
+         <div className="bg-white rounded-lg border overflow-hidden">
         {loading ? (
           <div className="p-8 flex justify-center items-center">
             <Loader color="blue" size={48} />;
           </div>
         ) : (
           <div className="max-h-[600px] overflow-y-auto">
-          <table className="w-full table-fixed">
+            <table className="w-full table-fixed">
               <thead className="bg-blue-50">
                 <tr>
                   <th className="sticky top-0 bg-blue-50 z-10 w-[50px] px-3 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
                     Sr. No
                   </th>
-                  <th className="sticky top-0 bg-blue-50 z-10 w-[40px] px-2 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
-                  </th>
+                  {/* Remove chevron column */}
                   <th className="sticky top-0 bg-blue-50 z-10 w-[150px] px-3 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
                     MOC/Project No
                   </th>
@@ -233,7 +240,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredMOCs.map((moc, index) => {
+              {filteredMOCs.map((moc, index) => {
                   const awardedValue = safeNumber(moc.contractValue);
                   const awardedValueWithVAT = awardedValue * 1.15;
                   const totalPayable = moc.invoices.reduce(
@@ -247,20 +254,18 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
                   const isExpanded = expandedMOCs.has(moc.mocId);
 
                   return (
-                    <React.Fragment key={moc.mocId}>
-                      <tr
-                        className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 cursor-pointer`}
-                        onClick={() => toggleMOCExpansion(moc.mocId)}
-                      >
-                          <td className="px-3 py-3 text-sm text-gray-900">
-                          {index + 1}
-                        </td>
-                        <td className="px-2 py-3">
-                          {isExpanded ? <ChevronUp className="w-5 h-5 text-blue-600" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
-                        </td>
-                        <td className="px-3 py-3 text-sm font-medium text-gray-900 truncate" title={safeString(moc.mocNo)}>
-                          {safeString(moc.mocNo)}
-                        </td>
+                    <tr
+                      key={moc.mocId}
+                      className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 cursor-pointer`}
+                      onClick={() => setSelectedMoc(moc)}
+                    >
+                      <td className="px-3 py-3 text-sm text-gray-900">
+                        {index + 1}
+                      </td>
+                      {/* Remove chevron cell */}
+                      <td className="px-3 py-3 text-sm font-medium text-gray-900 truncate" title={safeString(moc.mocNo)}>
+                        {safeString(moc.mocNo)}
+                      </td>
                         <td className="px-3 py-3 text-sm text-gray-600 truncate" title={safeString(moc.shortDescription)}>
                           {safeString(moc.shortDescription)}
                         </td>
@@ -282,44 +287,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
                         <td className="px-3 py-3 text-sm text-gray-900 text-center font-mono">
                           {formatMillions(balanceAmount)}
                         </td>
-                      </tr>
-
-                      {isExpanded && moc.invoices.map((invoice) => {
-                        const payable = invoice.amount + invoice.vat - invoice.retention;
-                        const statusConfig = statusMapping[invoice.invoiceStatus as StatusKey];
-
-                        return (
-                          <tr key={invoice.invoiceId} className="bg-blue-50">
-                            <td className="px-2"></td>
-                            <td className="px-3 py-2 text-sm" colSpan={8}>
-                              <div className="grid grid-cols-8 gap-4 items-center">
-                                <div className="col-span-2 text-gray-500 truncate" title={invoice.invoiceNo}>
-                                  {invoice.invoiceNo}
-                                </div>
-                                <div className="text-gray-500 text-sm">
-                                  {new Date(invoice.invoiceDate).toLocaleDateString("en-US", {
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                  })}
-                                </div>
-                                <div className="col-span-2">
-                                  <span className={`${statusConfig.color} font-medium text-sm`}>
-                                    {statusConfig.label}
-                                  </span>
-                                </div>
-                                <div className="text-gray-900 text-center font-mono text-sm">
-                                  {formatMillions(payable)}
-                                </div>
-                                <div className="text-gray-500 text-sm text-center font-mono">
-                                  {formatMillions(invoice.amount)}
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </React.Fragment>
+                        </tr>
                   );
                 })}
               </tbody>
@@ -327,6 +295,49 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
           </div>
         )}
       </div>
+
+                      {/* Invoice Details Dialog */}
+      <Dialog open={!!selectedMoc} onOpenChange={(open) => !open && setSelectedMoc(null)}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Invoice Details - {selectedMoc?.mocNo}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedMoc?.invoices.map((invoice) => {
+              const payable = invoice.amount + invoice.vat - invoice.retention;
+              const statusConfig = statusMapping[invoice.invoiceStatus as StatusKey];
+
+              return (
+                <div key={invoice.invoiceId} className="bg-blue-50 p-4 rounded-lg">
+                  <div className="grid grid-cols-8 gap-4 items-center">
+                    <div className="col-span-2 text-gray-500 truncate" title={invoice.invoiceNo}>
+                      {invoice.invoiceNo}
+                    </div>
+                    <div className="text-gray-500 text-sm">
+                      {new Date(invoice.invoiceDate).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </div>
+                    <div className="col-span-2">
+                      <span className={`${statusConfig.color} font-medium text-sm`}>
+                        {statusConfig.label}
+                      </span>
+                    </div>
+                    <div className="text-gray-900 text-center font-mono text-sm">
+                      {formatMillions(payable)}
+                    </div>
+                    <div className="text-gray-500 text-sm text-center font-mono">
+                      {formatMillions(invoice.amount)}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -406,6 +417,4 @@ const MergedCard: React.FC<MergedCardProps> = ({
   );
 };
 
-
-// ... (keep StatusCard component if still needed elsewhere)
 export default Dashboard;
