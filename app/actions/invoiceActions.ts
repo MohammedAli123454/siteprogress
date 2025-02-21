@@ -42,6 +42,7 @@ export type PartialInvoiceData = {
   proposal: string | null;
   contractValue: number | null;
   shortDescription: string | null; // Add this
+  type: string | null;
 };
 
 export async function getPartialInvoices(): Promise<{
@@ -66,6 +67,7 @@ export async function getPartialInvoices(): Promise<{
         proposal: mocs.proposal,
         contractValue: mocs.contractValue,
         shortDescription: mocs.shortDescription, // Add this line
+        type: mocs.type // Add this line
       })
       .from(partialInvoices)
       .leftJoin(mocs, eq(partialInvoices.mocId, mocs.id));

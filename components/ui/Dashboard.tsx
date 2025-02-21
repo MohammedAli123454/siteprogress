@@ -1,4 +1,3 @@
-// app/components/Dashboard.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -6,6 +5,13 @@ import { Loader } from 'lucide-react';
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { PartialInvoiceData } from "@/app/actions/invoiceActions";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 type DashboardProps = {
   data: PartialInvoiceData[];
@@ -21,6 +27,7 @@ type GroupedMOC = {
   proposal: string | null;
   contractValue: number | null;
   invoices: PartialInvoiceData[];
+  type: string | null;
 };
 
 const statusMapping = {
@@ -40,9 +47,11 @@ const formatMillions = (value: number) => {
 const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
   const [selectedCard, setSelectedCard] = useState<string | null>('awarded');
   const [expandedMOCs, setExpandedMOCs] = useState<Set<number>>(new Set());
+  const [selectedType, setSelectedType] = useState<string>('Overall');
 
   const safeString = (value: string | null) => value || "N/A";
   const safeNumber = (value: number | null) => value ?? 0;
+  const types = Array.from(new Set(data.map(moc => moc.type))).filter(Boolean) as string[];
 
   const groupedMOCs = data.reduce((acc, invoice) => {
     const mocId = invoice.mocId;
@@ -56,6 +65,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
         proposal: invoice.proposal,
         contractValue: invoice.contractValue,
         invoices: [],
+        type: invoice.type,
       });
     }
     acc.get(mocId)?.invoices.push(invoice);
@@ -68,25 +78,27 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
     OVERALL: number;
   } & Record<StatusKey, number>;
 
-  const aggregatedSums = Array.from(groupedMOCs.values()).reduce(
-    (acc, moc) => {
-      acc.AWARDED_MOCS += safeNumber(moc.contractValue);
-      return acc;
-    },
-    {
-      AWARDED_MOCS: 0,
-      OVERALL: data.reduce((sum, row) => sum + (row.amount + row.vat - row.retention), 0),
-      TOTAL_PAID: data
-        .filter((row) => row.invoiceStatus === "PAID")
-        .reduce((sum, row) => sum + (row.amount + row.vat - row.retention), 0),
-      ...(Object.keys(statusMapping) as StatusKey[]).reduce((acc, status) => {
-        acc[status] = data
-          .filter((row) => row.invoiceStatus === status)
-          .reduce((sum, row) => sum + (row.amount + row.vat - row.retention), 0);
-        return acc;
-      }, {} as Record<StatusKey, number>),
-    } as AggregatedSums
+  // Filter MOCs based on selected type for aggregation
+  const filteredMOCsForAggregation = Array.from(groupedMOCs.values()).filter(moc =>
+    selectedType === 'Overall' || moc.type === selectedType
   );
+
+  // Collect all invoices from filtered MOCs
+  const allInvoicesForAggregation = filteredMOCsForAggregation.flatMap(moc => moc.invoices);
+
+  const aggregatedSums = {
+    AWARDED_MOCS: filteredMOCsForAggregation.reduce((sum, moc) => sum + safeNumber(moc.contractValue), 0),
+    OVERALL: allInvoicesForAggregation.reduce((sum, row) => sum + (row.amount + row.vat - row.retention), 0),
+    TOTAL_PAID: allInvoicesForAggregation
+      .filter((row) => row.invoiceStatus === "PAID")
+      .reduce((sum, row) => sum + (row.amount + row.vat - row.retention), 0),
+    ...(Object.keys(statusMapping) as StatusKey[]).reduce((acc, status) => {
+      acc[status] = allInvoicesForAggregation
+        .filter((row) => row.invoiceStatus === status)
+        .reduce((sum, row) => sum + (row.amount + row.vat - row.retention), 0);
+      return acc;
+    }, {} as Record<StatusKey, number>),
+  } as AggregatedSums;
 
   const retentionValue = aggregatedSums.TOTAL_PAID * 0.1;
   const paymentPercentage = aggregatedSums.PAID / aggregatedSums.OVERALL || 0;
@@ -97,16 +109,39 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
     setExpandedMOCs(newExpanded);
   };
 
-  const filteredMOCs = Array.from(groupedMOCs.values()).map((moc) => ({
-    ...moc,
-    invoices:
-      Object.keys(statusMapping).includes(selectedCard || '')
+  const filteredMOCs = Array.from(groupedMOCs.values())
+    .filter(moc => selectedType === 'Overall' || moc.type === selectedType)
+    .map((moc) => ({
+      ...moc,
+      invoices: Object.keys(statusMapping).includes(selectedCard || '') 
         ? moc.invoices.filter(invoice => invoice.invoiceStatus === selectedCard)
-        : moc.invoices,
-  })).filter(moc => moc.invoices.length > 0);
+        : moc.invoices
+    }))
+    .filter(moc => moc.invoices.length > 0);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Dropdown Menu */}
+      <div className="mb-4 flex justify-end">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="ml-auto">
+              {selectedType} <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setSelectedType('Overall')}>
+              Overall
+            </DropdownMenuItem>
+            {types.map(type => (
+              <DropdownMenuItem key={type} onClick={() => setSelectedType(type)}>
+                {type}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mb-8">
         <MergedCard
           title="Contract Value Summary"
@@ -163,9 +198,12 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
           </div>
         ) : (
           <div className="max-h-[600px] overflow-y-auto">
-            <table className="w-full table-fixed">
+          <table className="w-full table-fixed">
               <thead className="bg-blue-50">
                 <tr>
+                  <th className="sticky top-0 bg-blue-50 z-10 w-[50px] px-3 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
+                    Sr. No
+                  </th>
                   <th className="sticky top-0 bg-blue-50 z-10 w-[40px] px-2 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
                   </th>
                   <th className="sticky top-0 bg-blue-50 z-10 w-[150px] px-3 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-b-2 border-blue-100">
@@ -214,6 +252,9 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
                         className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 cursor-pointer`}
                         onClick={() => toggleMOCExpansion(moc.mocId)}
                       >
+                          <td className="px-3 py-3 text-sm text-gray-900">
+                          {index + 1}
+                        </td>
                         <td className="px-2 py-3">
                           {isExpanded ? <ChevronUp className="w-5 h-5 text-blue-600" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
                         </td>
