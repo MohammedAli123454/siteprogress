@@ -17,6 +17,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress"
+
 import { Button } from "@/components/ui/button";
 
 type DashboardProps = {
@@ -117,14 +119,14 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
   // };
 
   const filteredMOCs = Array.from(groupedMOCs.values())
-  .filter(moc => selectedType === 'Overall' || moc.type === selectedType)
-  .map((moc) => ({
-    ...moc,
-    invoices: Object.keys(statusMapping).includes(selectedCard || '') 
-      ? moc.invoices.filter(invoice => invoice.invoiceStatus === selectedCard)
-      : moc.invoices
-  }))
-  .filter(moc => moc.invoices.length > 0);
+    .filter(moc => selectedType === 'Overall' || moc.type === selectedType)
+    .map((moc) => ({
+      ...moc,
+      invoices: Object.keys(statusMapping).includes(selectedCard || '')
+        ? moc.invoices.filter(invoice => invoice.invoiceStatus === selectedCard)
+        : moc.invoices
+    }))
+    .filter(moc => moc.invoices.length > 0);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -197,9 +199,9 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
         />
       </div>
 
-    
-         {/* MOC Table */}
-         <div className="bg-white rounded-lg border overflow-hidden">
+
+      {/* MOC Table */}
+      <div className="bg-white rounded-lg border overflow-hidden">
         {loading ? (
           <div className="p-8 flex justify-center items-center">
             <Loader color="blue" size={48} />;
@@ -240,7 +242,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-              {filteredMOCs.map((moc, index) => {
+                {filteredMOCs.map((moc, index) => {
                   const awardedValue = safeNumber(moc.contractValue);
                   const awardedValueWithVAT = awardedValue * 1.15;
                   const totalPayable = moc.invoices.reduce(
@@ -266,28 +268,28 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
                       <td className="px-3 py-3 text-sm font-medium text-gray-900 truncate" title={safeString(moc.mocNo)}>
                         {safeString(moc.mocNo)}
                       </td>
-                        <td className="px-3 py-3 text-sm text-gray-600 truncate" title={safeString(moc.shortDescription)}>
-                          {safeString(moc.shortDescription)}
-                        </td>
-                        <td className="px-3 py-3 text-sm text-gray-500 truncate">
-                          {safeString(moc.cwo)}
-                        </td>
-                        <td className="px-3 py-3 text-sm text-gray-900 text-center font-mono">
-                          {formatMillions(awardedValue)}
-                        </td>
-                        <td className="px-3 py-3 text-sm text-gray-900 text-center font-mono font-medium">
-                          {formatMillions(awardedValueWithVAT)}
-                        </td>
-                        <td className="px-3 py-3 text-sm text-gray-900 text-center font-mono">
-                          {formatMillions(totalPayable)}
-                        </td>
-                        <td className="px-3 py-3 text-sm text-green-600 text-center font-mono font-semibold">
-                          {formatMillions(receivedValue)}
-                        </td>
-                        <td className="px-3 py-3 text-sm text-gray-900 text-center font-mono">
-                          {formatMillions(balanceAmount)}
-                        </td>
-                        </tr>
+                      <td className="px-3 py-3 text-sm text-gray-600 truncate" title={safeString(moc.shortDescription)}>
+                        {safeString(moc.shortDescription)}
+                      </td>
+                      <td className="px-3 py-3 text-sm text-gray-500 truncate">
+                        {safeString(moc.cwo)}
+                      </td>
+                      <td className="px-3 py-3 text-sm text-gray-900 text-center font-mono">
+                        {formatMillions(awardedValue)}
+                      </td>
+                      <td className="px-3 py-3 text-sm text-gray-900 text-center font-mono font-medium">
+                        {formatMillions(awardedValueWithVAT)}
+                      </td>
+                      <td className="px-3 py-3 text-sm text-gray-900 text-center font-mono">
+                        {formatMillions(totalPayable)}
+                      </td>
+                      <td className="px-3 py-3 text-sm text-green-600 text-center font-mono font-semibold">
+                        {formatMillions(receivedValue)}
+                      </td>
+                      <td className="px-3 py-3 text-sm text-gray-900 text-center font-mono">
+                        {formatMillions(balanceAmount)}
+                      </td>
+                    </tr>
                   );
                 })}
               </tbody>
@@ -296,46 +298,158 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
         )}
       </div>
 
-                      {/* Invoice Details Dialog */}
-      <Dialog open={!!selectedMoc} onOpenChange={(open) => !open && setSelectedMoc(null)}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Invoice Details - {selectedMoc?.mocNo}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {selectedMoc?.invoices.map((invoice) => {
-              const payable = invoice.amount + invoice.vat - invoice.retention;
-              const statusConfig = statusMapping[invoice.invoiceStatus as StatusKey];
 
-              return (
-                <div key={invoice.invoiceId} className="bg-blue-50 p-4 rounded-lg">
-                  <div className="grid grid-cols-8 gap-4 items-center">
-                    <div className="col-span-2 text-gray-500 truncate" title={invoice.invoiceNo}>
-                      {invoice.invoiceNo}
-                    </div>
-                    <div className="text-gray-500 text-sm">
-                      {new Date(invoice.invoiceDate).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </div>
-                    <div className="col-span-2">
-                      <span className={`${statusConfig.color} font-medium text-sm`}>
-                        {statusConfig.label}
-                      </span>
-                    </div>
-                    <div className="text-gray-900 text-center font-mono text-sm">
-                      {formatMillions(payable)}
-                    </div>
-                    <div className="text-gray-500 text-sm text-center font-mono">
-                      {formatMillions(invoice.amount)}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      {/* Invoice Details Dialog */}
+      <Dialog open={!!selectedMoc} onOpenChange={(open) => !open && setSelectedMoc(null)}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-gray-800">
+              MOC {selectedMoc?.mocNo} - Invoice Management
+            </DialogTitle>
+            <div className="text-sm text-gray-500 mt-1">
+              {selectedMoc?.shortDescription}
+            </div>
+          </DialogHeader>
+<div>
+       {/* Summary Cards */}
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  {/* Contract Value Card */}
+  <Card className="bg-white shadow-sm">
+    <CardHeader className="pb-2">
+      <CardTitle className="text-sm font-medium text-gray-600">
+        Contract Value inc. VAT
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-mono text-blue-800">
+        {formatMillions((selectedMoc?.contractValue || 0) * 1.15)}
+      </div>
+    </CardContent>
+  </Card>
+
+  {/* Total Invoiced Card */}
+  <Card className="bg-white shadow-sm">
+    <CardHeader className="pb-2">
+      <CardTitle className="text-sm font-medium text-gray-600">
+        Total Invoiced
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-mono text-purple-800">
+        {formatMillions(selectedMoc?.invoices.reduce((sum, inv) => sum + inv.amount + inv.vat, 0) || 0)}
+      </div>
+    </CardContent>
+  </Card>
+
+  {/* Total Received Card */}
+  <Card className="bg-white shadow-sm">
+    <CardHeader className="pb-2">
+      <CardTitle className="text-sm font-medium text-gray-600">
+        Total Received
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-mono text-green-800">
+        {formatMillions(selectedMoc?.invoices
+          .filter(inv => inv.invoiceStatus === "PAID")
+          .reduce((sum, inv) => sum + inv.amount + inv.vat, 0) || 0)}
+      </div>
+    </CardContent>
+  </Card>
+
+  {/* Retention Card */}
+  <Card className="bg-white shadow-sm">
+    <CardHeader className="pb-2">
+      <CardTitle className="text-sm font-medium text-gray-600">
+        Retention Held
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-mono text-amber-800">
+        {formatMillions(selectedMoc?.invoices
+          .filter(inv => inv.invoiceStatus === "PAID")
+          .reduce((sum, inv) => sum + (inv.amount + inv.vat) * 0.10, 0) || 0)}
+      </div>
+    </CardContent>
+  </Card>
+</div>
+
+            {/* Invoices Table */}
+            <div className="border rounded-lg overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Invoice #</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Date</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Amount (SR)</th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">VAT (SR)</th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Retention (SR)</th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Net Payable (SR)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {selectedMoc?.invoices.map((invoice) => {
+                    const totalAmount = invoice.amount + invoice.vat;
+                    const retention = totalAmount * 0.10;
+                    const netPayable = totalAmount - retention;
+                    const statusConfig = statusMapping[invoice.invoiceStatus as StatusKey];
+
+                    return (
+                      <tr key={invoice.invoiceId} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                          {invoice.invoiceNo}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-500">
+                          {new Date(invoice.invoiceDate).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`${statusConfig.color} inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium`}>
+                            {statusConfig.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-sm text-gray-900">
+                          {formatMillions(invoice.amount)}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-sm text-gray-900">
+                          {formatMillions(invoice.vat)}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-sm text-red-600">
+                          {formatMillions(retention)}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-sm font-semibold text-green-700">
+                          {formatMillions(netPayable)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot className="bg-gray-50">
+                  <tr>
+                    <td colSpan={3} className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                      Totals
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono text-sm font-semibold text-gray-900">
+                      {formatMillions(selectedMoc?.invoices.reduce((sum, inv) => sum + inv.amount, 0) || 0)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono text-sm font-semibold text-gray-900">
+                      {formatMillions(selectedMoc?.invoices.reduce((sum, inv) => sum + inv.vat, 0) || 0)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono text-sm font-semibold text-red-700">
+                      {formatMillions(selectedMoc?.invoices.reduce((sum, inv) => sum + (inv.amount + inv.vat) * 0.10, 0) || 0)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono text-sm font-semibold text-green-700">
+                      {formatMillions(selectedMoc?.invoices.reduce((sum, inv) => sum + (inv.amount + inv.vat - (inv.amount + inv.vat) * 0.10), 0) || 0)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            </div>
         </DialogContent>
       </Dialog>
     </div>
@@ -382,17 +496,16 @@ const MergedCard: React.FC<MergedCardProps> = ({
         }`}
     >
       <CardHeader className="pb-2">
-      <CardTitle 
-        className={`text-center text-[15px] font-medium text-blue-900/90 py-1.5 px-3.5
+        <CardTitle
+          className={`text-center text-[15px] font-medium text-blue-900/90 py-1.5 px-3.5
           border-b border-blue-200/30 bg-gradient-to-r from-blue-100/70 to-blue-100/30
-          backdrop-blur-sm rounded-t-xl transition-all duration-300 ${
-            isSelected 
-              ? "bg-blue-100/50 border-b-blue-300/30" 
+          backdrop-blur-sm rounded-t-xl transition-all duration-300 ${isSelected
+              ? "bg-blue-100/50 border-b-blue-300/30"
               : "hover:bg-blue-100/40"
-          }`}
-      >
-        {title}
-      </CardTitle>
+            }`}
+        >
+          {title}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
