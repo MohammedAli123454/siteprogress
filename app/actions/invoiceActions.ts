@@ -5,6 +5,7 @@ import { db } from "../configs/db";
 import { partialInvoices, mocs} from "../configs/schema";
 import { eq } from "drizzle-orm";
 import { sql } from "drizzle-orm";
+import { z } from 'zod';
 
 // Type for creating new invoices (all required)
 export interface CreatePartialInvoice {
@@ -78,7 +79,7 @@ export type ApiResponse<T> =
   | { success: false; message: string };
 
 // validation.ts
-import { z } from 'zod';
+
 
 const InvoiceSchema = z.object({
   invoiceId: z.union([z.string(), z.number()]).transform(Number),
@@ -89,12 +90,6 @@ const InvoiceSchema = z.object({
   retention: z.union([z.string(), z.number()]).transform(Number),
   invoiceStatus: z.string()
 });
-// server-action.ts
-
-
-
-
-
 export async function getGroupedMOCs(): Promise<ApiResponse<GroupedMOC[]>> {
   try {
     const { rows } = await db.execute(sql`

@@ -62,31 +62,63 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
 
   const allInvoicesForAggregation = filteredMOCsForAggregation.flatMap(moc => moc.invoices);
 
-  const aggregatedSums = {
-    AWARDED_MOCS: filteredMOCsForAggregation.reduce(
-      (sum, moc) => sum + safeNumber(moc.contractValue),
-      0
-    ),
-    OVERALL: allInvoicesForAggregation.reduce(
-      (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
-      0
-    ),
-    TOTAL_PAID: allInvoicesForAggregation
-      .filter((row) => row?.invoiceStatus === "PAID")
-      .reduce(
-        (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
-        0
-      ),
-    ...(Object.keys(statusMapping) as StatusKey[]).reduce((acc, status) => {
-      acc[status] = allInvoicesForAggregation
-        .filter((row) => row?.invoiceStatus === status)
-        .reduce(
-          (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
-          0
-        );
-      return acc;
-    }, {} as Record<StatusKey, number>),
-  } as AggregatedSums;
+ // Calculate each aggregation value separately
+const AWARDED_MOCS = filteredMOCsForAggregation.reduce(
+  (sum, moc) => sum + safeNumber(moc.contractValue),
+  0
+);
+
+const OVERALL = allInvoicesForAggregation.reduce(
+  (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
+  0
+);
+
+const TOTAL_PAID = allInvoicesForAggregation
+  .filter((row) => row?.invoiceStatus === "PAID")
+  .reduce(
+    (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
+    0
+  );
+
+// Calculate status-based aggregations
+const PAID = allInvoicesForAggregation
+  .filter((row) => row?.invoiceStatus === "PAID")
+  .reduce(
+    (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
+    0
+  );
+
+const FINANCE = allInvoicesForAggregation
+  .filter((row) => row?.invoiceStatus === "FINANCE")
+  .reduce(
+    (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
+    0
+  );
+
+const PMD = allInvoicesForAggregation
+  .filter((row) => row?.invoiceStatus === "PMD")
+  .reduce(
+    (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
+    0
+  );
+
+const PMT = allInvoicesForAggregation
+  .filter((row) => row?.invoiceStatus === "PMT")
+  .reduce(
+    (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
+    0
+  );
+
+// Combine all values into the aggregatedSums object
+const aggregatedSums = {
+  AWARDED_MOCS,
+  OVERALL,
+  TOTAL_PAID,
+  PAID,
+  FINANCE,
+  PMD,
+  PMT,
+} as AggregatedSums;
 
   const retentionValue = allInvoicesForAggregation
     .filter(row => row?.invoiceStatus === "PAID")
