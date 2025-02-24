@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import { Loader } from 'lucide-react';
-import { ChevronDown, ChevronUp } from "lucide-react";
-import type { PartialInvoiceData } from "@/app/actions/invoiceActions";
+import { ChevronDown } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -17,26 +16,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress"
-
 import { Button } from "@/components/ui/button";
+import { GroupedMOC } from "@/app/actions/invoiceActions";
 
 type DashboardProps = {
-  data: PartialInvoiceData[];
+  data: GroupedMOC[];
   loading?: boolean;
 };
 
-type GroupedMOC = {
-  mocId: number;
-  mocNo: string | null;
-  shortDescription: string | null;
-  cwo: string | null;
-  po: string | null;
-  proposal: string | null;
-  contractValue: number | null;
-  invoices: PartialInvoiceData[];
-  type: string | null;
-};
 
 const statusMapping = {
   PAID: { label: "Total Received Payment", color: "text-green-600" },
@@ -52,34 +39,16 @@ const formatMillions = (value: number) => {
   return `${millions.toLocaleString('en-US', { maximumFractionDigits: 1 })}M`;
 };
 
+
 const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
   const [selectedCard, setSelectedCard] = useState<string | null>('awarded');
-  const [expandedMOCs, setExpandedMOCs] = useState<Set<number>>(new Set());
   const [selectedType, setSelectedType] = useState<string>('Overall');
   const [selectedMoc, setSelectedMoc] = useState<GroupedMOC | null>(null);
 
   const safeString = (value: string | null) => value || "N/A";
   const safeNumber = (value: number | null) => value ?? 0;
-  const types = Array.from(new Set(data.map(moc => moc.type))).filter(Boolean) as string[];
+  const types = Array.from(new Set((data ?? []).map(moc => moc.type))).filter(Boolean) as string[];
 
-  const groupedMOCs = data.reduce((acc, invoice) => {
-    const mocId = invoice.mocId;
-    if (!acc.has(mocId)) {
-      acc.set(mocId, {
-        mocId,
-        mocNo: invoice.mocNo,
-        shortDescription: invoice.shortDescription,
-        cwo: invoice.cwo,
-        po: invoice.po,
-        proposal: invoice.proposal,
-        contractValue: invoice.contractValue,
-        invoices: [],
-        type: invoice.type,
-      });
-    }
-    acc.get(mocId)?.invoices.push(invoice);
-    return acc;
-  }, new Map<number, GroupedMOC>());
 
   type AggregatedSums = {
     AWARDED_MOCS: number;
@@ -87,46 +56,54 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
     OVERALL: number;
   } & Record<StatusKey, number>;
 
-  // Filter MOCs based on selected type for aggregation
-  const filteredMOCsForAggregation = Array.from(groupedMOCs.values()).filter(moc =>
+  const filteredMOCsForAggregation = data.filter(moc =>
     selectedType === 'Overall' || moc.type === selectedType
   );
 
-  // Collect all invoices from filtered MOCs
   const allInvoicesForAggregation = filteredMOCsForAggregation.flatMap(moc => moc.invoices);
 
   const aggregatedSums = {
-    AWARDED_MOCS: filteredMOCsForAggregation.reduce((sum, moc) => sum + safeNumber(moc.contractValue), 0),
-    OVERALL: allInvoicesForAggregation.reduce((sum, row) => sum + (row.amount + row.vat - row.retention), 0),
+    AWARDED_MOCS: filteredMOCsForAggregation.reduce(
+      (sum, moc) => sum + safeNumber(moc.contractValue),
+      0
+    ),
+    OVERALL: allInvoicesForAggregation.reduce(
+      (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
+      0
+    ),
     TOTAL_PAID: allInvoicesForAggregation
-      .filter((row) => row.invoiceStatus === "PAID")
-      .reduce((sum, row) => sum + (row.amount + row.vat - row.retention), 0),
+      .filter((row) => row?.invoiceStatus === "PAID")
+      .reduce(
+        (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
+        0
+      ),
     ...(Object.keys(statusMapping) as StatusKey[]).reduce((acc, status) => {
       acc[status] = allInvoicesForAggregation
-        .filter((row) => row.invoiceStatus === status)
-        .reduce((sum, row) => sum + (row.amount + row.vat - row.retention), 0);
+        .filter((row) => row?.invoiceStatus === status)
+        .reduce(
+          (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
+          0
+        );
       return acc;
     }, {} as Record<StatusKey, number>),
   } as AggregatedSums;
 
-  const retentionValue = aggregatedSums.TOTAL_PAID * 0.1;
+  const retentionValue = allInvoicesForAggregation
+    .filter(row => row?.invoiceStatus === "PAID")
+    .reduce((sum, row) => sum + (row?.retention ?? 0), 0);
+
   const paymentPercentage = aggregatedSums.PAID / aggregatedSums.OVERALL || 0;
 
-  // const toggleMOCExpansion = (mocId: number) => {
-  //   const newExpanded = new Set(expandedMOCs);
-  //   newExpanded.has(mocId) ? newExpanded.delete(mocId) : newExpanded.add(mocId);
-  //   setExpandedMOCs(newExpanded);
-  // };
+  const filteredMOCs = (data ?? [])
+  .filter(moc => selectedType === 'Overall' || moc.type === selectedType)
+  .map(moc => ({
+    ...moc,
+    invoices: Object.keys(statusMapping).includes(selectedCard || '')
+      ? (moc.invoices ?? []).filter(invoice => invoice.invoiceStatus === selectedCard)
+      : moc.invoices ?? []
+  }))
+  .filter(moc => (moc.invoices ?? []).length > 0);
 
-  const filteredMOCs = Array.from(groupedMOCs.values())
-    .filter(moc => selectedType === 'Overall' || moc.type === selectedType)
-    .map((moc) => ({
-      ...moc,
-      invoices: Object.keys(statusMapping).includes(selectedCard || '')
-        ? moc.invoices.filter(invoice => invoice.invoiceStatus === selectedCard)
-        : moc.invoices
-    }))
-    .filter(moc => moc.invoices.length > 0);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -245,15 +222,18 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
                 {filteredMOCs.map((moc, index) => {
                   const awardedValue = safeNumber(moc.contractValue);
                   const awardedValueWithVAT = awardedValue * 1.15;
-                  const totalPayable = moc.invoices.reduce(
-                    (sum, inv) => sum + (inv.amount + inv.vat - inv.retention),
+                  const totalPayable = moc.invoices?.reduce(
+                    (sum, inv) => sum + ((inv?.amount ?? 0) + (inv?.vat ?? 0) - (inv?.retention ?? 0)),
                     0
-                  );
+                  ) ?? 0;
                   const receivedValue = moc.invoices
-                    .filter(inv => inv.invoiceStatus === "PAID")
-                    .reduce((sum, inv) => sum + (inv.amount + inv.vat - inv.retention), 0);
+                    ?.filter(inv => inv?.invoiceStatus === "PAID")
+                    ?.reduce(
+                      (sum, inv) => sum + ((inv?.amount ?? 0) + (inv?.vat ?? 0) - (inv?.retention ?? 0)),
+                      0
+                    ) ?? 0;
                   const balanceAmount = awardedValueWithVAT - receivedValue;
-                  const isExpanded = expandedMOCs.has(moc.mocId);
+                
 
                   return (
                     <tr
@@ -310,69 +290,69 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
               {selectedMoc?.shortDescription}
             </div>
           </DialogHeader>
-<div>
-       {/* Summary Cards */}
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-  {/* Contract Value Card */}
-  <Card className="bg-white shadow-sm">
-    <CardHeader className="pb-2">
-      <CardTitle className="text-sm font-medium text-gray-600">
-        Contract Value inc. VAT
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-mono text-blue-800">
-        {formatMillions((selectedMoc?.contractValue || 0) * 1.15)}
-      </div>
-    </CardContent>
-  </Card>
+          <div>
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {/* Contract Value Card */}
+              <Card className="bg-white shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">
+                    Contract Value inc. VAT
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-mono text-blue-800">
+                    {formatMillions((selectedMoc?.contractValue || 0) * 1.15)}
+                  </div>
+                </CardContent>
+              </Card>
 
-  {/* Total Invoiced Card */}
-  <Card className="bg-white shadow-sm">
-    <CardHeader className="pb-2">
-      <CardTitle className="text-sm font-medium text-gray-600">
-        Total Invoiced
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-mono text-purple-800">
-        {formatMillions(selectedMoc?.invoices.reduce((sum, inv) => sum + inv.amount + inv.vat, 0) || 0)}
-      </div>
-    </CardContent>
-  </Card>
+              {/* Total Invoiced Card */}
+              <Card className="bg-white shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">
+                    Total Invoiced
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-mono text-purple-800">
+                    {formatMillions(selectedMoc?.invoices.reduce((sum, inv) => sum + inv.amount + inv.vat, 0) || 0)}
+                  </div>
+                </CardContent>
+              </Card>
 
-  {/* Total Received Card */}
-  <Card className="bg-white shadow-sm">
-    <CardHeader className="pb-2">
-      <CardTitle className="text-sm font-medium text-gray-600">
-        Total Received
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-mono text-green-800">
-        {formatMillions(selectedMoc?.invoices
-          .filter(inv => inv.invoiceStatus === "PAID")
-          .reduce((sum, inv) => sum + inv.amount + inv.vat, 0) || 0)}
-      </div>
-    </CardContent>
-  </Card>
+              {/* Total Received Card */}
+              <Card className="bg-white shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">
+                    Total Received
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-mono text-green-800">
+                    {formatMillions(selectedMoc?.invoices
+                      .filter(inv => inv.invoiceStatus === "PAID")
+                      .reduce((sum, inv) => sum + inv.amount + inv.vat, 0) || 0)}
+                  </div>
+                </CardContent>
+              </Card>
 
-  {/* Retention Card */}
-  <Card className="bg-white shadow-sm">
-    <CardHeader className="pb-2">
-      <CardTitle className="text-sm font-medium text-gray-600">
-        Retention Held
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-mono text-amber-800">
-        {formatMillions(selectedMoc?.invoices
-          .filter(inv => inv.invoiceStatus === "PAID")
-          .reduce((sum, inv) => sum + (inv.amount + inv.vat) * 0.10, 0) || 0)}
-      </div>
-    </CardContent>
-  </Card>
-</div>
+              {/* Retention Card */}
+              <Card className="bg-white shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">
+                    Retention Held
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-mono text-amber-800">
+                    {formatMillions(selectedMoc?.invoices
+                      .filter(inv => inv.invoiceStatus === "PAID")
+                      .reduce((sum, inv) => sum + (inv.amount + inv.vat) * 0.10, 0) || 0)}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Invoices Table */}
             <div className="border rounded-lg overflow-hidden">
@@ -449,7 +429,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
                 </tfoot>
               </table>
             </div>
-            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

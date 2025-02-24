@@ -4,6 +4,7 @@
 import { db } from "../configs/db";
 import { partialInvoices, mocs} from "../configs/schema";
 import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 // Type for creating new invoices (all required)
 export interface CreatePartialInvoice {
@@ -27,6 +28,168 @@ export interface UpdatePartialInvoice {
   invoiceStatus?: string;
 }
 
+// types.ts
+export interface RawInvoice {
+  invoiceId: string;
+  invoiceNo: string;
+  invoiceDate: string;
+  amount: string;
+  vat: string;
+  retention: string;
+  invoiceStatus: string;
+}
+
+export interface RawGroupedMOC {
+  mocId: string;
+  mocNo: string | null;
+  shortDescription: string | null;
+  cwo: string | null;
+  po: string | null;
+  proposal: string | null;
+  contractValue: string | null;
+  type: string | null;
+  invoices: RawInvoice[] | string;
+}
+
+export interface Invoice {
+  invoiceId: number;
+  invoiceNo: string;
+  invoiceDate: Date;
+  amount: number;
+  vat: number;
+  retention: number;
+  invoiceStatus: string;
+}
+
+export interface GroupedMOC {
+  mocId: number;
+  mocNo: string | null;
+  shortDescription: string | null;
+  cwo: string | null;
+  po: string | null;
+  proposal: string | null;
+  contractValue: number | null;
+  type: string | null;
+  invoices: Invoice[];
+}
+
+export type ApiResponse<T> = 
+  | { success: true; data: T }
+  | { success: false; message: string };
+
+// validation.ts
+import { z } from 'zod';
+
+const InvoiceSchema = z.object({
+  invoiceId: z.union([z.string(), z.number()]).transform(Number),
+  invoiceNo: z.string(),
+  invoiceDate: z.union([z.string(), z.number()]).transform(v => new Date(v)),
+  amount: z.union([z.string(), z.number()]).transform(Number),
+  vat: z.union([z.string(), z.number()]).transform(Number),
+  retention: z.union([z.string(), z.number()]).transform(Number),
+  invoiceStatus: z.string()
+});
+// server-action.ts
+
+
+
+
+
+export async function getGroupedMOCs(): Promise<ApiResponse<GroupedMOC[]>> {
+  try {
+    const { rows } = await db.execute(sql`
+      SELECT
+        m.id AS "mocId",
+        m.moc_no AS "mocNo",
+        m.short_description AS "shortDescription",
+        m.cwo,
+        m.po,
+        m.proposal,
+        m.contract_value AS "contractValue",
+        m.type,
+        COALESCE(
+          json_agg(
+           json_build_object(
+  'invoiceId', p.id::text,
+  'invoiceNo', p.invoice_no,
+  'invoiceDate', p.invoice_date::text,
+  'amount', p.amount::text,
+  'vat', p.vat::text,
+  'retention', p.retention::text,
+  'invoiceStatus', p.invoice_status
+) ORDER BY p.invoice_date DESC
+          ) FILTER (WHERE p.id IS NOT NULL), '[]'
+        ) AS "invoices"
+      FROM mocs m
+      LEFT JOIN partial_invoices p ON m.id = p.moc_id
+      GROUP BY m.id, m.moc_no, m.short_description, m.cwo, m.po, m.proposal, m.contract_value, m.type
+    `);
+
+    const rawData = rows as unknown as RawGroupedMOC[];
+
+    const processedData: GroupedMOC[] = rawData.map(moc => {
+      // Parse invoices
+      let rawInvoices: unknown[] = [];
+      try {
+        rawInvoices = typeof moc.invoices === 'string' 
+          ? JSON.parse(moc.invoices)
+          : moc.invoices || [];
+      } catch (error) {
+        console.error(`Invoice parsing error for MOC ${moc.mocId}:`, error);
+      }
+
+      // Validate and process invoices
+      const invoices = rawInvoices
+        .map(rawInvoice => {
+          try {
+            return InvoiceSchema.parse(rawInvoice);
+          } catch (error) {
+            console.error('Invalid invoice format:', rawInvoice);
+            return null;
+          }
+        })
+        .filter((invoice): invoice is Invoice => invoice !== null);
+
+      return {
+        mocId: Number(moc.mocId),
+        mocNo: moc.mocNo,
+        shortDescription: moc.shortDescription,
+        cwo: moc.cwo,
+        po: moc.po,
+        proposal: moc.proposal,
+        contractValue: moc.contractValue ? 
+          parseFloat(moc.contractValue) : null,
+        type: moc.type,
+        invoices
+      };
+    });
+
+    // Filter out empty MOCs
+    const filteredData = processedData.filter(moc => 
+      moc.contractValue !== null || moc.invoices.length > 0
+    );
+
+    return {
+      success: true,
+      data: filteredData
+    };
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? 
+      error.message : 
+      'Failed to fetch MOC data';
+    
+    console.error('Server Action Error:', {
+      error,
+      timestamp: new Date().toISOString()
+    });
+
+    return {
+      success: false,
+      message: errorMessage
+    };
+  }
+}
 export type PartialInvoiceData = {
   invoiceId: number;
   mocId: number;
