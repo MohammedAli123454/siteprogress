@@ -51,9 +51,12 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
 
 
   type AggregatedSums = {
-    AWARDED_MOCS: number;
-    TOTAL_PAID: number;
-    OVERALL: number;
+    TOTAL_AWARDED_MOCS_AMOUNT_EX_VAT: number;
+    TOTAL_SUBMITTED_INVOICES_W_VAT_NET_RTN: number;
+    TOTAL_PAID_INVOICE_W_VAT_NET_RTN: number;
+    INVOICES_U_FINANCE_W_VAT_NET_RTN: number;
+    INVOICES_U_PMD_W_VAT_NET_RTN: number;   
+    INVOICES_U_PMT_W_VAT_NET_RTN: number;
   } & Record<StatusKey, number>;
 
   const filteredMOCsForAggregation = data.filter(moc =>
@@ -63,46 +66,38 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
   const allInvoicesForAggregation = filteredMOCsForAggregation.flatMap(moc => moc.invoices);
 
  // Calculate each aggregation value separately
-const AWARDED_MOCS = filteredMOCsForAggregation.reduce(
+const TOTAL_AWARDED_MOCS_AMOUNT_EX_VAT = filteredMOCsForAggregation.reduce(
   (sum, moc) => sum + safeNumber(moc.contractValue),
   0
 );
 
-const OVERALL = allInvoicesForAggregation.reduce(
+const TOTAL_SUBMITTED_INVOICES_W_VAT_NET_RTN = allInvoicesForAggregation.reduce(
   (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
   0
 );
 
-const TOTAL_PAID = allInvoicesForAggregation
+const  TOTAL_PAID_INVOICE_W_VAT_NET_RTN = allInvoicesForAggregation
   .filter((row) => row?.invoiceStatus === "PAID")
   .reduce(
     (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
     0
   );
 
-// Calculate status-based aggregations
-const PAID = allInvoicesForAggregation
-  .filter((row) => row?.invoiceStatus === "PAID")
-  .reduce(
-    (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
-    0
-  );
-
-const FINANCE = allInvoicesForAggregation
+const INVOICES_U_FINANCE_W_VAT_NET_RTN = allInvoicesForAggregation
   .filter((row) => row?.invoiceStatus === "FINANCE")
   .reduce(
     (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
     0
   );
 
-const PMD = allInvoicesForAggregation
+const INVOICES_U_PMD_W_VAT_NET_RTN = allInvoicesForAggregation
   .filter((row) => row?.invoiceStatus === "PMD")
   .reduce(
     (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
     0
   );
 
-const PMT = allInvoicesForAggregation
+const INVOICES_U_PMT_W_VAT_NET_RTN = allInvoicesForAggregation
   .filter((row) => row?.invoiceStatus === "PMT")
   .reduce(
     (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
@@ -111,20 +106,19 @@ const PMT = allInvoicesForAggregation
 
 // Combine all values into the aggregatedSums object
 const aggregatedSums = {
-  AWARDED_MOCS,
-  OVERALL,
-  TOTAL_PAID,
-  PAID,
-  FINANCE,
-  PMD,
-  PMT,
+  TOTAL_AWARDED_MOCS_AMOUNT_EX_VAT,
+  TOTAL_SUBMITTED_INVOICES_W_VAT_NET_RTN,
+  TOTAL_PAID_INVOICE_W_VAT_NET_RTN,
+  INVOICES_U_FINANCE_W_VAT_NET_RTN,
+  INVOICES_U_PMD_W_VAT_NET_RTN,
+  INVOICES_U_PMT_W_VAT_NET_RTN,
 } as AggregatedSums;
 
   const retentionValue = allInvoicesForAggregation
     .filter(row => row?.invoiceStatus === "PAID")
     .reduce((sum, row) => sum + (row?.retention ?? 0), 0);
 
-  const paymentPercentage = aggregatedSums.PAID / aggregatedSums.OVERALL || 0;
+  const paymentPercentage = aggregatedSums. TOTAL_PAID_INVOICE_W_VAT_NET_RTN / aggregatedSums.TOTAL_SUBMITTED_INVOICES_W_VAT_NET_RTN || 0;
 
   const filteredMOCs = (data ?? [])
   .filter(moc => selectedType === 'Overall' || moc.type === selectedType)
@@ -164,9 +158,9 @@ const aggregatedSums = {
         <MergedCard
           title="Contract Value Summary"
           leftLabel="Awarded Contract Value"
-          leftValue={aggregatedSums.AWARDED_MOCS}
+          leftValue={aggregatedSums.TOTAL_AWARDED_MOCS_AMOUNT_EX_VAT}
           rightLabel="Total Invoices Submitted"
-          rightValue={aggregatedSums.OVERALL}
+          rightValue={aggregatedSums.TOTAL_SUBMITTED_INVOICES_W_VAT_NET_RTN}
           onClick={() => setSelectedCard(prev => prev === 'awarded' ? 'submitted' : 'awarded')}
           isSelected={selectedCard === 'awarded' || selectedCard === 'submitted'}
         />
@@ -174,7 +168,7 @@ const aggregatedSums = {
         <MergedCard
           title="Collection Summary"
           leftLabel={statusMapping.PAID.label}
-          leftValue={aggregatedSums.PAID}
+          leftValue={aggregatedSums.TOTAL_PAID_INVOICE_W_VAT_NET_RTN}
           rightLabel="Coll. % vs Submitted Inv."
           rightValue={paymentPercentage}
           leftColor={statusMapping.PAID.color}
@@ -186,9 +180,9 @@ const aggregatedSums = {
         <MergedCard
           title="Invoices to Finance & SC"
           leftLabel={statusMapping.FINANCE.label}
-          leftValue={aggregatedSums.FINANCE}
+          leftValue={aggregatedSums.INVOICES_U_FINANCE_W_VAT_NET_RTN}
           rightLabel={statusMapping.PMD.label}
-          rightValue={aggregatedSums.PMD}
+          rightValue={aggregatedSums.INVOICES_U_PMD_W_VAT_NET_RTN}
           leftColor={statusMapping.FINANCE.color}
           rightColor={statusMapping.PMT.color}
           onClick={() => setSelectedCard(prev => prev === 'FINANCE' ? 'PMT' : 'FINANCE')}
@@ -198,7 +192,7 @@ const aggregatedSums = {
         <MergedCard
           title="Invoices Under PMT Review"
           leftLabel={statusMapping.PMT.label}
-          leftValue={aggregatedSums.PMT}
+          leftValue={aggregatedSums.INVOICES_U_PMT_W_VAT_NET_RTN}
           rightLabel="Retention Value"
           rightValue={retentionValue}
           leftColor={statusMapping.PMD.color}
