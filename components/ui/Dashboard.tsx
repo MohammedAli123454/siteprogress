@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Loader } from 'lucide-react';
 import { ChevronDown } from "lucide-react";
+import { ShieldCheck, BookOpen, FileText } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -55,7 +56,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
     TOTAL_SUBMITTED_INVOICES_W_VAT_NET_RTN: number;
     TOTAL_PAID_INVOICE_W_VAT_NET_RTN: number;
     INVOICES_U_FINANCE_W_VAT_NET_RTN: number;
-    INVOICES_U_PMD_W_VAT_NET_RTN: number;   
+    INVOICES_U_PMD_W_VAT_NET_RTN: number;
     INVOICES_U_PMT_W_VAT_NET_RTN: number;
   } & Record<StatusKey, number>;
 
@@ -65,70 +66,70 @@ const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
 
   const allInvoicesForAggregation = filteredMOCsForAggregation.flatMap(moc => moc.invoices);
 
- // Calculate each aggregation value separately
-const TOTAL_AWARDED_MOCS_AMOUNT_EX_VAT = filteredMOCsForAggregation.reduce(
-  (sum, moc) => sum + safeNumber(moc.contractValue),
-  0
-);
+  // Calculate each aggregation value separately
+  const TOTAL_AWARDED_MOCS_AMOUNT_EX_VAT = filteredMOCsForAggregation.reduce(
+    (sum, moc) => sum + safeNumber(moc.contractValue),
+    0
+  );
 
-const TOTAL_SUBMITTED_INVOICES_W_VAT_NET_RTN = allInvoicesForAggregation.reduce(
-  (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
-  0
-);
-
-const  TOTAL_PAID_INVOICE_W_VAT_NET_RTN = allInvoicesForAggregation
-  .filter((row) => row?.invoiceStatus === "PAID")
-  .reduce(
+  const TOTAL_SUBMITTED_INVOICES_W_VAT_NET_RTN = allInvoicesForAggregation.reduce(
     (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
     0
   );
 
-const INVOICES_U_FINANCE_W_VAT_NET_RTN = allInvoicesForAggregation
-  .filter((row) => row?.invoiceStatus === "FINANCE")
-  .reduce(
-    (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
-    0
-  );
+  const TOTAL_PAID_INVOICE_W_VAT_NET_RTN = allInvoicesForAggregation
+    .filter((row) => row?.invoiceStatus === "PAID")
+    .reduce(
+      (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
+      0
+    );
 
-const INVOICES_U_PMD_W_VAT_NET_RTN = allInvoicesForAggregation
-  .filter((row) => row?.invoiceStatus === "PMD")
-  .reduce(
-    (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
-    0
-  );
+  const INVOICES_U_FINANCE_W_VAT_NET_RTN = allInvoicesForAggregation
+    .filter((row) => row?.invoiceStatus === "FINANCE")
+    .reduce(
+      (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
+      0
+    );
 
-const INVOICES_U_PMT_W_VAT_NET_RTN = allInvoicesForAggregation
-  .filter((row) => row?.invoiceStatus === "PMT")
-  .reduce(
-    (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
-    0
-  );
+  const INVOICES_U_PMD_W_VAT_NET_RTN = allInvoicesForAggregation
+    .filter((row) => row?.invoiceStatus === "PMD")
+    .reduce(
+      (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
+      0
+    );
 
-// Combine all values into the aggregatedSums object
-const aggregatedSums = {
-  TOTAL_AWARDED_MOCS_AMOUNT_EX_VAT,
-  TOTAL_SUBMITTED_INVOICES_W_VAT_NET_RTN,
-  TOTAL_PAID_INVOICE_W_VAT_NET_RTN,
-  INVOICES_U_FINANCE_W_VAT_NET_RTN,
-  INVOICES_U_PMD_W_VAT_NET_RTN,
-  INVOICES_U_PMT_W_VAT_NET_RTN,
-} as AggregatedSums;
+  const INVOICES_U_PMT_W_VAT_NET_RTN = allInvoicesForAggregation
+    .filter((row) => row?.invoiceStatus === "PMT")
+    .reduce(
+      (sum, row) => sum + ((row?.amount ?? 0) + (row?.vat ?? 0) - (row?.retention ?? 0)),
+      0
+    );
+
+  // Combine all values into the aggregatedSums object
+  const aggregatedSums = {
+    TOTAL_AWARDED_MOCS_AMOUNT_EX_VAT,
+    TOTAL_SUBMITTED_INVOICES_W_VAT_NET_RTN,
+    TOTAL_PAID_INVOICE_W_VAT_NET_RTN,
+    INVOICES_U_FINANCE_W_VAT_NET_RTN,
+    INVOICES_U_PMD_W_VAT_NET_RTN,
+    INVOICES_U_PMT_W_VAT_NET_RTN,
+  } as AggregatedSums;
 
   const retentionValue = allInvoicesForAggregation
     .filter(row => row?.invoiceStatus === "PAID")
     .reduce((sum, row) => sum + (row?.retention ?? 0), 0);
 
-  const paymentPercentage = aggregatedSums. TOTAL_PAID_INVOICE_W_VAT_NET_RTN / aggregatedSums.TOTAL_SUBMITTED_INVOICES_W_VAT_NET_RTN || 0;
+  const paymentPercentage = aggregatedSums.TOTAL_PAID_INVOICE_W_VAT_NET_RTN / aggregatedSums.TOTAL_SUBMITTED_INVOICES_W_VAT_NET_RTN || 0;
 
   const filteredMOCs = (data ?? [])
-  .filter(moc => selectedType === 'Overall' || moc.type === selectedType)
-  .map(moc => ({
-    ...moc,
-    invoices: Object.keys(statusMapping).includes(selectedCard || '')
-      ? (moc.invoices ?? []).filter(invoice => invoice.invoiceStatus === selectedCard)
-      : moc.invoices ?? []
-  }))
-  .filter(moc => (moc.invoices ?? []).length > 0);
+    .filter(moc => selectedType === 'Overall' || moc.type === selectedType)
+    .map(moc => ({
+      ...moc,
+      invoices: Object.keys(statusMapping).includes(selectedCard || '')
+        ? (moc.invoices ?? []).filter(invoice => invoice.invoiceStatus === selectedCard)
+        : moc.invoices ?? []
+    }))
+    .filter(moc => (moc.invoices ?? []).length > 0);
 
 
   return (
@@ -259,7 +260,7 @@ const aggregatedSums = {
                       0
                     ) ?? 0;
                   const balanceAmount = awardedValueWithVAT - receivedValue;
-                
+
 
                   return (
                     <tr
@@ -455,7 +456,50 @@ const aggregatedSums = {
                 </tfoot>
               </table>
             </div>
-          </div>
+
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
+        <Card className="bg-blue-50/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-blue-800">
+              PSSR(Pre-Startup Safety Review) Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm font-medium text-gray-700">
+              {selectedMoc?.pssrStatus || 'Pending Review'}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-green-50/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-green-800">
+              PRB(Project Record Books) Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm font-medium text-gray-700">
+              {selectedMoc?.prbStatus || 'In Progress'}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-amber-50/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-amber-800">
+              Project Remarks
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-gray-600">
+              {selectedMoc?.remarks || 'No special remarks'}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+          
         </DialogContent>
       </Dialog>
     </div>

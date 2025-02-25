@@ -204,7 +204,11 @@ export const mocs = pgTable("mocs", {
   contractValue: numeric("contract_value", { precision: 12, scale: 2 }).notNull(),
   description: text("description"), // Optional, add .notNull() if required
   shortDescription: varchar("short_description", { length: 255 }), // Optional, add .notNull() if required
-  type: text("type").notNull() // newly added field
+  type: text("type").notNull(), // newly added field
+  pssrStatus: text("pssr_status"),
+  prbStatus: text("prb_status"),
+  remarks: text("remarks"),
+
 });
 
 export const partialInvoices = pgTable("partial_invoices", {
@@ -217,4 +221,5 @@ export const partialInvoices = pgTable("partial_invoices", {
   retention: numeric("retention", { precision: 12, scale: 2 }).notNull(),
   payable: numeric("payable", { precision: 12, scale: 2 }).notNull(),
   invoiceStatus: text("invoice_status").notNull(),
+
 });

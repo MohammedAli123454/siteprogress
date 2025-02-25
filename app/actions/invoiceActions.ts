@@ -2,7 +2,7 @@
 "use server";
 
 import { db } from "../configs/db";
-import { partialInvoices, mocs} from "../configs/schema";
+import { partialInvoices, mocs } from "../configs/schema";
 import { eq } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { z } from 'zod';
@@ -43,7 +43,7 @@ export interface RawInvoice {
   amount: string;
   vat: string;
   retention: string;
-  invoiceStatus: string;
+  invoiceStatus: string;  // Removed MOC-specific fields
 }
 
 // Represents the raw MOC (Management of Change) data fetched from the database.
@@ -54,11 +54,13 @@ export interface RawGroupedMOC {
   shortDescription: string | null;
   cwo: string | null;
   po: string | null;
-  
   proposal: string | null;
   contractValue: string | null;
   type: string | null;
-  invoices: RawInvoice[] | string; // Can be an array or a JSON string.
+  invoices: RawInvoice[] | string;
+  pssrStatus: string;
+  prbStatus: string;
+  remarks: string;
 }
 
 // Represents an invoice after transforming raw database data into the correct types.
@@ -69,7 +71,7 @@ export interface Invoice {
   amount: number;
   vat: number;
   retention: number;
-  invoiceStatus: string;
+  invoiceStatus: string;  // No MOC fields here
 }
 
 // Represents an MOC after transforming raw database data into the correct types.
@@ -82,11 +84,14 @@ export interface GroupedMOC {
   proposal: string | null;
   contractValue: number | null;
   type: string | null;
-  invoices: Invoice[]; // Fully validated invoices
+  invoices: Invoice[];
+  pssrStatus: string;    // MOC-specific fields
+  prbStatus: string;
+  remarks: string;
 }
 
 // Defines the structure of API responses.
-export type ApiResponse<T> = 
+export type ApiResponse<T> =
   | { success: true; data: T }
   | { success: false; message: string };
 
@@ -104,6 +109,7 @@ const InvoiceSchema = z.object({
   vat: z.union([z.string(), z.number()]).transform(Number),
   retention: z.union([z.string(), z.number()]).transform(Number),
   invoiceStatus: z.string()
+
 });
 
 // ==========================
@@ -122,6 +128,9 @@ export async function getGroupedMOCs(): Promise<ApiResponse<GroupedMOC[]>> {
         m.proposal,
         m.contract_value AS "contractValue",
         m.type,
+         m.pssr_status AS "pssrStatus",
+        m.prb_status AS "prbStatus",
+        m.remarks AS "remarks",
         COALESCE(
           json_agg(
             json_build_object(
@@ -135,11 +144,14 @@ export async function getGroupedMOCs(): Promise<ApiResponse<GroupedMOC[]>> {
             ) ORDER BY p.invoice_date DESC
           ) FILTER (WHERE p.id IS NOT NULL), '[]'
         ) AS "invoices"
-      FROM mocs m
+  FROM mocs m
       LEFT JOIN partial_invoices p ON m.id = p.moc_id
-      GROUP BY m.id, m.moc_no, m.short_description, m.cwo, m.po, m.proposal, m.contract_value, m.type
+      GROUP BY 
+        m.id, m.moc_no, m.short_description, 
+        m.cwo, m.po, m.proposal, 
+        m.contract_value, m.type,
+        m.pssr_status, m.prb_status, m.remarks
     `);
-
     // Cast rows to RawGroupedMOC for processing
     const rawData = rows as unknown as RawGroupedMOC[];
 
@@ -148,7 +160,7 @@ export async function getGroupedMOCs(): Promise<ApiResponse<GroupedMOC[]>> {
       // Parse invoices (handle string or array format)
       let rawInvoices: unknown[] = [];
       try {
-        rawInvoices = typeof moc.invoices === 'string' 
+        rawInvoices = typeof moc.invoices === 'string'
           ? JSON.parse(moc.invoices) // Convert JSON string to array
           : moc.invoices || []; // Use array directly if already in correct format
       } catch (error) {
@@ -176,18 +188,22 @@ export async function getGroupedMOCs(): Promise<ApiResponse<GroupedMOC[]>> {
         cwo: moc.cwo,
         po: moc.po,
         proposal: moc.proposal,
-        
+
         // Convert contract value from string to number
         // Unlike invoices, this is a single field, so we apply transformation directly.
         // We do not use a Zod schema here because it is a straightforward conversion.
-        contractValue: moc.contractValue ? parseFloat(moc.contractValue) : null, 
+        contractValue: moc.contractValue ? parseFloat(moc.contractValue) : null,
         type: moc.type,
-        invoices // Processed and validated invoices
+        pssrStatus: moc.pssrStatus, 
+    prbStatus: moc.prbStatus,
+    remarks: moc.remarks,
+    invoices
+         // Processed and validated invoices
       };
     });
 
     // Filter out MOCs that have neither contract value nor invoices
-    const filteredData = processedData.filter(moc => 
+    const filteredData = processedData.filter(moc =>
       moc.contractValue !== null || moc.invoices.length > 0
     );
 
@@ -289,14 +305,14 @@ export async function addPartialInvoice(data: CreatePartialInvoice) {
 export async function updatePartialInvoice(id: number, data: UpdatePartialInvoice) {
   try {
     const updateData: Record<string, any> = { ...data };
-    
+
     // Only update amount-related fields if amount is provided
     if (data.amount !== undefined || data.vat !== undefined || data.retention !== undefined) {
       const amount = data.amount ?? 0;
       const vat = data.vat ?? 0;
       const retention = data.retention ?? 0;
       const payable = amount + vat - retention;
-      
+
       updateData.amount = amount.toString();
       updateData.vat = vat.toString();
       updateData.retention = retention.toString();
@@ -314,7 +330,7 @@ export async function updatePartialInvoice(id: number, data: UpdatePartialInvoic
       .update(partialInvoices)
       .set(updateData)
       .where(eq(partialInvoices.id, id));
-      
+
     return { success: true };
   } catch (error: any) {
     return { success: false, message: error.message };
