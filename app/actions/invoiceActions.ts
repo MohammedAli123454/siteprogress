@@ -29,93 +29,70 @@ export interface UpdatePartialInvoice {
   invoiceStatus?: string;
 }
 
-
-// ==========================
-// Type Definitions
-// ==========================
-
-// Represents the raw invoice data as fetched from the database.
-// Since database fields are often stored as strings, we define them as strings here.
-export interface RawInvoice {
-  invoiceId: string;
-  invoiceNo: string;
-  invoiceDate: string;
-  amount: string;
-  vat: string;
-  retention: string;
-  invoiceStatus: string;  // Removed MOC-specific fields
-}
-
-// Represents the raw MOC (Management of Change) data fetched from the database.
-// The invoices field may be either an array or a JSON string, requiring transformation.
-export interface RawGroupedMOC {
-  mocId: string;
-  mocNo: string | null;
-  shortDescription: string | null;
-  cwo: string | null;
-  po: string | null;
-  proposal: string | null;
-  contractValue: string | null;
-  type: string | null;
-  invoices: RawInvoice[] | string;
-  pssrStatus: string;
-  prbStatus: string;
-  remarks: string;
-}
-
-// Represents an invoice after transforming raw database data into the correct types.
-export interface Invoice {
-  invoiceId: number;
-  invoiceNo: string;
-  invoiceDate: Date;
-  amount: number;
-  vat: number;
-  retention: number;
-  invoiceStatus: string;  // No MOC fields here
-}
-
-// Represents an MOC after transforming raw database data into the correct types.
-export interface GroupedMOC {
-  mocId: number;
-  mocNo: string | null;
-  shortDescription: string | null;
-  cwo: string | null;
-  po: string | null;
-  proposal: string | null;
-  contractValue: number | null;
-  type: string | null;
-  invoices: Invoice[];
-  pssrStatus: string;    // MOC-specific fields
-  prbStatus: string;
-  remarks: string;
-}
-
-// Defines the structure of API responses.
 export type ApiResponse<T> =
   | { success: true; data: T }
   | { success: false; message: string };
 
-// ==========================
-// Data Validation Schema
-// ==========================
-
-// Zod schema to validate and transform raw invoice data from the database.
-// This ensures numerical fields are properly converted to numbers and dates.
-const InvoiceSchema = z.object({
-  invoiceId: z.union([z.string(), z.number()]).transform(Number),
-  invoiceNo: z.string(),
-  invoiceDate: z.union([z.string(), z.number()]).transform(v => new Date(v)),
-  amount: z.union([z.string(), z.number()]).transform(Number),
-  vat: z.union([z.string(), z.number()]).transform(Number),
-  retention: z.union([z.string(), z.number()]).transform(Number),
-  invoiceStatus: z.string()
-
-});
+  export interface PartialInvoices {
+    mocId: number;
+    mocNo: string | null;
+    shortDescription: string | null;
+    cwo: string | null;
+    po: string | null;
+    proposal: string | null;
+    contractValue: number | null;
+    type: string | null;
+    invoices: Array<{
+      invoiceId: number;
+      invoiceNo: string;
+      invoiceDate: Date;
+      amount: number;
+      vat: number;
+      retention: number;
+      invoiceStatus: string;
+    }>;
+    pssrStatus: string | null;
+    prbStatus: string | null;
+    remarks: string | null;
+  }
+  
+  // ==========================
+  // Zod Schemas (Optimized)
+  // ==========================
+  
+  const invoiceParser = z.object({
+    invoiceId: z.union([z.string(), z.number()]).transform(Number),
+    invoiceNo: z.string(),
+    invoiceDate: z.union([z.string(), z.number(), z.date()]).transform(v => new Date(v)),
+    amount: z.union([z.string(), z.number()]).transform(Number),
+    vat: z.union([z.string(), z.number()]).transform(Number),
+    retention: z.union([z.string(), z.number()]).transform(Number),
+    invoiceStatus: z.string()
+  });
+  
+  const GroupedMOCSchema = z.object({
+    mocId: z.union([z.string(), z.number()]).transform(Number),
+    mocNo: z.nullable(z.string()),
+    shortDescription: z.nullable(z.string()),
+    cwo: z.nullable(z.string()),
+    po: z.nullable(z.string()),
+    proposal: z.nullable(z.string()),
+    contractValue: z.union([z.string(), z.number()])
+      .transform(v => v ? parseFloat(v.toString()) : null),
+    type: z.nullable(z.string()),
+    invoices: z.union([
+      z.string().transform(str => JSON.parse(str)),
+      z.array(z.unknown())
+    ]).transform(arr => z.array(invoiceParser).parse(arr)),
+    pssrStatus: z.nullable(z.string()).transform(v => v || ''),
+    prbStatus: z.nullable(z.string()).transform(v => v || ''),
+    remarks: z.nullable(z.string()).transform(v => v || '')
+  });
 
 // ==========================
 // Server Action: Fetching Grouped MOCs
 // ==========================
-export async function getGroupedMOCs(): Promise<ApiResponse<GroupedMOC[]>> {
+export async function getGroupedMOCs(): Promise<ApiResponse<PartialInvoices[]>> {
   try {
     // Execute the SQL query to fetch MOC and Invoice data
     const { rows } = await db.execute(sql`
@@ -153,75 +130,22 @@ export async function getGroupedMOCs(): Promise<ApiResponse<GroupedMOC[]>> {
         m.pssr_status, m.prb_status, m.remarks
     `);
     // Cast rows to RawGroupedMOC for processing
-    const rawData = rows as unknown as RawGroupedMOC[];
+    const processedData = z.array(GroupedMOCSchema).parse(rows);
 
-    // Process each MOC and convert it to the correct format
-    const processedData: GroupedMOC[] = rawData.map(moc => {
-      // Parse invoices (handle string or array format)
-      let rawInvoices: unknown[] = [];
-      try {
-        rawInvoices = typeof moc.invoices === 'string'
-          ? JSON.parse(moc.invoices) // Convert JSON string to array
-          : moc.invoices || []; // Use array directly if already in correct format
-      } catch (error) {
-        console.error(`Invoice parsing error for MOC ${moc.mocId}:`, error);
-      }
-
-      // Validate and process invoices using the Zod schema
-      // Since invoices are an array of objects, we must validate each invoice individually.
-      // This is why we apply the schema within a map function.
-      const invoices = rawInvoices
-        .map(rawInvoice => {
-          try {
-            return InvoiceSchema.parse(rawInvoice); // Convert to correct types
-          } catch (error) {
-            console.error('Invalid invoice format:', rawInvoice);
-            return null; // Exclude invalid invoices
-          }
-        })
-        .filter((invoice): invoice is Invoice => invoice !== null); // Filter out null values
-
-      return {
-        mocId: Number(moc.mocId), // Convert string to number
-        mocNo: moc.mocNo,
-        shortDescription: moc.shortDescription,
-        cwo: moc.cwo,
-        po: moc.po,
-        proposal: moc.proposal,
-
-        // Convert contract value from string to number
-        // Unlike invoices, this is a single field, so we apply transformation directly.
-        // We do not use a Zod schema here because it is a straightforward conversion.
-        contractValue: moc.contractValue ? parseFloat(moc.contractValue) : null,
-        type: moc.type,
-        pssrStatus: moc.pssrStatus, 
-    prbStatus: moc.prbStatus,
-    remarks: moc.remarks,
-    invoices
-         // Processed and validated invoices
-      };
-    });
-
-    // Filter out MOCs that have neither contract value nor invoices
+    // Filter out MOCs without contract value or invoices
     const filteredData = processedData.filter(moc =>
       moc.contractValue !== null || moc.invoices.length > 0
     );
 
-    return {
-      success: true,
-      data: filteredData
-    };
+    return { success: true, data: filteredData };
 
   } catch (error) {
-    // Handle errors
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch MOC data';
-    console.error('Server Action Error:', { error, timestamp: new Date().toISOString() });
-    return {
-      success: false,
-      message: errorMessage
-    };
+    console.error('Server Action Error:', error);
+    return { success: false, message: errorMessage };
   }
 }
+
 
 
 export type PartialInvoiceData = {

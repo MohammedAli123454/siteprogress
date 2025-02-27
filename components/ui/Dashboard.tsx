@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { Loader } from 'lucide-react';
 import { ChevronDown } from "lucide-react";
-import { ShieldCheck, BookOpen, FileText } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -18,10 +17,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { GroupedMOC } from "@/app/actions/invoiceActions";
+import { PartialInvoices } from "@/app/actions/invoiceActions";
 
 type DashboardProps = {
-  data: GroupedMOC[];
+  data: PartialInvoices[];
   loading?: boolean;
 };
 
@@ -44,7 +43,7 @@ const formatMillions = (value: number) => {
 const Dashboard: React.FC<DashboardProps> = ({ data, loading }) => {
   const [selectedCard, setSelectedCard] = useState<string | null>('awarded');
   const [selectedType, setSelectedType] = useState<string>('Overall');
-  const [selectedMoc, setSelectedMoc] = useState<GroupedMOC | null>(null);
+  const [selectedMoc, setSelectedMoc] = useState<PartialInvoices | null>(null);
 
   const safeString = (value: string | null) => value || "N/A";
   const safeNumber = (value: number | null) => value ?? 0;

@@ -194,7 +194,6 @@ export const invoiceSequence = pgTable('invoice_sequence', {
   sequence: integer('sequence').notNull(),
 });
 
-
 export const mocs = pgTable("mocs", {
   id: serial("id").primaryKey(),
   mocNo: text("moc_no").notNull(),
@@ -202,13 +201,15 @@ export const mocs = pgTable("mocs", {
   po: text("po").notNull(),
   proposal: text("proposal").notNull(),
   contractValue: numeric("contract_value", { precision: 12, scale: 2 }).notNull(),
-  description: text("description"), // Optional, add .notNull() if required
-  shortDescription: varchar("short_description", { length: 255 }), // Optional, add .notNull() if required
-  type: text("type").notNull(), // newly added field
+  description: text("description"),
+  shortDescription: varchar("short_description", { length: 255 }),
+  type: text("type").notNull(),
+  category: text("category").notNull(),
+  issuedDate: date("issued_date").notNull(),
+  signedDate: date("signed_date").notNull(),
   pssrStatus: text("pssr_status"),
   prbStatus: text("prb_status"),
   remarks: text("remarks"),
-
 });
 
 export const partialInvoices = pgTable("partial_invoices", {

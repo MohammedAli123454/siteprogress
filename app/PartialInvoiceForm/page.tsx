@@ -174,7 +174,7 @@ export default function PartialInvoiceForm({
   // Business Logic
   const calculateValues = useCallback((amount: number) => ({
     vat: amount * 0.15,
-    retention: amount * 0.05,
+    retention: amount * 0.10,
   }), []);
 
   const handleAmountChange = (value: string) => {
@@ -196,15 +196,27 @@ export default function PartialInvoiceForm({
       try {
         const moc = mocOptions.find((m) => m.id.toString() === mocId);
         if (!moc) return;
-
-        const countResult = await db
-          .select({ count: sql<number>`count(*)` })
+  
+        // Fetch existing invoice numbers for this MOC
+        const existingInvoices = await db
+          .select({ invoiceNo: partialInvoices.invoiceNo })
           .from(partialInvoices)
           .where(eq(partialInvoices.mocId, parseInt(mocId)));
-
-        const count = countResult[0]?.count || 0;
-        const invoiceNo = `${moc.cwo}-PI-${count + 1}`;
-        setFormData((prev) => ({ ...prev, invoiceNo }));
+  
+        let maxNumber = 0;
+        existingInvoices.forEach(({ invoiceNo }) => {
+          const match = invoiceNo.match(/INV-C-(\d+)$/);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            maxNumber = Math.max(maxNumber, num);
+          }
+        });
+  
+        const nextNumber = maxNumber + 1;
+        const paddedNumber = nextNumber.toString().padStart(3, '0');
+        const newInvoiceNo = `${moc.cwo} INV-C-${paddedNumber}`;
+  
+        setFormData((prev) => ({ ...prev, invoiceNo: newInvoiceNo }));
       } finally {
         setIsGeneratingInvoiceNo(false);
       }
