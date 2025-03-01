@@ -1,13 +1,16 @@
 "use client";
-
 import { useState, useTransition, useEffect, useCallback } from "react";
 import DatePicker from "react-datepicker";
+import { Calendar } from "@/components/ui/calendar"
 import "react-datepicker/dist/react-datepicker.css";
 import {
   addPartialInvoice,
   updatePartialInvoice,
   deletePartialInvoice
 } from "@/app/actions/invoiceActions";
+
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,10 +40,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+
+
 
 // Interfaces
 interface PartialInvoiceFormProps {
@@ -120,6 +125,10 @@ export default function PartialInvoiceForm({
   const [dialogMessage, setDialogMessage] = useState("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
+  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
+  const [startDate, endDate] = dateRange;
+
+
   // Form State
   const [formData, setFormData] = useState({
     mocId: "",
@@ -196,13 +205,13 @@ export default function PartialInvoiceForm({
       try {
         const moc = mocOptions.find((m) => m.id.toString() === mocId);
         if (!moc) return;
-  
+
         // Fetch existing invoice numbers for this MOC
         const existingInvoices = await db
           .select({ invoiceNo: partialInvoices.invoiceNo })
           .from(partialInvoices)
           .where(eq(partialInvoices.mocId, parseInt(mocId)));
-  
+
         let maxNumber = 0;
         existingInvoices.forEach(({ invoiceNo }) => {
           const match = invoiceNo.match(/INV-C-(\d+)$/);
@@ -211,11 +220,11 @@ export default function PartialInvoiceForm({
             maxNumber = Math.max(maxNumber, num);
           }
         });
-  
+
         const nextNumber = maxNumber + 1;
         const paddedNumber = nextNumber.toString().padStart(3, '0');
         const newInvoiceNo = `${moc.cwo} INV-C-${paddedNumber}`;
-  
+
         setFormData((prev) => ({ ...prev, invoiceNo: newInvoiceNo }));
       } finally {
         setIsGeneratingInvoiceNo(false);
@@ -318,7 +327,7 @@ export default function PartialInvoiceForm({
         })
         .from(partialInvoices)
         .leftJoin(mocs, eq(partialInvoices.mocId, mocs.id));
-  
+
       const updatedInvoices = result.map(row => ({
         ...row,
         mocNo: row.mocNo || "",
@@ -328,7 +337,7 @@ export default function PartialInvoiceForm({
         // Ensure status is properly formatted
         invoiceStatus: row.invoiceStatus.trim().toUpperCase()
       }));
-  
+
       setInvoices(updatedInvoices);
     } catch (error) {
       console.error("Refresh invoices error:", error);
@@ -336,10 +345,23 @@ export default function PartialInvoiceForm({
   };
 
   // Add filtered invoices
-  const filteredInvoices = invoices.filter(invoice =>
-    invoice.invoiceNo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    invoice.mocNo?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredInvoices = invoices.filter(invoice => {
+    const searchLower = searchQuery.toLowerCase();
+    const invoiceDate = invoice.invoiceDate ? new Date(invoice.invoiceDate) : null;
+
+    // Date range filter
+    const dateInRange = !startDate || !endDate || !invoiceDate ? true :
+      invoiceDate >= startDate && invoiceDate <= endDate;
+
+    // Existing search filter
+    const matchesSearch = (
+      invoice.invoiceNo?.toLowerCase().includes(searchLower) ||
+      invoice.mocNo?.toLowerCase().includes(searchLower) ||
+      invoice.invoiceDate?.toLowerCase().includes(searchLower)
+    );
+
+    return dateInRange && matchesSearch;
+  });
 
   const resetForm = () => {
     setFormData({
@@ -472,57 +494,87 @@ export default function PartialInvoiceForm({
 
             {/* New combined row: Partial Invoices title, Invoice Status, Action Buttons, and Search Input */}
             <div className="grid grid-cols-2 gap-4 mb-4">
-  <div>
-    <FormField
-      label="Status *"
-      content={
-        <Select
-          value={formData.invoiceStatus}
-          onValueChange={(value) =>
-            setFormData({ ...formData, invoiceStatus: value })
-          }
-          required
-        >
-          <SelectTrigger className="h-9">
-            <SelectValue placeholder="Select Status" />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(STATUS_COLORS).map(([status, color]) => (
-              <SelectItem
-                key={status}
-                value={status}
-                className={`text-sm ${color}`}
-              >
-                {status}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      }
-    />
-  </div>
-  <div className="flex items-center space-x-4 justify-end">
-    {editId && (
-      <Button
-        type="button"
-        variant="outline"
-        onClick={resetForm}
-        disabled={isPending}
-      >
-        Cancel
-      </Button>
-    )}
-    <Button type="submit" className="w-full md:w-auto" disabled={isPending}>
-      {isPending ? "Processing..." : editId ? "Update Invoice" : "Add Invoice"}
+              <div>
+                <FormField
+                  label="Status *"
+                  content={
+                    <Select
+                      value={formData.invoiceStatus}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, invoiceStatus: value })
+                      }
+                      required
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Select Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(STATUS_COLORS).map(([status, color]) => (
+                          <SelectItem
+                            key={status}
+                            value={status}
+                            className={`text-sm ${color}`}
+                          >
+                            {status}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  }
+                />
+              </div>
+              <div className="flex items-center space-x-2 justify-end">
+  {editId && (
+    <Button
+      type="button"
+      variant="outline"
+      onClick={resetForm}
+      disabled={isPending}
+    >
+      Cancel
     </Button>
+  )}
+  <Button type="submit" className="w-full md:w-auto" disabled={isPending}>
+    {isPending ? "Processing..." : editId ? "Update Invoice" : "Add Invoice"}
+  </Button>
+
+  <div className="flex items-center space-x-2">
     <Input
       placeholder="Search invoices..."
       value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      className="w-64"
+      onChange={(e) => {
+        setSearchQuery(e.target.value);
+        setDateRange([null, null]);
+      }}
+      className="w-48"
     />
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline">
+          <CalendarIcon className="h-4 w-4 mr-2" />
+          {startDate ? 
+            (endDate ? 
+              `${format(startDate, 'MMM dd')} - ${format(endDate, 'MMM dd')}` : 
+              format(startDate, 'MMM dd')) : 
+            "Select Date Range"}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0">
+        <Calendar
+          mode="range"
+          selected={{ from: startDate || undefined, to: endDate || undefined }}
+          onSelect={(range) => {
+            setDateRange([range?.from || null, range?.to || null]);
+            setSearchQuery("");
+          }}
+          numberOfMonths={2}
+          className="rounded-md border"
+        />
+      </PopoverContent>
+    </Popover>
   </div>
 </div>
+            </div>
           </form>
 
           {/* Invoices Table */}
@@ -588,8 +640,8 @@ const InvoiceTable = ({
               <TableRow className="h-8">
                 <TableHead className="font-semibold text-gray-700 py-2">MOC Number</TableHead>
                 <TableHead className="font-semibold text-gray-700 py-2">Invoice No</TableHead>
-                <TableHead className="font-semibold text-gray-700 py-2">Date</TableHead>
-                <TableHead className="font-semibold text-gray-700 py-2">Amount</TableHead>
+                <TableHead className="font-semibold text-gray-700 py-2">Inv. Sub. Date</TableHead>
+                <TableHead className="font-semibold text-gray-700 py-2">Invoice Amount</TableHead>
                 <TableHead className="font-semibold text-gray-700 py-2">Status</TableHead>
                 <TableHead className="font-semibold text-gray-700 py-2">Actions</TableHead>
               </TableRow>
@@ -598,17 +650,17 @@ const InvoiceTable = ({
             <TableBody>
               {isLoading
                 ? Array(5)
-                    .fill(0)
-                    .map((_, i) => <SkeletonRow key={i} />)
+                  .fill(0)
+                  .map((_, i) => <SkeletonRow key={i} />)
                 : invoices.map((invoice) => (
-                    <InvoiceRow
-                      key={invoice.id}
-                      invoice={invoice}
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                      onStatusChange={onStatusChange}
-                    />
-                  ))}
+                  <InvoiceRow
+                    key={invoice.id}
+                    invoice={invoice}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onStatusChange={onStatusChange}
+                  />
+                ))}
             </TableBody>
           </Table>
         </div>
