@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import tradeList from '@/app/tradeList.json';
 import Navbar from '../NavBar/page';
-import { jsPDF } from "jspdf";
 
 interface Trade {
   TradeName: string;
@@ -33,7 +32,9 @@ const TradeListComponent: React.FC = () => {
 
   const disciplines = Array.from(new Set(tradeValues.map(trade => trade.Discipline)));
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
+    const jsPdfModule = await import("jspdf/dist/jspdf.umd.min.js");
+    const { jsPDF } = jsPdfModule.default;
     const doc = new jsPDF();
     let y = 20; // Start position for the first row (lower to give space)
   

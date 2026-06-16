@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button"
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-type Props = {}
-
-export default function Navbar({}: Props) {
+export default function Navbar() {
     const router = useRouter()
     const buttonClasses = 'px-3 py-2 text-sm bg-transparent text-black border-none disabled:opacity-50 hover:bg-blue-500 hover:text-white'
 

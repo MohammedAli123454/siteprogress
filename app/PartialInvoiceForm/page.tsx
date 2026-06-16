@@ -47,11 +47,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 
 
-// Interfaces
-interface PartialInvoiceFormProps {
-  onInvoiceAdded?: () => void;
-}
-
 interface MocOption {
   id: number;
   mocNo: string;
@@ -109,9 +104,7 @@ const SkeletonRow = () => (
   </TableRow>
 );
 
-export default function PartialInvoiceForm({
-  onInvoiceAdded = () => { }
-}: PartialInvoiceFormProps) {
+export default function PartialInvoiceForm() {
   // State Management
   const [searchQuery, setSearchQuery] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -257,7 +250,6 @@ export default function PartialInvoiceForm({
 
         refreshInvoices();
         resetForm();
-        onInvoiceAdded();
       } catch (error) {
         console.error("Form submission error:", error);
         showDialog("Error", "An error occurred. Please try again.");
