@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Table, TableCell, TableRow, TableHead, TableBody } from "@/components/ui/table";
+import { Table, TableCell, TableRow, TableHead, TableHeader, TableBody } from "@/components/ui/table";
 import { db } from "@/app/configs/db";
 import { mocDetail, jointsDetail } from "@/app/configs/schema";
 import { sql, eq } from "drizzle-orm";
@@ -82,7 +82,7 @@ const sizeWiseQuery = async (moc: string, Type: string) => {
         }),
     })
     .from(jointsDetail)
-    .where(moc === "*" ? sql`TRUE` : eq(mocDetail.moc, moc))
+    .where(moc === "*" ? sql`TRUE` : eq(jointsDetail.moc, moc))
     .groupBy(jointsDetail.sizeInches, jointsDetail.thickness)
     .orderBy(sql`CAST(${jointsDetail.sizeInches} AS NUMERIC) DESC`);
   const result = await microQuery;
@@ -164,20 +164,20 @@ export default function WeldSummaryTable() {
   // Helper function to render table headers based on the Type
   const renderHeaders = (Type: string) => (
     <>
-      <TableCell className="min-w-[60px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Sr.No</TableCell>
-      <TableCell className="min-w-[150px] px-2 py-2 box-border text-center font-bold bg-gray-100 text-lg font-sans">MOC</TableCell>
-      <TableCell className="min-w-[600px] px-2 py-2 box-border font-bold bg-gray-100 text-lg font-sans">MOC Name</TableCell>
+      <TableHead className="min-w-[60px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Sr.No</TableHead>
+      <TableHead className="min-w-[150px] px-2 py-2 box-border text-center font-bold bg-gray-100 text-lg font-sans">MOC</TableHead>
+      <TableHead className="min-w-[600px] px-2 py-2 box-border font-bold bg-gray-100 text-lg font-sans">MOC Name</TableHead>
       {Type.includes("Joints") ? (
         <>
-          <TableCell className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Shop Joints</TableCell>
-          <TableCell className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Field Joints</TableCell>
-          <TableCell className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Total Joints</TableCell>
+          <TableHead className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Shop Joints</TableHead>
+          <TableHead className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Field Joints</TableHead>
+          <TableHead className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Total Joints</TableHead>
         </>
       ) : (
         <>
-          <TableCell className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Shop Inch Dia</TableCell>
-          <TableCell className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Field Inch Dia</TableCell>
-          <TableCell className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Total Inch Dia</TableCell>
+          <TableHead className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Shop Inch Dia</TableHead>
+          <TableHead className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Field Inch Dia</TableHead>
+          <TableHead className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Total Inch Dia</TableHead>
         </>
       )}
     </>
@@ -188,21 +188,21 @@ export default function WeldSummaryTable() {
   const renderMicroTableHeaders = (Type: string) => (
     <>
 
-      <TableCell className="min-w-[60px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Sr.No</TableCell>
-      <TableCell className="min-w-[150px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Size (Inches)</TableCell>
-      <TableCell className="min-w-[150px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Thickness</TableCell>
+      <TableHead className="min-w-[60px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Sr.No</TableHead>
+      <TableHead className="min-w-[150px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Size (Inches)</TableHead>
+      <TableHead className="min-w-[150px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Thickness</TableHead>
 
       {Type.includes("Joints") ? (
         <>
-          <TableCell className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Shop Joints</TableCell>
-          <TableCell className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Field Joints</TableCell>
-          <TableCell className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Total Joints</TableCell>
+          <TableHead className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Shop Joints</TableHead>
+          <TableHead className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Field Joints</TableHead>
+          <TableHead className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Total Joints</TableHead>
         </>
       ) : (
         <>
-          <TableCell className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Shop Inch Dia</TableCell>
-          <TableCell className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Field Inch Dia</TableCell>
-          <TableCell className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Total Inch Dia</TableCell>
+          <TableHead className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Shop Inch Dia</TableHead>
+          <TableHead className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Field Inch Dia</TableHead>
+          <TableHead className="min-w-[175px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Total Inch Dia</TableHead>
         </>
       )}
     </>
@@ -338,9 +338,11 @@ export default function WeldSummaryTable() {
           // Moc Wise Detail Table (Default View)
           <div className="overflow-auto max-h-[550px] mx-4 mt-2">
           <Table className="w-full table-fixed">
-            <TableHead className="fixed">
+            <TableHeader className="sticky top-0 z-10">
+              <TableRow className="flex w-full box-border">
                 {renderHeaders(Type)}
-              </TableHead>
+              </TableRow>
+            </TableHeader>
               <TableBody>
                 {renderRows(data, Type)}
                 {renderFooterRow(totals, Type)}
@@ -351,9 +353,11 @@ export default function WeldSummaryTable() {
           // Micro Detail Table (Shown when toggled)
           <div className="overflow-auto max-h-[550px] mx-4 mt-2">
           <Table className="w-full table-fixed">
-            <TableHead className="fixed">
+            <TableHeader className="sticky top-0 z-10">
+              <TableRow className="flex w-full box-border">
                 {renderMicroTableHeaders(Type)}
-            </TableHead>
+              </TableRow>
+            </TableHeader>
             <TableBody>
               {renderMicroTableRows(microData, Type)}
               {renderMicroTableFooterRow(totals, Type)}
@@ -369,9 +373,6 @@ export default function WeldSummaryTable() {
   );
 
 }
-
-
-
 
 
 

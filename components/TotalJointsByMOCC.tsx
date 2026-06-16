@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Table, TableCell, TableRow, TableHead, TableBody } from "@/components/ui/table";
+import { Table, TableCell, TableRow, TableHead, TableHeader, TableBody } from "@/components/ui/table";
 import { db } from "@/app/configs/db";
 import { mocDetail, jointsDetail } from "@/app/configs/schema";
 import { sql, eq } from "drizzle-orm";
@@ -63,16 +63,16 @@ export default function TotalJointsByMOCC({ params }: { params: { TYPEP: string 
         ) : (
           <div className="overflow-x-auto mx-4">
             <Table className="w-full min-w-full">
-              <TableHead>
+              <TableHeader>
                 <TableRow className="flex w-full box-border font-bold text-lg bg-gray-200">
-                  <TableCell className="font-semibold min-w-[60px] px-2 py-2 box-border text-center">Sr.No</TableCell>
-                  <TableCell className="font-semibold min-w-[150px] px-2 py-2 box-border text-center">MOC</TableCell>
-                  <TableCell className="font-semibold min-w-[600px] px-2 py-2 box-border">MOC Name</TableCell>
-                  <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Shop Joints</TableCell>
-                  <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Field Joints</TableCell>
-                  <TableCell className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Total Joints</TableCell>
+                  <TableHead className="font-semibold min-w-[60px] px-2 py-2 box-border text-center">Sr.No</TableHead>
+                  <TableHead className="font-semibold min-w-[150px] px-2 py-2 box-border text-center">MOC</TableHead>
+                  <TableHead className="font-semibold min-w-[600px] px-2 py-2 box-border">MOC Name</TableHead>
+                  <TableHead className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Shop Joints</TableHead>
+                  <TableHead className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Field Joints</TableHead>
+                  <TableHead className="font-semibold min-w-[175px] px-2 py-2 box-border text-center">Total Joints</TableHead>
                 </TableRow>
-              </TableHead>
+              </TableHeader>
               <TableBody>
                 {data.map((item, index) => (
                   <TableRow key={index} className={`flex w-full box-border ${index % 2 === 0 ? "bg-gray-100" : "bg-white"}`}>
