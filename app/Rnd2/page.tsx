@@ -1,10 +1,10 @@
 'use client';
-import React, { useState } from 'react';
+
+import { useState } from 'react';
 import Select from 'react-select';
 import { useQuery } from '@tanstack/react-query';
-import { LoaderCircle } from 'lucide-react'; // Import the LoaderCircle icon
+import { LoaderCircle } from 'lucide-react';
 
-// Define types for country, state, and city options
 interface Country {
   value: string;
   label: string;
@@ -20,21 +20,18 @@ interface City {
   label: string;
 }
 
-// Fetch countries
 const fetchCountries = async (): Promise<Country[]> => {
   const response = await fetch('https://countriesnow.space/api/v0.1/countries');
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
   const data = await response.json();
-  console.log("Countries", data);
   return data.data.map((country: { country: string }) => ({
     value: country.country,
     label: country.country,
   }));
 };
 
-// Fetch states
 const fetchStates = async (country: string): Promise<State[]> => {
   if (!country) return [];
 
@@ -45,14 +42,12 @@ const fetchStates = async (country: string): Promise<State[]> => {
   });
 
   const data = await response.json();
-  console.log("States", data);
   return data.data.states.map((state: { name: string }) => ({
     value: state.name,
     label: state.name,
   }));
 };
 
-// Fetch cities
 const fetchCities = async (country: string, state: string): Promise<City[]> => {
   if (!country || !state) return [];
 
@@ -67,7 +62,6 @@ const fetchCities = async (country: string, state: string): Promise<City[]> => {
   }
 
   const data = await response.json();
-  console.log("Cities:", data);
   return data.data.map((city: string) => ({
     value: city,
     label: city,
@@ -75,52 +69,44 @@ const fetchCities = async (country: string, state: string): Promise<City[]> => {
 };
 
 export default function Rnd2() {
-  // State for selected country, state, and city
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [selectedState, setSelectedState] = useState<State | null>(null);
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
 
-  // Fetch countries
-  const { isLoading: isCountriesLoading, error: countriesError, data: countries } = useQuery({
+  const { isLoading: isCountriesLoading, data: countries } = useQuery({
     queryKey: ['countries'],
     queryFn: fetchCountries,
-    staleTime: 1000 * 60 * 60, // Cache data for 1 hour
+    staleTime: 1000 * 60 * 60,
   });
 
-  // Fetch states when a country is selected
-  const { isLoading: isStatesLoading, error: statesError, data: states } = useQuery({
+  const { isLoading: isStatesLoading, data: states } = useQuery({
     queryKey: ['states', selectedCountry?.value],
     queryFn: () => fetchStates(selectedCountry?.value || ''),
-    enabled: !!selectedCountry, // Only fetch if a country is selected
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+    enabled: !!selectedCountry,
+    staleTime: 1000 * 60 * 60,
   });
 
-  // Fetch cities when both country and state are selected
-  const { isLoading: isCitiesLoading, error: citiesError, data: cities } = useQuery({
+  const { isLoading: isCitiesLoading, data: cities } = useQuery({
     queryKey: ['cities', selectedCountry?.value, selectedState?.value],
     queryFn: () => fetchCities(selectedCountry?.value || '', selectedState?.value || ''),
-    enabled: !!selectedState && !!selectedCountry, // Only fetch if both country and state are selected
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+    enabled: !!selectedState && !!selectedCountry,
+    staleTime: 1000 * 60 * 60,
   });
 
   const isLoading = isCountriesLoading || isStatesLoading || isCitiesLoading;
 
   return (
     <div className="flex items-center justify-center min-h-[90vh] bg-white border border-gray-200 p-8 max-w-[1400px] mx-auto">
-      {/* Overlay Spinner */}
       {isLoading && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <LoaderCircle className="animate-spin text-white" size={48} />
         </div>
       )}
 
-      {/* Main Content */}
       <div className="min-h-[60vh] w-full max-w-xl bg-white p-8 rounded-lg shadow-lg">
         <h2 className="text-2xl font-semibold mb-6 text-center">Select Your Location</h2>
 
-        {/* Child container with form inputs */}
         <div className="space-y-6">
-          {/* Country selection */}
           <div className="grid grid-cols-5 gap-4 items-center">
             <label htmlFor="country" className="col-span-1 text-lg font-medium">Country</label>
             <div className="col-span-4">
@@ -134,7 +120,6 @@ export default function Rnd2() {
             </div>
           </div>
 
-          {/* State selection */}
           <div className="grid grid-cols-5 gap-4 items-center">
             <label htmlFor="state" className="col-span-1 text-lg font-medium">State</label>
             <div className="col-span-4">
@@ -149,7 +134,6 @@ export default function Rnd2() {
             </div>
           </div>
 
-          {/* City selection */}
           <div className="grid grid-cols-5 gap-4 items-center">
             <label htmlFor="city" className="col-span-1 text-lg font-medium">City</label>
             <div className="col-span-4">
@@ -165,7 +149,6 @@ export default function Rnd2() {
           </div>
         </div>
 
-        {/* Display selected location */}
         {selectedCity && (
           <div className="mt-6">
             <h3 className="text-xl font-semibold">Selected Location:</h3>
@@ -178,5 +161,3 @@ export default function Rnd2() {
     </div>
   );
 }
-
-

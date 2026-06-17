@@ -1,0 +1,34 @@
+export type JointRecord = {
+  id: number;
+  moc: string;
+  mocName: string;
+  sizeInches: string;
+  pipeSchedule: string;
+  thickness: number;
+  shopJoints: number;
+  fieldJoints: number;
+  totalJoints: number;
+  shopInchDia: number;
+  fieldInchDia: number;
+  totalInchDia: number;
+};
+
+export type JointRecordFormValues = {
+  id: number | null;
+  moc: string;
+  mocName: string;
+  sizeInches: string;
+  pipeSchedule: string;
+  thickness: number;
+  shopJoints: number;
+  fieldJoints: number;
+};
+
+export type JointRecordPayload = Omit<JointRecordFormValues, "id">;
+
+export type MocOption = {
+  moc: string;
+  mocName: string;
+};
+
+export type MocPayload = MocOption;

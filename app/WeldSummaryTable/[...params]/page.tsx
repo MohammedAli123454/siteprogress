@@ -1,31 +1,17 @@
-"use client"; // Ensure it's a client component
+"use client";
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Table, TableCell, TableRow, TableHead, TableHeader, TableBody } from "@/components/ui/table";
-import { db } from "@/app/configs/db";
-import { mocDetail, jointsDetail } from "@/app/configs/schema";
-import { sql, eq } from "drizzle-orm";
 import { useParams } from "next/navigation";
-import { Loader } from 'lucide-react';
-import { useMemo } from "react";
-import Navbar from "@/app/NavBar/page";
+import { Loader } from "lucide-react";
+import type { MocWiseDataRow, NumericValue, SizeWiseDataRow } from "@/lib/weld-types";
 
-type MocWiseDataType = {
-  MOC: string;
-  MOC_NAME: string;
-  shopJoints?: number;
-  fieldJoints?: number;
-  totalJoints?: number;
-  shopInchDia?: number;
-  fieldInchDia?: number;
-  totalInchDia?: number;
-};
+type MocWiseDataType = MocWiseDataRow;
+type SizeWiseDataType = SizeWiseDataRow;
 
-type SizeWiseDataType = {
-  SIZE_INCHES: string;
-  THKNESS: number;
+type WeldTotals = {
   shopJoints: number;
   fieldJoints: number;
   totalJoints: number;
@@ -34,88 +20,43 @@ type SizeWiseDataType = {
   totalInchDia: number;
 };
 
-// Query function to fetch data
-const mocWiseQuery = async (moc: string, Type: string) => {
-  const mocQuery = db
-    .select({
-      MOC: mocDetail.moc,
-      MOC_NAME: mocDetail.mocName,
-      ...(Type === "Joints"
-        ? {
-          shopJoints: sql`SUM(${jointsDetail.shopJoints})`,
-          fieldJoints: sql`SUM(${jointsDetail.fieldJoints})`,
-          totalJoints: sql`SUM(${jointsDetail.totalJoints})`,
-        }
-        : {
-          shopInchDia: sql`SUM(${jointsDetail.shopInchDia})`,
-          fieldInchDia: sql`SUM(${jointsDetail.fieldInchDia})`,
-          totalInchDia: sql`SUM(${jointsDetail.totalInchDia})`,
-        }),
-    })
-    .from(mocDetail)
-    .leftJoin(jointsDetail, eq(mocDetail.moc, jointsDetail.moc))
-    .where(moc === "*" ? sql`TRUE` : eq(mocDetail.moc, moc))
-    .groupBy(mocDetail.moc, mocDetail.mocName);
+const fetchWeldDetail = async <T,>(moc: string, Type: string, scope: "summary" | "pipe-size") => {
+  const params = new URLSearchParams({ moc, type: Type, scope });
+  const response = await fetch(`/api/weld-detail?${params.toString()}`, {
+    cache: "no-store",
+  });
+  const payload = await response.json();
 
-  const result = await mocQuery;
-  return result as MocWiseDataType[];
+  if (!response.ok) {
+    throw new Error(payload?.error || "Failed to load weld detail.");
+  }
 
+  return (payload.data ?? []) as T[];
 };
 
-// Query function for micro details
-const sizeWiseQuery = async (moc: string, Type: string) => {
-  const microQuery = db
-    .select({
-      SIZE_INCHES: jointsDetail.sizeInches,
-      THKNESS: jointsDetail.thickness,
+const toNumber = (value: NumericValue) => Number(value || 0);
 
-      ...(Type === "Joints"
-        ? {
-          shopJoints: sql`SUM(${jointsDetail.shopJoints})`,
-          fieldJoints: sql`SUM(${jointsDetail.fieldJoints})`,
-          totalJoints: sql`SUM(${jointsDetail.totalJoints})`,
-        }
-        : {
-          shopInchDia: sql`SUM(${jointsDetail.shopInchDia})`,
-          fieldInchDia: sql`SUM(${jointsDetail.fieldInchDia})`,
-          totalInchDia: sql`SUM(${jointsDetail.totalInchDia})`,
-        }),
-    })
-    .from(jointsDetail)
-    .where(moc === "*" ? sql`TRUE` : eq(jointsDetail.moc, moc))
-    .groupBy(jointsDetail.sizeInches, jointsDetail.thickness)
-    .orderBy(sql`CAST(${jointsDetail.sizeInches} AS NUMERIC) DESC`);
-  const result = await microQuery;
-  return result as SizeWiseDataType[];
-};
-
-// React component to display the table
 export default function WeldSummaryTable() {
-  const [showMicroDetail, setShowMicroDetail] = useState(false); // Default is false to show the Moc Wise Detail Table
+  const [showMicroDetail, setShowMicroDetail] = useState(false);
 
   const handleToggle = () => {
     setShowMicroDetail(!showMicroDetail);
   };
 
-  const params = useParams(); // Get the parameters from the URL
-  const moc: string = params?.params?.[0] ?? ""; // Default to an empty string if undefined
-  const Type: string = params?.params?.[1] ?? ""; // Default to an empty string if undefined
+  const params = useParams();
+  const moc: string = params?.params?.[0] ?? "";
+  const Type: string = params?.params?.[1] ?? "";
 
-  console.log("Type=" + Type);
-
-  // Fetch data using useQuery hook
   const { data = [], isLoading: isMocLoading, isError: isMocError, } = useQuery({
-
     queryKey: ["mocData", moc, Type],
-    queryFn: () => mocWiseQuery(moc, Type),
-    
-  
+    queryFn: () => fetchWeldDetail<MocWiseDataType>(moc, Type, "summary"),
+    retry: 1,
   });
 
-  // Fetch micro detail data
   const { data: microData = [], isLoading: isMicroLoading, isError: isMicroError } = useQuery({
     queryKey: ["microData", moc, Type],
-    queryFn: () => sizeWiseQuery(moc, Type),
+    queryFn: () => fetchWeldDetail<SizeWiseDataType>(moc, Type, "pipe-size"),
+    retry: 1,
   });
 
   if (isMocError) {
@@ -133,23 +74,22 @@ export default function WeldSummaryTable() {
     );
   }
 
-  // Loading States
   if (isMocLoading || (showMicroDetail && isMicroLoading)) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader color="blue" size={48} />;
+        <Loader color="blue" size={48} />
       </div>
     );
   }
 
   const totals = data.reduce(
     (acc, item) => ({
-      shopJoints: acc.shopJoints + Number(item.shopJoints || 0),
-      fieldJoints: acc.fieldJoints + Number(item.fieldJoints || 0),
-      totalJoints: acc.totalJoints + Number(item.totalJoints || 0),
-      shopInchDia: acc.shopInchDia + Number(item.shopInchDia || 0),
-      fieldInchDia: acc.fieldInchDia + Number(item.fieldInchDia || 0),
-      totalInchDia: acc.totalInchDia + Number(item.totalInchDia || 0),
+      shopJoints: acc.shopJoints + toNumber(item.shopJoints),
+      fieldJoints: acc.fieldJoints + toNumber(item.fieldJoints),
+      totalJoints: acc.totalJoints + toNumber(item.totalJoints),
+      shopInchDia: acc.shopInchDia + toNumber(item.shopInchDia),
+      fieldInchDia: acc.fieldInchDia + toNumber(item.fieldInchDia),
+      totalInchDia: acc.totalInchDia + toNumber(item.totalInchDia),
     }),
     {
       shopJoints: 0,
@@ -161,7 +101,6 @@ export default function WeldSummaryTable() {
     }
   );
 
-  // Helper function to render table headers based on the Type
   const renderHeaders = (Type: string) => (
     <>
       <TableHead className="min-w-[60px] px-2 py-2 text-center font-bold bg-gray-100 text-lg font-sans">Sr.No</TableHead>
@@ -183,8 +122,6 @@ export default function WeldSummaryTable() {
     </>
   );
 
-
-  // Helper function to render table headers based on the Type
   const renderMicroTableHeaders = (Type: string) => (
     <>
 
@@ -208,7 +145,6 @@ export default function WeldSummaryTable() {
     </>
   );
 
-  // Helper function to render table rows
   const renderRows = (data: MocWiseDataType[], Type: string) =>
     data.map((item, index) => (
       <TableRow key={index} className="flex w-full box-border">
@@ -252,12 +188,9 @@ export default function WeldSummaryTable() {
           </>
         )}
       </TableRow>
-
     ));
 
-  // Helper function to render footer row
-  const renderFooterRow = (totals: any, Type: string) => (
-
+  const renderFooterRow = (totals: WeldTotals, Type: string) => (
     <TableRow className="flex w-full box-border font-bold">
       <TableCell className="px-2 py-2 min-w-[210px] box-border"></TableCell>
       <TableCell className="px-2 py-2 min-w-[450px] box-border"></TableCell>
@@ -279,10 +212,7 @@ export default function WeldSummaryTable() {
     </TableRow>
   );
 
-
-  // Helper function to render footer row
-  const renderMicroTableFooterRow = (totals: any, Type: string) => (
-
+  const renderMicroTableFooterRow = (totals: WeldTotals, Type: string) => (
     <TableRow className="sticky flex w-full box-border font-bold">
       <TableCell className="px-2 py-2 min-w-[60px] box-border"></TableCell>
       <TableCell className="px-2 py-2 min-w-[150px] box-border"></TableCell>
@@ -307,7 +237,6 @@ export default function WeldSummaryTable() {
   return (
     <Card>
       <CardHeader className="grid grid-cols-6 items-center justify-between p-1 text-lg font-sans font-bold">
-        {/* First div with 80% width, centered content */}
         <div className="col-span-5 text-center">
           {!showMicroDetail ? (
             Type === 'Joints' ?
@@ -320,7 +249,6 @@ export default function WeldSummaryTable() {
           )}
         </div>
 
-        {/* Second div with 20% width for the toggle button */}
         <div className="col-span-1">
           <button
             className="ml-4 px-2 py-2 bg-blue-500 text-white"
@@ -333,9 +261,7 @@ export default function WeldSummaryTable() {
 
 
       <CardContent className="flex justify-center items-center">
-        {/* Conditionally Render Moc Wise Detail Table or Micro Detail Table */}
         {!showMicroDetail ? (
-          // Moc Wise Detail Table (Default View)
           <div className="overflow-auto max-h-[550px] mx-4 mt-2">
           <Table className="w-full table-fixed">
             <TableHeader className="sticky top-0 z-10">
@@ -350,7 +276,6 @@ export default function WeldSummaryTable() {
             </Table>
           </div>
         ) : (
-          // Micro Detail Table (Shown when toggled)
           <div className="overflow-auto max-h-[550px] mx-4 mt-2">
           <Table className="w-full table-fixed">
             <TableHeader className="sticky top-0 z-10">
@@ -373,7 +298,5 @@ export default function WeldSummaryTable() {
   );
 
 }
-
-
 
 
