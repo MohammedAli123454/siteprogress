@@ -4,7 +4,7 @@ import {
   getMocWiseWeldDetail,
   getPipeSizeWeldDetail,
   normalizeWeldType,
-} from "@/lib/weld-data";
+} from "@/features/weld-summary/data";
 
 export const dynamic = "force-dynamic";
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getAllMocsWeldSummary, normalizeWeldType } from "@/lib/weld-data";
+import { getAllMocsWeldSummary, normalizeWeldType } from "@/features/weld-summary/data";
 
 export const dynamic = "force-dynamic";
 

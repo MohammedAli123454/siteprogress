@@ -1,16 +1,18 @@
-import { defineConfig } from 'drizzle-kit';
+import "dotenv/config";
+
+import { defineConfig } from "drizzle-kit";
+
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL is not set. Add it to .env before running Drizzle commands.");
+}
 
 export default defineConfig({
-  dialect: 'postgresql',
-  schema: "./app/configs/schema.ts",
+  dialect: "postgresql",
+  schema: "./db/schema.ts",
   out: "./drizzle",
-
   dbCredentials: {
-    url: "postgresql://azcsmohdali1:f1NauxJ0RikY@ep-morning-snowflake-15132543-pooler.ap-southeast-1.aws.neon.tech/projectsprogress?sslmode=require"
+    url: databaseUrl,
   },
-
 });
-
-
-
-
