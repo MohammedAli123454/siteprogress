@@ -1,11 +1,15 @@
 "use client";
 
-import { Download, Loader2, Ruler, Table2, type LucideIcon } from "lucide-react";
+import {
+  Download,
+  Loader2,
+  RotateCcw,
+  Save,
+} from "lucide-react";
 import Select, { type FormatOptionLabelMeta, type SingleValue, type StylesConfig } from "react-select";
 
 import { Button } from "@/components/ui/button";
 
-import { formatNumber, type RecordTotals } from "../domain/calculations";
 import { ALL_MOCS } from "../domain/constants";
 import type { MocOption } from "../domain/types";
 
@@ -18,17 +22,21 @@ type MocSelectOption = {
 type EditorToolbarProps = {
   selectedMoc: string;
   mocOptions: MocOption[];
-  totals: RecordTotals;
   isExportDisabled: boolean;
   isExporting: boolean;
+  hasUnsavedChanges: boolean;
+  isSavingChanges: boolean;
+  unsavedChangeCount: number;
   onMocChange: (value: string) => void;
+  onSaveChanges: () => void;
+  onDiscardChanges: () => void;
   onExportExcel: () => void;
 };
 
 const selectStyles: StylesConfig<MocSelectOption, false> = {
   control: (baseStyles, state) => ({
     ...baseStyles,
-    minHeight: 64,
+    minHeight: 44,
     borderColor: state.isFocused ? "#3b82f6" : "#cbd5e1",
     borderRadius: 8,
     boxShadow: state.isFocused ? "0 0 0 3px rgb(59 130 246 / 0.14)" : "none",
@@ -39,7 +47,7 @@ const selectStyles: StylesConfig<MocSelectOption, false> = {
   }),
   valueContainer: (baseStyles) => ({
     ...baseStyles,
-    minHeight: 64,
+    minHeight: 44,
     padding: "0 12px",
   }),
   input: (baseStyles) => ({
@@ -69,15 +77,19 @@ const selectStyles: StylesConfig<MocSelectOption, false> = {
   }),
 };
 
-const toolbarButtonClassName = "h-16 justify-center px-4 text-sm";
+const toolbarButtonClassName = "justify-center text-sm";
 
 export function EditorToolbar({
   selectedMoc,
   mocOptions,
-  totals,
   isExportDisabled,
   isExporting,
+  hasUnsavedChanges,
+  isSavingChanges,
+  unsavedChangeCount,
   onMocChange,
+  onSaveChanges,
+  onDiscardChanges,
   onExportExcel,
 }: EditorToolbarProps) {
   const mocNameOptions = [
@@ -95,10 +107,7 @@ export function EditorToolbar({
 
   return (
     <section className="p-0">
-      <span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-        MOC Name
-      </span>
-      <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(320px,1fr)_minmax(180px,220px)_minmax(180px,220px)_max-content]">
+      <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(360px,1fr)_minmax(420px,max-content)]">
         <ToolbarSelect
           label="MOC Name"
           options={mocNameOptions}
@@ -107,14 +116,36 @@ export function EditorToolbar({
           onChange={(option) => onMocChange(option?.value ?? ALL_MOCS)}
         />
 
-        <ToolbarKpi label="Total Joints" value={totals.totalJoints} icon={Table2} />
-        <ToolbarKpi label="Total Inch Dia" value={totals.totalInchDia} icon={Ruler} />
-
-        <div className="flex flex-wrap items-start gap-3 sm:col-span-2 xl:col-span-1 xl:flex-nowrap">
+        <div className="flex min-w-0 flex-wrap justify-start gap-2 lg:h-11 lg:justify-end">
+          {(hasUnsavedChanges || isSavingChanges) && (
+            <>
+              <Button
+                className="h-11 min-w-[150px] justify-center px-3 text-sm"
+                disabled={isSavingChanges}
+                onClick={onSaveChanges}
+              >
+                {isSavingChanges ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                {hasUnsavedChanges ? `Save (${unsavedChangeCount})` : "Save Changes"}
+              </Button>
+              <Button
+                className="h-11 min-w-[112px] justify-center px-3 text-sm"
+                variant="outline"
+                disabled={isSavingChanges}
+                onClick={onDiscardChanges}
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Discard
+              </Button>
+            </>
+          )}
           <Button
-            className={toolbarButtonClassName}
+            className={`${toolbarButtonClassName} h-11 min-w-[160px] px-3`}
             variant="outline"
-            disabled={isExportDisabled || isExporting}
+            disabled={isExportDisabled || isExporting || isSavingChanges}
             onClick={onExportExcel}
           >
             {isExporting ? (
@@ -144,7 +175,10 @@ function ToolbarSelect({
   onChange: (option: SingleValue<MocSelectOption>) => void;
 }) {
   return (
-    <label className="min-w-0 sm:col-span-2 xl:col-span-1">
+    <label className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
+        {label}
+      </span>
       <Select
         instanceId={`joint-inch-dia-${label.toLowerCase().replace(/\s+/g, "-")}`}
         aria-label={label}
@@ -157,32 +191,6 @@ function ToolbarSelect({
         onChange={onChange}
       />
     </label>
-  );
-}
-
-function ToolbarKpi({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string;
-  value: number;
-  icon: LucideIcon;
-}) {
-  return (
-    <div className="flex h-16 min-w-0 items-center gap-3 rounded-lg border border-[#dbe4ef] bg-[#f8fafc] px-4">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500">
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="min-w-0">
-        <div className="text-[11px] font-bold uppercase leading-none tracking-wide text-slate-500">
-          {label}
-        </div>
-        <div className="mt-2 truncate text-xl font-bold leading-none text-slate-950">
-          {formatNumber(value)}
-        </div>
-      </div>
-    </div>
   );
 }
 

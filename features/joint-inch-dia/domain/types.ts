@@ -26,6 +26,20 @@ export type JointRecordFormValues = {
 
 export type JointRecordPayload = Omit<JointRecordFormValues, "id">;
 
+export type JointRecordBatchCreatePayload = JointRecordPayload & {
+  clientId: number;
+};
+
+export type JointRecordBatchUpdatePayload = JointRecordPayload & {
+  id: number;
+};
+
+export type JointRecordBatchPayload = {
+  create: JointRecordBatchCreatePayload[];
+  update: JointRecordBatchUpdatePayload[];
+  deleteIds: number[];
+};
+
 export type MocOption = {
   moc: string;
   mocName: string;

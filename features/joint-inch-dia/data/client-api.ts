@@ -1,4 +1,20 @@
-import type { JointRecord, JointRecordPayload, MocOption, MocPayload } from "../domain/types";
+import type {
+  JointRecord,
+  JointRecordBatchPayload,
+  JointRecordPayload,
+  MocOption,
+  MocPayload,
+} from "../domain/types";
+
+export class JointRecordBatchClientError extends Error {
+  rowErrors: Record<string, string>;
+
+  constructor(message: string, rowErrors: Record<string, string> = {}) {
+    super(message);
+    this.name = "JointRecordBatchClientError";
+    this.rowErrors = rowErrors;
+  }
+}
 
 export async function fetchJointRecords() {
   const response = await fetch("/api/joint-records", { cache: "no-store" });
@@ -78,4 +94,22 @@ export async function deleteJointRecord(id: number) {
   }
 
   return id;
+}
+
+export async function saveJointRecordBatch(payload: JointRecordBatchPayload) {
+  const response = await fetch("/api/joint-records/batch", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new JointRecordBatchClientError(
+      data?.error || "Failed to save BOQ changes.",
+      data?.rowErrors || {}
+    );
+  }
+
+  return (data.data ?? []) as JointRecord[];
 }

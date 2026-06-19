@@ -11,11 +11,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const toggleSidebar = () => setIsSidebarVisible((isVisible) => !isVisible);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen overflow-x-hidden">
       <SideNav isOpen={isSidebarVisible} onToggle={toggleSidebar} />
 
       <main
-        className="transition-all duration-300 ease-in-out"
+        className="min-w-0 overflow-x-hidden transition-all duration-300 ease-in-out"
         style={{
           marginLeft: isSidebarVisible ? "16rem" : "0",
           width: isSidebarVisible ? "calc(100% - 16rem)" : "100%",
@@ -25,7 +25,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         } as React.CSSProperties}
       >
         <QueryProvider>
-          <div className="h-full min-h-screen">{children}</div>
+          <div className="h-full min-h-screen min-w-0 overflow-x-hidden">{children}</div>
         </QueryProvider>
       </main>
     </div>

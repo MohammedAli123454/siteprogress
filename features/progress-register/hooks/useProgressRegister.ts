@@ -19,16 +19,22 @@ import {
 import { ALL_MOCS } from "../domain/constants";
 import type { ProgressRegisterRow, ProgressScope } from "../domain/types";
 
+type ProgressLimitWarning = {
+  balanceJoints: number;
+  enteredJoints: number;
+};
+
 export function useProgressRegister() {
   const queryClient = useQueryClient();
   const [selectedMoc, setSelectedMoc] = useState(ALL_MOCS);
   const [progressScope, setProgressScope] = useState<ProgressScope>("SHOP");
   const [reportDate, setReportDate] = useState(getTodayDateInputValue());
-  const [reportNo, setReportNo] = useState("");
   const [remarks, setRemarks] = useState("");
   const [draftProgress, setDraftProgress] = useState<Map<number, number>>(new Map());
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [progressLimitWarning, setProgressLimitWarning] =
+    useState<ProgressLimitWarning | null>(null);
 
   const {
     rows,
@@ -41,6 +47,7 @@ export function useProgressRegister() {
   useEffect(() => {
     setDraftProgress(new Map());
     setMessage(null);
+    setProgressLimitWarning(null);
   }, [progressScope, selectedMoc]);
 
   const mocOptions = useMemo(() => getMocOptions(mocRows, rows), [mocRows, rows]);
@@ -91,13 +98,20 @@ export function useProgressRegister() {
   function handleProgressChange(row: ProgressRegisterRow, value: string) {
     const requestedValue = Math.max(0, Math.trunc(toNumber(value)));
     const remainingJoints = getRemainingJoints(row, progressScope);
-    const nextValue = Math.min(requestedValue, remainingJoints);
+
+    if (requestedValue > remainingJoints) {
+      setProgressLimitWarning({
+        balanceJoints: remainingJoints,
+        enteredJoints: requestedValue,
+      });
+      return;
+    }
 
     setDraftProgress((currentValues) => {
       const nextValues = new Map(currentValues);
 
-      if (nextValue > 0) {
-        nextValues.set(row.jointRecordId, nextValue);
+      if (requestedValue > 0) {
+        nextValues.set(row.jointRecordId, requestedValue);
       } else {
         nextValues.delete(row.jointRecordId);
       }
@@ -124,14 +138,11 @@ export function useProgressRegister() {
         moc: selectedMoc,
         progressScope,
         reportDate,
-        reportNo,
         remarks,
         lines,
       });
 
       setDraftProgress(new Map());
-      setReportNo("");
-      setRemarks("");
       setMessage(`Saved ${result.savedLineCount} progress row${result.savedLineCount === 1 ? "" : "s"}.`);
       await queryClient.invalidateQueries({ queryKey: ["progress-register-rows"] });
     } catch (saveError) {
@@ -151,8 +162,6 @@ export function useProgressRegister() {
     setProgressScope,
     reportDate,
     setReportDate,
-    reportNo,
-    setReportNo,
     remarks,
     setRemarks,
     mocOptions,
@@ -167,6 +176,8 @@ export function useProgressRegister() {
     error: rowsError,
     isSaving,
     message,
+    progressLimitWarning,
+    dismissProgressLimitWarning: () => setProgressLimitWarning(null),
     getScopeJoints: (row: ProgressRegisterRow) => getScopeJoints(row, progressScope),
     getPreviousJoints: (row: ProgressRegisterRow) => getPreviousJoints(row, progressScope),
     getRemainingJoints: (row: ProgressRegisterRow) => getRemainingJoints(row, progressScope),

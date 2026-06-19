@@ -94,6 +94,32 @@
   .gradient-title {
     @apply gradient font-extrabold  pr-2 pb-2 text-transparent bg-clip-text;
   }
+
+  .joint-records-table-scroll-container {
+    overflow-x: auto;
+    overflow-y: scroll;
+    scrollbar-color: #94a3b8 #f1f5f9;
+    scrollbar-gutter: stable both-edges;
+    scrollbar-width: thin;
+  }
+
+  .joint-records-table-scroll-container::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+  }
+
+  .joint-records-table-scroll-container::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+
+  .joint-records-table-scroll-container::-webkit-scrollbar-thumb {
+    background-color: #94a3b8;
+    border-radius: 8px;
+  }
+
+  .joint-records-table-scroll-container::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b;
+  }
 }
 
 

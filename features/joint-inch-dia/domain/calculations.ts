@@ -208,6 +208,9 @@ export function validateJointRecordPayload(payload: JointRecordPayload) {
   if (!payload.moc) return "Choose a MOC before saving this row.";
   if (!payload.mocName) return "The selected MOC needs a project name.";
   if (!payload.sizeInches) return "Pipe size is required.";
+  if (toNumber(payload.shopJoints) <= 0 && toNumber(payload.fieldJoints) <= 0) {
+    return "Enter shop joints or field joints before saving this row.";
+  }
 
   return null;
 }

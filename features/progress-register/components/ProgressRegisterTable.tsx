@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
 import { Input } from "@/components/ui/input";
 import {
-  Table,
   TableBody,
   TableCell,
   TableFooter,
@@ -26,15 +27,21 @@ import type {
 } from "../domain/types";
 
 const headerCellClassName =
-  "border-b border-r border-slate-200 px-2 py-3 text-center font-bold leading-tight text-slate-600 last:border-r-0";
+  "border-b-2 border-b-teal-400 border-r border-r-emerald-100 px-2 py-2 text-center text-xs font-extrabold uppercase leading-tight tracking-[0.08em] text-teal-700 last:border-r-0";
 const bodyCellClassName =
   "border-b border-r border-slate-200 p-0 text-center align-middle text-slate-950 last:border-r-0";
 const readOnlyValueClassName =
-  "flex h-12 w-full items-center justify-center truncate px-2 font-semibold tabular-nums";
+  "flex h-9 w-full items-center justify-center truncate px-2 font-semibold tabular-nums";
 const footerCellClassName =
-  "border-t border-r border-slate-200 px-3 py-3 text-center align-middle font-bold text-slate-950 last:border-r-0";
+  "border-t border-r border-slate-200 px-3 py-2 text-center align-middle font-bold text-slate-950 last:border-r-0";
 const progressInputClassName =
-  "h-12 w-full rounded-none border-0 bg-transparent px-2 text-center font-semibold text-slate-950 shadow-none outline-none transition placeholder:text-slate-400 focus-visible:bg-blue-50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500";
+  "h-9 w-full rounded-none border-0 bg-transparent px-2 text-center font-semibold text-slate-950 shadow-none outline-none transition placeholder:text-slate-400 focus-visible:bg-blue-50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500";
+
+type ScrollIndicatorMetrics = {
+  isScrollable: boolean;
+  thumbHeight: number;
+  thumbTop: number;
+};
 
 type ProgressRegisterTableProps = {
   isAllMocsView: boolean;
@@ -62,10 +69,89 @@ export function ProgressRegisterTable({
   onProgressChange,
 }: ProgressRegisterTableProps) {
   const isEmpty = isAllMocsView ? mocSummaries.length === 0 : rows.length === 0;
+  const tableRowCount = isAllMocsView ? mocSummaries.length : rows.length;
+  const shouldUseFixedTableHeight = tableRowCount >= 8;
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const [scrollIndicatorMetrics, setScrollIndicatorMetrics] =
+    useState<ScrollIndicatorMetrics>({
+      isScrollable: false,
+      thumbHeight: 48,
+      thumbTop: 0,
+    });
+
+  useEffect(() => {
+    if (!shouldUseFixedTableHeight) {
+      setScrollIndicatorMetrics({
+        isScrollable: false,
+        thumbHeight: 48,
+        thumbTop: 0,
+      });
+      return;
+    }
+
+    const scrollElement = tableScrollRef.current;
+    if (!scrollElement) return;
+    const measuredScrollElement = scrollElement;
+
+    let animationFrame = 0;
+
+    function updateScrollIndicator() {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(() => {
+        const { clientHeight, scrollHeight, scrollTop } = measuredScrollElement;
+        const isScrollable = scrollHeight > clientHeight + 1;
+
+        if (!isScrollable) {
+          setScrollIndicatorMetrics({
+            isScrollable: false,
+            thumbHeight: 48,
+            thumbTop: 0,
+          });
+          return;
+        }
+
+        const thumbHeight = Math.max(48, (clientHeight / scrollHeight) * clientHeight);
+        const maxScrollTop = scrollHeight - clientHeight;
+        const maxThumbTop = clientHeight - thumbHeight;
+        const thumbTop = maxScrollTop > 0 ? (scrollTop / maxScrollTop) * maxThumbTop : 0;
+
+        setScrollIndicatorMetrics({
+          isScrollable: true,
+          thumbHeight,
+          thumbTop,
+        });
+      });
+    }
+
+    updateScrollIndicator();
+    measuredScrollElement.addEventListener("scroll", updateScrollIndicator, { passive: true });
+    window.addEventListener("resize", updateScrollIndicator);
+
+    const resizeObserver = new ResizeObserver(updateScrollIndicator);
+    resizeObserver.observe(measuredScrollElement);
+    if (measuredScrollElement.firstElementChild) {
+      resizeObserver.observe(measuredScrollElement.firstElementChild);
+    }
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      measuredScrollElement.removeEventListener("scroll", updateScrollIndicator);
+      window.removeEventListener("resize", updateScrollIndicator);
+      resizeObserver.disconnect();
+    };
+  }, [shouldUseFixedTableHeight, tableRowCount]);
 
   return (
-    <div className="min-w-0 overflow-hidden rounded-md border border-slate-200">
-      <div className="h-[calc(100vh-250px)] min-h-[540px] [&>div]:h-full [&>div]:overflow-auto">
+    <div className="relative w-full min-w-0 max-w-full overflow-hidden rounded-md border border-slate-200">
+      <div
+        ref={tableScrollRef}
+        data-progress-register-scroll-container
+        className={
+          shouldUseFixedTableHeight
+            ? "joint-records-table-scroll-container h-[calc(100dvh-210px)] min-h-[500px] max-w-full"
+            : "overflow-auto"
+        }
+      >
         {isAllMocsView ? (
           <AllMocSummaryTable summaries={mocSummaries} scope={scope} />
         ) : (
@@ -86,6 +172,17 @@ export function ProgressRegisterTable({
           </div>
         ) : null}
       </div>
+      {shouldUseFixedTableHeight ? (
+        <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-50 w-3 border-l border-slate-300 bg-slate-200 shadow-inner">
+          <div
+            className="absolute left-1 top-0 w-1.5 rounded-full bg-slate-700 shadow-sm"
+            style={{
+              height: `${scrollIndicatorMetrics.isScrollable ? scrollIndicatorMetrics.thumbHeight : 80}px`,
+              transform: `translateY(${scrollIndicatorMetrics.isScrollable ? scrollIndicatorMetrics.thumbTop : 0}px)`,
+            }}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -108,7 +205,7 @@ function SingleMocProgressTable({
   onProgressChange: (row: ProgressRegisterRow, value: string) => void;
 }) {
   return (
-    <Table className="w-full min-w-[1040px] table-fixed border-separate border-spacing-0 text-sm">
+    <table className="w-full min-w-[1040px] table-fixed border-separate border-spacing-0 text-sm">
       <colgroup>
         <col style={{ width: 58 }} />
         <col style={{ width: 58 }} />
@@ -122,16 +219,16 @@ function SingleMocProgressTable({
         <col style={{ width: 112 }} />
         <col style={{ width: 70 }} />
       </colgroup>
-      <TableHeader className="sticky top-0 z-30 bg-slate-100 shadow-sm">
+      <TableHeader className="sticky top-0 z-30 bg-emerald-50 shadow-sm">
         <TableRow className="hover:bg-transparent">
           <TableHead className={headerCellClassName}>Size</TableHead>
           <TableHead className={headerCellClassName}>Thk</TableHead>
           <TableHead className={headerCellClassName}>Schedule</TableHead>
-          <TableHead className={headerCellClassName}>Scope<br />Joints</TableHead>
-          <TableHead className={headerCellClassName}>Previous<br />Done</TableHead>
-          <TableHead className={headerCellClassName}>New Progress</TableHead>
-          <TableHead className={headerCellClassName}>Total<br />Done</TableHead>
-          <TableHead className={headerCellClassName}>Balance</TableHead>
+          <TableHead className={headerCellClassName}>Total<br />Joints</TableHead>
+          <TableHead className={headerCellClassName}>Previous<br />Completed</TableHead>
+          <TableHead className={headerCellClassName}>Current<br />Progress</TableHead>
+          <TableHead className={headerCellClassName}>Overall<br />Completed</TableHead>
+          <TableHead className={headerCellClassName}>Balance<br />Joints</TableHead>
           <TableHead className={headerCellClassName}>New Inch Dia</TableHead>
           <TableHead className={headerCellClassName}>Done Inch Dia</TableHead>
           <TableHead className={headerCellClassName}>%</TableHead>
@@ -199,7 +296,7 @@ function SingleMocProgressTable({
           </TableCell>
         </TableRow>
       </TableFooter>
-    </Table>
+    </table>
   );
 }
 
@@ -234,7 +331,7 @@ function AllMocSummaryTable({
   );
 
   return (
-    <Table className="w-full min-w-[980px] table-fixed border-separate border-spacing-0 text-sm">
+    <table className="w-full min-w-[980px] table-fixed border-separate border-spacing-0 text-sm">
       <colgroup>
         <col style={{ width: 150 }} />
         <col style={{ width: 300 }} />
@@ -245,7 +342,7 @@ function AllMocSummaryTable({
         <col style={{ width: 120 }} />
         <col style={{ width: 80 }} />
       </colgroup>
-      <TableHeader className="sticky top-0 z-30 bg-slate-100 shadow-sm">
+      <TableHeader className="sticky top-0 z-30 bg-emerald-50 shadow-sm">
         <TableRow className="hover:bg-transparent">
           <TableHead className={headerCellClassName}>MOC</TableHead>
           <TableHead className={headerCellClassName}>Project</TableHead>
@@ -294,7 +391,7 @@ function AllMocSummaryTable({
           </TableCell>
         </TableRow>
       </TableFooter>
-    </Table>
+    </table>
   );
 }
 

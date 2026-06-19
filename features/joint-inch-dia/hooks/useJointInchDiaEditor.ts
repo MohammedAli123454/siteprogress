@@ -5,10 +5,11 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { useJointRecordCollection } from "../data/useJointRecordCollection";
 import { useMocCollection } from "../data/useMocCollection";
-import { createJointRecord, updateJointRecord } from "../data/client-api";
 import {
-  addSetValue,
-  deleteSetValue,
+  JointRecordBatchClientError,
+  saveJointRecordBatch,
+} from "../data/client-api";
+import {
   filterJointRecords,
   getConsolidatedPipeRows,
   getJointRecordPayload,
@@ -21,27 +22,36 @@ import {
   validateJointRecordPayload,
 } from "../domain/calculations";
 import { ALL_MOCS } from "../domain/constants";
-import type { JointRecord, JointRecordPayload } from "../domain/types";
+import type { JointRecord, JointRecordBatchPayload } from "../domain/types";
 import { exportPipeSummaryWorkbook } from "../export/excel-export";
 
-type PersistedTransaction = {
-  isPersisted: {
-    promise: Promise<unknown>;
-  };
+const editableFields = [
+  "sizeInches",
+  "thickness",
+  "pipeSchedule",
+  "shopJoints",
+  "fieldJoints",
+] as const;
+
+type EditableField = (typeof editableFields)[number];
+
+type TransactionNotice = {
+  id: number;
+  message: string;
+  tone: "success" | "error";
 };
 
 export function useJointInchDiaEditor() {
   const queryClient = useQueryClient();
   const nextTempId = useRef(-1);
-  const saveTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
-  const draftRowsRef = useRef<JointRecord[]>([]);
-  const pendingDraftSaveIds = useRef<Set<number>>(new Set());
 
-  const [selectedMoc, setSelectedMoc] = useState(ALL_MOCS);
+  const [selectedMoc, setSelectedMocState] = useState(ALL_MOCS);
   const [deleteTarget, setDeleteTarget] = useState<JointRecord | null>(null);
   const [draftRows, setDraftRows] = useState<JointRecord[]>([]);
-  const [dirtyRowIds, setDirtyRowIds] = useState<Set<number>>(new Set());
-  const [savingRowIds, setSavingRowIds] = useState<Set<number>>(new Set());
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<number>>(new Set());
+  const [rowErrors, setRowErrors] = useState<Map<number, string>>(new Map());
+  const [isSavingChanges, setIsSavingChanges] = useState(false);
+  const [transactionNotice, setTransactionNotice] = useState<TransactionNotice | null>(null);
   const [isMocDialogOpen, setIsMocDialogOpen] = useState(false);
   const [isSavingMoc, setIsSavingMoc] = useState(false);
   const [mocErrorMessage, setMocErrorMessage] = useState<string | undefined>();
@@ -57,16 +67,9 @@ export function useJointInchDiaEditor() {
 
   const { mocRows, mocsCollection } = useMocCollection();
 
-  useEffect(() => {
-    draftRowsRef.current = draftRows;
-  }, [draftRows]);
-
-  useEffect(
-    () => () => {
-      saveTimers.current.forEach((timer) => clearTimeout(timer));
-      saveTimers.current.clear();
-    },
-    []
+  const collectionRowsById = useMemo(
+    () => new Map(collectionRows.map((record) => [record.id, record])),
+    [collectionRows]
   );
 
   const collectionRowIds = useMemo(
@@ -74,12 +77,17 @@ export function useJointInchDiaEditor() {
     [collectionRows]
   );
 
+  const draftRowsById = useMemo(
+    () => new Map(draftRows.map((record) => [record.id, record])),
+    [draftRows]
+  );
+
   const visibleRows = useMemo(
     () => [
-      ...collectionRows,
+      ...collectionRows.map((record) => draftRowsById.get(record.id) ?? record),
       ...draftRows.filter((record) => !collectionRowIds.has(record.id)),
     ],
-    [collectionRowIds, collectionRows, draftRows]
+    [collectionRowIds, collectionRows, draftRows, draftRowsById]
   );
 
   const mocOptions = useMemo(
@@ -100,10 +108,25 @@ export function useJointInchDiaEditor() {
     });
   }, [visibleRows, selectedMoc]);
 
-  const totals = useMemo(() => getRecordTotals(filteredRecords), [filteredRecords]);
+  const activeFilteredRecords = useMemo(
+    () => filteredRecords.filter((record) => !pendingDeleteIds.has(record.id)),
+    [filteredRecords, pendingDeleteIds]
+  );
+
+  const totals = useMemo(() => getRecordTotals(activeFilteredRecords), [activeFilteredRecords]);
   const consolidatedRows = useMemo(
-    () => getConsolidatedPipeRows(filteredRecords),
-    [filteredRecords]
+    () => getConsolidatedPipeRows(activeFilteredRecords),
+    [activeFilteredRecords]
+  );
+
+  const dirtyRowIds = useMemo(
+    () => new Set([...draftRows.map((record) => record.id), ...pendingDeleteIds]),
+    [draftRows, pendingDeleteIds]
+  );
+
+  const changedCellKeys = useMemo(
+    () => getChangedCellKeys(draftRows, collectionRowsById),
+    [collectionRowsById, draftRows]
   );
 
   const isAllMocsView = selectedMoc === ALL_MOCS;
@@ -112,154 +135,102 @@ export function useJointInchDiaEditor() {
     () => getPipeTableSummary(selectedMoc, isAllMocsView, mocNameByCode),
     [isAllMocsView, mocNameByCode, selectedMoc]
   );
-  const visibleTableRowCount = isAllMocsView ? consolidatedRows.length : filteredRecords.length;
+  const visibleTableRowCount = isAllMocsView
+    ? consolidatedRows.length
+    : activeFilteredRecords.length;
+  const unsavedChangeCount = draftRows.length + pendingDeleteIds.size;
+  const hasUnsavedChanges = unsavedChangeCount > 0;
+
+  useEffect(() => {
+    if (!transactionNotice) return;
+
+    const timer = setTimeout(() => setTransactionNotice(null), 4000);
+    return () => clearTimeout(timer);
+  }, [transactionNotice]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    function handleBeforeUnload(event: BeforeUnloadEvent) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   function getMocName(moc: string) {
     return mocNameByCode.get(moc) || "";
   }
 
-  function markDirty(id: number) {
-    setDirtyRowIds((previous) => addSetValue(previous, id));
+  function showTransactionNotice(message: string, tone: TransactionNotice["tone"]) {
+    setTransactionNotice({
+      id: Date.now(),
+      message,
+      tone,
+    });
   }
 
-  function clearAutoSave(id: number) {
-    const existingTimer = saveTimers.current.get(id);
+  function clearDraftState() {
+    setDraftRows([]);
+    setPendingDeleteIds(new Set());
+    setRowErrors(new Map());
+  }
 
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-      saveTimers.current.delete(id);
+  function clearRowError(id: number) {
+    setRowErrors((currentErrors) => {
+      if (!currentErrors.has(id)) return currentErrors;
+
+      const nextErrors = new Map(currentErrors);
+      nextErrors.delete(id);
+      return nextErrors;
+    });
+  }
+
+  function handleMocChange(value: string) {
+    if (value === selectedMoc) return;
+
+    if (hasUnsavedChanges) {
+      const shouldDiscard = window.confirm(
+        "Switching MOC will discard unsaved BOQ changes. Continue?"
+      );
+
+      if (!shouldDiscard) return;
+      clearDraftState();
     }
-  }
 
-  function scheduleAutoSave(id: number) {
-    clearAutoSave(id);
-
-    const timer = setTimeout(() => {
-      saveTimers.current.delete(id);
-      const latestRecord = draftRowsRef.current.find((record) => record.id === id);
-
-      if (latestRecord) {
-        persistDraftRow(latestRecord);
-      }
-    }, 800);
-
-    saveTimers.current.set(id, timer);
-  }
-
-  function trackPersistedTransaction(
-    rowId: number,
-    transaction: PersistedTransaction,
-    options: {
-      invalidateJointRecordsOnPersist?: boolean;
-      invalidateSummaryOnPersist?: boolean;
-      removeDraft?: boolean;
-    } = {}
-  ) {
-    setSavingRowIds((previous) => addSetValue(previous, rowId));
-    markDirty(rowId);
-
-    void transaction.isPersisted.promise
-      .then(() => {
-        if (options.removeDraft) {
-          setDraftRows((currentRows) => currentRows.filter((row) => row.id !== rowId));
-        }
-
-        if (options.invalidateJointRecordsOnPersist) {
-          queryClient.invalidateQueries({ queryKey: ["joint-records"] });
-        }
-
-        if (options.invalidateSummaryOnPersist) {
-          queryClient.invalidateQueries({ queryKey: ["allMocsJointsData"] });
-        }
-      })
-      .catch((saveError) => {
-        console.error("Failed to persist joint record transaction:", saveError);
-      })
-      .finally(() => {
-        setDirtyRowIds((previous) => deleteSetValue(previous, rowId));
-        setSavingRowIds((previous) => deleteSetValue(previous, rowId));
-      });
+    setSelectedMocState(value);
   }
 
   function updateRow(id: number, updater: (record: JointRecord) => void) {
-    if (isNewRecord(id)) {
-      setDraftRows((currentRows) =>
-        currentRows.map((row) => {
-          if (row.id !== id) return row;
+    if (pendingDeleteIds.has(id)) return;
 
-          const updatedRow = { ...row };
-          updater(updatedRow);
-          return recalculateRecord(updatedRow);
-        })
-      );
-      markDirty(id);
-      scheduleAutoSave(id);
-      return;
-    }
+    setDraftRows((currentRows) => {
+      const currentDraft = currentRows.find((row) => row.id === id);
+      const sourceRow = currentDraft ?? collectionRowsById.get(id);
 
-    if (!recordsCollection.has(id)) return;
+      if (!sourceRow) return currentRows;
 
-    const transaction = recordsCollection.update(id, (draft) => {
-      updater(draft);
-      Object.assign(draft, recalculateRecord(draft));
-    });
-    trackPersistedTransaction(id, transaction);
-  }
+      const updatedRow = recalculateRecord(applyRowUpdate(sourceRow, updater));
 
-  async function persistDraftRow(record: JointRecord) {
-    clearAutoSave(record.id);
-
-    if (pendingDraftSaveIds.current.has(record.id)) return;
-
-    const payload = getJointRecordPayload(record, getMocName(record.moc));
-    const rowError = validateJointRecordPayload(payload);
-
-    if (rowError) return;
-
-    pendingDraftSaveIds.current.add(record.id);
-    setSavingRowIds((previous) => addSetValue(previous, record.id));
-    markDirty(record.id);
-
-    try {
-      let persistedRecord = await createJointRecord(payload);
-      let persistedPayload = payload;
-
-      for (let attempt = 0; attempt < 3; attempt += 1) {
-        const latestRecord = draftRowsRef.current.find((row) => row.id === record.id);
-
-        if (!latestRecord) break;
-
-        const latestPayload = getJointRecordPayload(latestRecord, getMocName(latestRecord.moc));
-        const latestRowError = validateJointRecordPayload(latestPayload);
-
-        if (latestRowError || areJointRecordPayloadsEqual(persistedPayload, latestPayload)) {
-          break;
-        }
-
-        persistedRecord = await updateJointRecord(persistedRecord.id, latestPayload);
-        persistedPayload = latestPayload;
+      if (isNewRecord(id)) {
+        return upsertDraftRow(currentRows, updatedRow);
       }
 
-      recordsCollection.utils.writeUpsert(persistedRecord);
-      setDraftRows((currentRows) => currentRows.filter((row) => row.id !== record.id));
-      queryClient.invalidateQueries({ queryKey: ["allMocsJointsData"] });
-    } catch (saveError) {
-      console.error("Failed to create joint record:", saveError);
-    } finally {
-      pendingDraftSaveIds.current.delete(record.id);
-      setDirtyRowIds((previous) => deleteSetValue(previous, record.id));
-      setSavingRowIds((previous) => deleteSetValue(previous, record.id));
-    }
-  }
+      const baseRow = collectionRowsById.get(id);
 
-  function handleDiscardRow(record: JointRecord) {
-    clearAutoSave(record.id);
+      if (!baseRow) return currentRows;
 
-    if (isNewRecord(record.id)) {
-      setDraftRows((currentRows) => currentRows.filter((row) => row.id !== record.id));
-    }
+      if (areJointRecordsEqual(baseRow, updatedRow)) {
+        return currentRows.filter((row) => row.id !== id);
+      }
 
-    setDirtyRowIds((previous) => deleteSetValue(previous, record.id));
+      return upsertDraftRow(currentRows, updatedRow);
+    });
+
+    clearRowError(id);
+    setTransactionNotice(null);
   }
 
   function handleAddRow(mocOverride?: string) {
@@ -272,7 +243,7 @@ export function useJointInchDiaEditor() {
 
     const lowestExistingId = Math.min(
       0,
-      ...draftRowsRef.current.map((record) => record.id),
+      ...draftRows.map((record) => record.id),
       ...collectionRows.map((record) => record.id)
     );
 
@@ -294,15 +265,25 @@ export function useJointInchDiaEditor() {
     });
 
     setDraftRows((currentRows) => [...currentRows, record]);
-    setSelectedMoc(targetMoc);
-    setDirtyRowIds((previous) => addSetValue(previous, tempId));
+    setSelectedMocState(targetMoc);
+    setTransactionNotice(null);
   }
 
   function handleDeleteRow(record: JointRecord) {
-    clearAutoSave(record.id);
+    if (pendingDeleteIds.has(record.id)) {
+      setPendingDeleteIds((currentIds) => {
+        const nextIds = new Set(currentIds);
+        nextIds.delete(record.id);
+        return nextIds;
+      });
+      clearRowError(record.id);
+      setTransactionNotice(null);
+      return;
+    }
 
     if (isNewRecord(record.id)) {
-      handleDiscardRow(record);
+      setDraftRows((currentRows) => currentRows.filter((row) => row.id !== record.id));
+      clearRowError(record.id);
       return;
     }
 
@@ -313,10 +294,69 @@ export function useJointInchDiaEditor() {
     if (!deleteTarget) return;
 
     const rowId = deleteTarget.id;
-    const transaction = recordsCollection.delete(rowId);
 
+    setDraftRows((currentRows) => currentRows.filter((row) => row.id !== rowId));
+    setPendingDeleteIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+      nextIds.add(rowId);
+      return nextIds;
+    });
+    clearRowError(rowId);
+    setTransactionNotice(null);
     setDeleteTarget(null);
-    trackPersistedTransaction(rowId, transaction, { invalidateSummaryOnPersist: true });
+  }
+
+  function handleDiscardChanges() {
+    if (!hasUnsavedChanges) return;
+
+    clearDraftState();
+    showTransactionNotice("Unsaved changes discarded.", "success");
+  }
+
+  async function handleSaveChanges() {
+    if (!hasUnsavedChanges || isSavingChanges) return;
+
+    const { payload, errors } = getBatchPayload({
+      draftRows,
+      pendingDeleteIds,
+      getMocName,
+    });
+
+    if (errors.size) {
+      setRowErrors(errors);
+      showTransactionNotice("Resolve highlighted row errors before saving.", "error");
+      return;
+    }
+
+    setIsSavingChanges(true);
+    setRowErrors(new Map());
+
+    try {
+      const savedRows = await saveJointRecordBatch(payload);
+
+      savedRows.forEach((record) => recordsCollection.utils.writeUpsert(record));
+      pendingDeleteIds.forEach((id) => recordsCollection.utils.writeDelete(id));
+
+      clearDraftState();
+      showTransactionNotice("Changes saved.", "success");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["joint-records"] }),
+        queryClient.invalidateQueries({ queryKey: ["allMocsJointsData"] }),
+        queryClient.invalidateQueries({ queryKey: ["progress-register-rows"] }),
+      ]);
+    } catch (saveError) {
+      if (saveError instanceof JointRecordBatchClientError) {
+        setRowErrors(getRowErrorMap(saveError.rowErrors));
+        showTransactionNotice(saveError.message, "error");
+      } else {
+        showTransactionNotice(
+          saveError instanceof Error ? saveError.message : "Failed to save BOQ changes.",
+          "error"
+        );
+      }
+    } finally {
+      setIsSavingChanges(false);
+    }
   }
 
   async function handleCreateMoc(value: { moc: string; mocName: string }) {
@@ -336,7 +376,7 @@ export function useJointInchDiaEditor() {
         : mocsCollection.insert(moc);
 
       await transaction.isPersisted.promise;
-      setSelectedMoc(moc.moc);
+      setSelectedMocState(moc.moc);
       setIsMocDialogOpen(false);
     } catch (saveError) {
       const message = saveError instanceof Error ? saveError.message : "MOC save failed.";
@@ -356,7 +396,7 @@ export function useJointInchDiaEditor() {
       await exportPipeSummaryWorkbook({
         isAllMocsView,
         consolidatedRows,
-        filteredRecords,
+        filteredRecords: activeFilteredRecords,
         totals,
         tableSummary,
       });
@@ -370,11 +410,17 @@ export function useJointInchDiaEditor() {
 
   return {
     selectedMoc,
-    setSelectedMoc,
+    setSelectedMoc: handleMocChange,
     deleteTarget,
     closeDeleteDialog: () => setDeleteTarget(null),
     dirtyRowIds,
-    savingRowIds,
+    changedCellKeys,
+    pendingDeleteIds,
+    rowErrors,
+    isSavingChanges,
+    hasUnsavedChanges,
+    unsavedChangeCount,
+    transactionNotice,
     isMocDialogOpen,
     setIsMocDialogOpen,
     isSavingMoc,
@@ -396,18 +442,107 @@ export function useJointInchDiaEditor() {
     updateRow,
     handleDeleteRow,
     handleConfirmDelete,
+    handleDiscardChanges,
+    handleSaveChanges,
     handleExportToExcel,
   };
 }
 
-function areJointRecordPayloadsEqual(first: JointRecordPayload, second: JointRecordPayload) {
-  return (
-    first.moc === second.moc &&
-    first.mocName === second.mocName &&
-    first.sizeInches === second.sizeInches &&
-    first.pipeSchedule === second.pipeSchedule &&
-    first.thickness === second.thickness &&
-    first.shopJoints === second.shopJoints &&
-    first.fieldJoints === second.fieldJoints
-  );
+function applyRowUpdate(record: JointRecord, updater: (record: JointRecord) => void) {
+  const updatedRow = { ...record };
+  updater(updatedRow);
+  return updatedRow;
+}
+
+function upsertDraftRow(rows: JointRecord[], record: JointRecord) {
+  const existingIndex = rows.findIndex((row) => row.id === record.id);
+
+  if (existingIndex === -1) return [...rows, record];
+
+  return rows.map((row) => (row.id === record.id ? record : row));
+}
+
+function getBatchPayload({
+  draftRows,
+  pendingDeleteIds,
+  getMocName,
+}: {
+  draftRows: JointRecord[];
+  pendingDeleteIds: Set<number>;
+  getMocName: (moc: string) => string;
+}) {
+  const errors = new Map<number, string>();
+  const payload: JointRecordBatchPayload = {
+    create: [],
+    update: [],
+    deleteIds: Array.from(pendingDeleteIds),
+  };
+
+  draftRows.forEach((record) => {
+    const recordPayload = getJointRecordPayload(record, getMocName(record.moc));
+    const rowError = validateJointRecordPayload(recordPayload);
+
+    if (rowError) {
+      errors.set(record.id, rowError);
+      return;
+    }
+
+    if (isNewRecord(record.id)) {
+      payload.create.push({ ...recordPayload, clientId: record.id });
+      return;
+    }
+
+    payload.update.push({ ...recordPayload, id: record.id });
+  });
+
+  return { payload, errors };
+}
+
+function getChangedCellKeys(
+  draftRows: JointRecord[],
+  collectionRowsById: Map<number, JointRecord>
+) {
+  const keys = new Set<string>();
+
+  draftRows.forEach((record) => {
+    const baseRow = collectionRowsById.get(record.id);
+
+    editableFields.forEach((field) => {
+      if (!baseRow || !areEditableValuesEqual(field, baseRow[field], record[field])) {
+        keys.add(`${record.id}:${field}`);
+      }
+    });
+  });
+
+  return keys;
+}
+
+function getRowErrorMap(rowErrors: Record<string, string>) {
+  const errors = new Map<number, string>();
+
+  Object.entries(rowErrors).forEach(([key, message]) => {
+    const rowId = key.startsWith("new:") ? Number(key.replace("new:", "")) : Number(key);
+
+    if (Number.isFinite(rowId)) {
+      errors.set(rowId, message);
+    }
+  });
+
+  return errors;
+}
+
+function areJointRecordsEqual(first: JointRecord, second: JointRecord) {
+  return editableFields.every((field) => areEditableValuesEqual(field, first[field], second[field]));
+}
+
+function areEditableValuesEqual(
+  field: EditableField,
+  first: JointRecord[EditableField],
+  second: JointRecord[EditableField]
+) {
+  if (field === "sizeInches" || field === "pipeSchedule") {
+    return String(first || "").trim() === String(second || "").trim();
+  }
+
+  return Number(first || 0) === Number(second || 0);
 }

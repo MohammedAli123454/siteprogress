@@ -33,10 +33,10 @@ export function DeleteRowDialog({
     <Dialog open={Boolean(target)} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete pipe-size row?</DialogTitle>
+          <DialogTitle>Mark pipe-size row for deletion?</DialogTitle>
           <DialogDescription>
-            This removes size {target?.sizeInches || "-"} / thickness {target?.thickness || 0} from{" "}
-            {target?.moc || "this MOC"}.
+            This marks size {target?.sizeInches || "-"} / thickness {target?.thickness || 0} from{" "}
+            {target?.moc || "this MOC"} for deletion. Use Save Changes to commit it.
           </DialogDescription>
         </DialogHeader>
         {errorMessage && (
@@ -54,7 +54,7 @@ export function DeleteRowDialog({
             ) : (
               <Trash2 className="mr-2 h-4 w-4" />
             )}
-            Delete
+            Mark for Delete
           </Button>
         </DialogFooter>
       </DialogContent>

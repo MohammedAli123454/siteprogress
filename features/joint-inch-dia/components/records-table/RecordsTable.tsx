@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Fragment, useEffect, useRef, useState } from "react";
+import {
+  AlertTriangle,
+  Plus,
+  Trash2,
+  Undo2,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +19,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
   TableBody,
   TableCell,
   TableFooter,
@@ -40,14 +44,26 @@ const selectedCellClassName =
   "relative z-10 bg-blue-50 ring-2 ring-inset ring-blue-500";
 const footerCellClassName =
   "border-t border-r border-slate-200 px-3 py-2 text-center align-middle last:border-r-0";
+const combinedFooterCellClassName =
+  "border-b border-t border-r border-slate-200 px-3 py-1.5 text-center align-middle last:border-r-0";
 const editableInputClassName =
   "h-10 w-full rounded-none border-0 bg-transparent px-2 text-center font-semibold text-slate-950 shadow-none outline-none transition placeholder:text-slate-400 focus-visible:ring-0";
+
+type ScrollIndicatorMetrics = {
+  isScrollable: boolean;
+  thumbHeight: number;
+  thumbTop: number;
+};
 
 type RecordsTableProps = {
   isAllMocsView: boolean;
   consolidatedRows: ConsolidatedPipeRow[];
   filteredRecords: JointRecord[];
-  savingRowIds: Set<number>;
+  dirtyRowIds: Set<number>;
+  changedCellKeys: Set<string>;
+  pendingDeleteIds: Set<number>;
+  rowErrors: Map<number, string>;
+  isSavingChanges: boolean;
   totals: RecordTotals;
   footerLabelColSpan: number;
   onAddRow: () => void;
@@ -59,7 +75,11 @@ export function RecordsTable({
   isAllMocsView,
   consolidatedRows,
   filteredRecords,
-  savingRowIds,
+  dirtyRowIds,
+  changedCellKeys,
+  pendingDeleteIds,
+  rowErrors,
+  isSavingChanges,
   totals,
   footerLabelColSpan,
   onAddRow,
@@ -67,11 +87,20 @@ export function RecordsTable({
   onDeleteRow,
 }: RecordsTableProps) {
   const tableShellRef = useRef<HTMLDivElement>(null);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
   const [selectedCellKey, setSelectedCellKey] = useState<string | null>(null);
   const [isCalculatedCellDialogOpen, setIsCalculatedCellDialogOpen] = useState(false);
+  const [scrollIndicatorMetrics, setScrollIndicatorMetrics] =
+    useState<ScrollIndicatorMetrics>({
+      isScrollable: false,
+      thumbHeight: 48,
+      thumbTop: 0,
+    });
   const isEmpty = isAllMocsView
     ? consolidatedRows.length === 0
     : filteredRecords.length === 0;
+  const tableRowCount = isAllMocsView ? consolidatedRows.length : filteredRecords.length;
+  const shouldUseFixedTableHeight = tableRowCount >= 8;
 
   useEffect(() => {
     function clearSelectionIfOutsideNavigableCell(event: PointerEvent | FocusEvent) {
@@ -104,29 +133,104 @@ export function RecordsTable({
     };
   }, []);
 
+  useEffect(() => {
+    if (!shouldUseFixedTableHeight) {
+      setScrollIndicatorMetrics({
+        isScrollable: false,
+        thumbHeight: 48,
+        thumbTop: 0,
+      });
+      return;
+    }
+
+    const scrollElement = tableScrollRef.current;
+    if (!scrollElement) return;
+    const measuredScrollElement = scrollElement;
+
+    let animationFrame = 0;
+
+    function updateScrollIndicator() {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(() => {
+        const { clientHeight, scrollHeight, scrollTop } = measuredScrollElement;
+        const isScrollable = scrollHeight > clientHeight + 1;
+
+        if (!isScrollable) {
+          setScrollIndicatorMetrics({
+            isScrollable: false,
+            thumbHeight: 48,
+            thumbTop: 0,
+          });
+          return;
+        }
+
+        const thumbHeight = Math.max(48, (clientHeight / scrollHeight) * clientHeight);
+        const maxScrollTop = scrollHeight - clientHeight;
+        const maxThumbTop = clientHeight - thumbHeight;
+        const thumbTop = maxScrollTop > 0 ? (scrollTop / maxScrollTop) * maxThumbTop : 0;
+
+        setScrollIndicatorMetrics({
+          isScrollable: true,
+          thumbHeight,
+          thumbTop,
+        });
+      });
+    }
+
+    updateScrollIndicator();
+    measuredScrollElement.addEventListener("scroll", updateScrollIndicator, { passive: true });
+    window.addEventListener("resize", updateScrollIndicator);
+
+    const resizeObserver = new ResizeObserver(updateScrollIndicator);
+    resizeObserver.observe(measuredScrollElement);
+    if (measuredScrollElement.firstElementChild) {
+      resizeObserver.observe(measuredScrollElement.firstElementChild);
+    }
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      measuredScrollElement.removeEventListener("scroll", updateScrollIndicator);
+      window.removeEventListener("resize", updateScrollIndicator);
+      resizeObserver.disconnect();
+    };
+  }, [shouldUseFixedTableHeight, tableRowCount]);
+
   function selectCell(cellKey: string) {
     setSelectedCellKey(cellKey);
   }
 
   return (
     <>
-      <div ref={tableShellRef} className="min-w-0 overflow-hidden rounded-md border border-slate-200">
-        <div className="h-[calc(100vh-250px)] min-h-[540px] [&>div]:h-full [&>div]:overflow-auto">
-        <Table
+      <div
+        ref={tableShellRef}
+        className={`relative min-w-0 overflow-hidden rounded-md border border-slate-200 ${
+          shouldUseFixedTableHeight ? "h-full min-h-0" : ""
+        }`}
+      >
+        <div
+          ref={tableScrollRef}
+          data-records-scroll-container
+          className={
+            shouldUseFixedTableHeight
+              ? "joint-records-table-scroll-container h-full min-h-0"
+              : "overflow-auto"
+          }
+        >
+        <table
           className="w-full min-w-[930px] table-fixed border-separate border-spacing-0 text-sm"
           onKeyDownCapture={(event) => handleTableArrowNavigation(event, setSelectedCellKey)}
         >
           <colgroup>
-            <col style={{ width: 48 }} />
+            <col style={{ width: 76 }} />
             <col style={{ width: 58 }} />
             <col style={{ width: 58 }} />
-            <col style={{ width: 100 }} />
+            <col style={{ width: 136 }} />
             <col style={{ width: 86 }} />
             <col style={{ width: 86 }} />
             <col style={{ width: 88 }} />
-            <col style={{ width: 118 }} />
-            <col style={{ width: 118 }} />
-            <col style={{ width: 122 }} />
+            <col style={{ width: 106 }} />
+            <col style={{ width: 106 }} />
+            <col style={{ width: 110 }} />
             {!isAllMocsView ? <col style={{ width: 58 }} /> : null}
           </colgroup>
           <TableHeader className="sticky top-0 z-30 bg-slate-100 shadow-sm">
@@ -144,7 +248,7 @@ export function RecordsTable({
               {!isAllMocsView ? <TableHead className={headerCellClassName}>Delete</TableHead> : null}
             </TableRow>
           </TableHeader>
-          <TableBody className="[&_tr:hover]:bg-white">
+          <TableBody>
             {isAllMocsView
               ? consolidatedRows.map((record, index) => {
                   return (
@@ -221,41 +325,58 @@ export function RecordsTable({
                 })
               : filteredRecords.map((record, index) => {
                   const isNewRow = isNewRecord(record.id);
-                  const isSaving = savingRowIds.has(record.id);
+                  const isPendingDelete = pendingDeleteIds.has(record.id);
+                  const isEditedRow = dirtyRowIds.has(record.id) && !isNewRow && !isPendingDelete;
+                  const rowError = rowErrors.get(record.id);
                   const isSizeMissing = parsePipeSize(record.sizeInches) === 0;
+                  const rowStatus = getRowStatus({
+                    isEditedRow,
+                    isNewRow,
+                    isPendingDelete,
+                    hasError: Boolean(rowError),
+                  });
 
                   return (
-                    <TableRow
-                      key={record.id}
-                      className="bg-white"
-                    >
-                      {renderReadOnlyCell({
+                    <Fragment key={record.id}>
+                    <TableRow className={getEditableRowClassName(isPendingDelete, Boolean(rowError))}>
+                      {renderRowHeaderCell({
                         cellKey: `${record.id}:serialNumber`,
                         value: index + 1,
+                        status: rowStatus,
                         selectedCellKey,
                         onSelect: selectCell,
                       })}
                       <TableCell
                         data-cell-key={`${record.id}:sizeInches`}
                         tabIndex={0}
-                        className={`${bodyCellClassName} ${
-                          selectedCellKey === `${record.id}:sizeInches` ? selectedCellClassName : ""
-                        }`}
+                        className={getEditableCellClassName({
+                          cellKey: `${record.id}:sizeInches`,
+                          selectedCellKey,
+                          changedCellKeys,
+                          isPendingDelete,
+                        })}
                         onClick={() => setSelectedCellKey(`${record.id}:sizeInches`)}
                         onFocusCapture={() => setSelectedCellKey(`${record.id}:sizeInches`)}
                       >
-                        {renderEditableText(record.sizeInches, isNewRow ? "" : "Pipe size", (value) =>
-                          onUpdateRow(record.id, (draft) => {
-                            draft.sizeInches = value;
-                          })
+                        {renderEditableText(
+                          record.sizeInches,
+                          isNewRow ? "" : "Pipe size",
+                          (value) =>
+                            onUpdateRow(record.id, (draft) => {
+                              draft.sizeInches = value;
+                            }),
+                          isPendingDelete || isSavingChanges
                         )}
                       </TableCell>
                       <TableCell
                         data-cell-key={`${record.id}:thickness`}
                         tabIndex={0}
-                        className={`${bodyCellClassName} ${
-                          selectedCellKey === `${record.id}:thickness` ? selectedCellClassName : ""
-                        }`}
+                        className={getEditableCellClassName({
+                          cellKey: `${record.id}:thickness`,
+                          selectedCellKey,
+                          changedCellKeys,
+                          isPendingDelete,
+                        })}
                         onClick={() => setSelectedCellKey(`${record.id}:thickness`)}
                         onFocusCapture={() => setSelectedCellKey(`${record.id}:thickness`)}
                       >
@@ -265,30 +386,44 @@ export function RecordsTable({
                             onUpdateRow(record.id, (draft) => {
                               draft.thickness = value;
                             }),
-                          { shouldHideZero: isNewRow, mode: "integer" }
+                          {
+                            disabled: isPendingDelete || isSavingChanges,
+                            shouldHideZero: isNewRow,
+                            mode: "integer",
+                          }
                         )}
                       </TableCell>
                       <TableCell
                         data-cell-key={`${record.id}:pipeSchedule`}
                         tabIndex={0}
-                        className={`${bodyCellClassName} ${
-                          selectedCellKey === `${record.id}:pipeSchedule` ? selectedCellClassName : ""
-                        }`}
+                        className={getEditableCellClassName({
+                          cellKey: `${record.id}:pipeSchedule`,
+                          selectedCellKey,
+                          changedCellKeys,
+                          isPendingDelete,
+                        })}
                         onClick={() => setSelectedCellKey(`${record.id}:pipeSchedule`)}
                         onFocusCapture={() => setSelectedCellKey(`${record.id}:pipeSchedule`)}
                       >
-                        {renderEditableText(record.pipeSchedule, "", (value) =>
-                          onUpdateRow(record.id, (draft) => {
-                            draft.pipeSchedule = value;
-                          })
+                        {renderEditableText(
+                          record.pipeSchedule,
+                          "",
+                          (value) =>
+                            onUpdateRow(record.id, (draft) => {
+                              draft.pipeSchedule = value;
+                            }),
+                          isPendingDelete || isSavingChanges
                         )}
                       </TableCell>
                       <TableCell
                         data-cell-key={`${record.id}:shopJoints`}
                         tabIndex={0}
-                        className={`${bodyCellClassName} ${
-                          selectedCellKey === `${record.id}:shopJoints` ? selectedCellClassName : ""
-                        }`}
+                        className={getEditableCellClassName({
+                          cellKey: `${record.id}:shopJoints`,
+                          selectedCellKey,
+                          changedCellKeys,
+                          isPendingDelete,
+                        })}
                         onClick={() => setSelectedCellKey(`${record.id}:shopJoints`)}
                         onFocusCapture={() => setSelectedCellKey(`${record.id}:shopJoints`)}
                       >
@@ -298,15 +433,22 @@ export function RecordsTable({
                             onUpdateRow(record.id, (draft) => {
                               draft.shopJoints = value;
                             }),
-                          { shouldHideZero: isNewRow, mode: "integer" }
+                          {
+                            disabled: isPendingDelete || isSavingChanges,
+                            shouldHideZero: isNewRow,
+                            mode: "integer",
+                          }
                         )}
                       </TableCell>
                       <TableCell
                         data-cell-key={`${record.id}:fieldJoints`}
                         tabIndex={0}
-                        className={`${bodyCellClassName} ${
-                          selectedCellKey === `${record.id}:fieldJoints` ? selectedCellClassName : ""
-                        }`}
+                        className={getEditableCellClassName({
+                          cellKey: `${record.id}:fieldJoints`,
+                          selectedCellKey,
+                          changedCellKeys,
+                          isPendingDelete,
+                        })}
                         onClick={() => setSelectedCellKey(`${record.id}:fieldJoints`)}
                         onFocusCapture={() => setSelectedCellKey(`${record.id}:fieldJoints`)}
                       >
@@ -316,13 +458,17 @@ export function RecordsTable({
                             onUpdateRow(record.id, (draft) => {
                               draft.fieldJoints = value;
                             }),
-                          { shouldHideZero: isNewRow, mode: "integer" }
+                          {
+                            disabled: isPendingDelete || isSavingChanges,
+                            shouldHideZero: isNewRow,
+                            mode: "integer",
+                          }
                         )}
                       </TableCell>
                       {renderCalculatedCell({
                         cellKey: `${record.id}:totalJoints`,
                         value: record.totalJoints,
-                        shouldHideValue: isNewRow,
+                        shouldHideValue: isNewRow && record.totalJoints === 0,
                         selectedCellKey,
                         onSelect: selectCell,
                         onShowMessage: () => setIsCalculatedCellDialogOpen(true),
@@ -331,7 +477,7 @@ export function RecordsTable({
                         cellKey: `${record.id}:shopInchDia`,
                         value: record.shopInchDia,
                         isBlocked: isSizeMissing && record.shopJoints > 0,
-                        shouldHideValue: isNewRow,
+                        shouldHideValue: isNewRow && record.shopJoints === 0,
                         selectedCellKey,
                         onSelect: selectCell,
                         onShowMessage: () => setIsCalculatedCellDialogOpen(true),
@@ -340,7 +486,7 @@ export function RecordsTable({
                         cellKey: `${record.id}:fieldInchDia`,
                         value: record.fieldInchDia,
                         isBlocked: isSizeMissing && record.fieldJoints > 0,
-                        shouldHideValue: isNewRow,
+                        shouldHideValue: isNewRow && record.fieldJoints === 0,
                         selectedCellKey,
                         onSelect: selectCell,
                         onShowMessage: () => setIsCalculatedCellDialogOpen(true),
@@ -349,7 +495,7 @@ export function RecordsTable({
                         cellKey: `${record.id}:totalInchDia`,
                         value: record.totalInchDia,
                         isBlocked: isSizeMissing && record.totalJoints > 0,
-                        shouldHideValue: isNewRow,
+                        shouldHideValue: isNewRow && record.totalJoints === 0,
                         selectedCellKey,
                         onSelect: selectCell,
                         onShowMessage: () => setIsCalculatedCellDialogOpen(true),
@@ -359,37 +505,56 @@ export function RecordsTable({
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="text-red-600 hover:text-red-700"
-                            disabled={isSaving}
+                            className={isPendingDelete ? "text-slate-600 hover:text-slate-900" : "text-red-600 hover:text-red-700"}
+                            disabled={isSavingChanges}
                             onClick={(event) => {
                               event.stopPropagation();
                               onDeleteRow(record);
                             }}
-                            aria-label="Delete row"
+                            aria-label={isPendingDelete ? "Undo pending delete" : "Delete row"}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            {isPendingDelete ? <Undo2 className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
                           </Button>
                         </div>
                       </TableCell>
                     </TableRow>
+                    {rowError ? (
+                      <TableRow className="bg-red-50 hover:bg-red-50">
+                        <TableCell colSpan={11} className="border-b border-red-200 px-3 py-2 text-sm font-semibold text-red-700">
+                          <span className="inline-flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4" />
+                            {rowError}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+                    </Fragment>
                   );
                 })}
           </TableBody>
           <TableFooter className="sticky bottom-0 z-20 bg-slate-50 shadow-[0_-1px_0_0_#e2e8f0]">
             {!isAllMocsView ? (
-              <TableRow className="bg-slate-50 hover:bg-blue-50">
-                <TableCell colSpan={11} className="border-t border-slate-200 p-0">
+              <TableRow className="bg-slate-50 font-bold text-slate-950 hover:bg-blue-50">
+                <TableCell colSpan={footerLabelColSpan + 1} className="border-b border-t border-r border-slate-200 px-3 py-1.5 text-left last:border-r-0">
                   <button
                     type="button"
-                    className="flex h-11 w-full items-center justify-center gap-2 text-sm font-bold text-slate-600 transition hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
+                    disabled={isSavingChanges}
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-bold text-indigo-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={onAddRow}
                   >
                     <Plus className="h-4 w-4" />
                     Add line item
                   </button>
                 </TableCell>
+                <TableCell className={combinedFooterCellClassName}>{formatNumber(totals.shopJoints)}</TableCell>
+                <TableCell className={combinedFooterCellClassName}>{formatNumber(totals.fieldJoints)}</TableCell>
+                <TableCell className={combinedFooterCellClassName}>{formatNumber(totals.totalJoints)}</TableCell>
+                <TableCell className={combinedFooterCellClassName}>{formatNumber(totals.shopInchDia)}</TableCell>
+                <TableCell className={combinedFooterCellClassName}>{formatNumber(totals.fieldInchDia)}</TableCell>
+                <TableCell className={combinedFooterCellClassName}>{formatNumber(totals.totalInchDia)}</TableCell>
+                <TableCell className={combinedFooterCellClassName} />
               </TableRow>
-            ) : null}
+            ) : (
             <TableRow className="font-bold text-slate-950 hover:bg-transparent">
               <TableCell colSpan={footerLabelColSpan + 1} className={`${footerCellClassName} text-right`}>
                 Visible Total
@@ -402,8 +567,9 @@ export function RecordsTable({
               <TableCell className={footerCellClassName}>{formatNumber(totals.totalInchDia)}</TableCell>
               {!isAllMocsView ? <TableCell className={footerCellClassName} /> : null}
             </TableRow>
+            )}
           </TableFooter>
-        </Table>
+        </table>
 
         {isEmpty && (
           <div className="flex h-60 items-center justify-center border-t text-sm text-slate-500">
@@ -411,6 +577,17 @@ export function RecordsTable({
           </div>
         )}
         </div>
+        {shouldUseFixedTableHeight ? (
+          <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-50 w-3 border-l border-slate-300 bg-slate-200 shadow-inner">
+            <div
+              className="absolute left-1 top-0 w-1.5 rounded-full bg-slate-700 shadow-sm"
+              style={{
+                height: `${scrollIndicatorMetrics.isScrollable ? scrollIndicatorMetrics.thumbHeight : 80}px`,
+                transform: `translateY(${scrollIndicatorMetrics.isScrollable ? scrollIndicatorMetrics.thumbTop : 0}px)`,
+              }}
+            />
+          </div>
+        ) : null}
       </div>
 
       <Dialog open={isCalculatedCellDialogOpen} onOpenChange={setIsCalculatedCellDialogOpen}>
@@ -438,6 +615,94 @@ type SelectableReadOnlyCellOptions = {
   selectedCellKey: string | null;
   onSelect: (cellKey: string) => void;
 };
+
+type RowStatus = {
+  label: string;
+  className: string;
+} | null;
+
+function getRowStatus({
+  isEditedRow,
+  isNewRow,
+  isPendingDelete,
+  hasError,
+}: {
+  isEditedRow: boolean;
+  isNewRow: boolean;
+  isPendingDelete: boolean;
+  hasError: boolean;
+}): RowStatus {
+  if (hasError) return { label: "Error", className: "bg-red-100 text-red-700" };
+  if (isPendingDelete) return { label: "Delete", className: "bg-red-100 text-red-700" };
+  if (isNewRow) return { label: "New", className: "bg-blue-100 text-blue-700" };
+  if (isEditedRow) return { label: "Edited", className: "bg-amber-100 text-amber-800" };
+  return null;
+}
+
+function getEditableRowClassName(isPendingDelete: boolean, hasError: boolean) {
+  if (hasError) return "bg-red-50 hover:bg-red-50";
+  if (isPendingDelete) return "bg-red-50/70 opacity-75 hover:bg-red-50";
+  return "bg-white hover:bg-white";
+}
+
+function getEditableCellClassName({
+  cellKey,
+  selectedCellKey,
+  changedCellKeys,
+  isPendingDelete,
+}: {
+  cellKey: string;
+  selectedCellKey: string | null;
+  changedCellKeys: Set<string>;
+  isPendingDelete: boolean;
+}) {
+  const classes = [bodyCellClassName];
+
+  if (changedCellKeys.has(cellKey)) {
+    classes.push("bg-amber-50 ring-1 ring-inset ring-amber-300");
+  }
+
+  if (isPendingDelete) {
+    classes.push("bg-red-50 text-red-700");
+  }
+
+  if (selectedCellKey === cellKey) {
+    classes.push(selectedCellClassName);
+  }
+
+  return classes.join(" ");
+}
+
+function renderRowHeaderCell({
+  cellKey,
+  value,
+  status,
+  selectedCellKey,
+  onSelect,
+}: SelectableReadOnlyCellOptions & { status: RowStatus }) {
+  const isSelected = selectedCellKey === cellKey;
+
+  return (
+    <TableCell
+      data-cell-key={cellKey}
+      tabIndex={0}
+      className={`${bodyCellClassName} cursor-default text-slate-950 ${
+        isSelected ? selectedCellClassName : ""
+      }`}
+      onClick={() => onSelect(cellKey)}
+      onFocus={() => onSelect(cellKey)}
+    >
+      <span className="flex h-10 w-full flex-col items-center justify-center gap-0.5 px-1 font-semibold tabular-nums">
+        <span>{value}</span>
+        {status ? (
+          <span className={`rounded px-1.5 py-0.5 text-[10px] leading-none ${status.className}`}>
+            {status.label}
+          </span>
+        ) : null}
+      </span>
+    </TableCell>
+  );
+}
 
 function renderReadOnlyCell({
   cellKey,
@@ -512,11 +777,13 @@ function renderCalculatedCell({
 function renderEditableText(
   value: string,
   placeholder: string,
-  onChange: (value: string) => void
+  onChange: (value: string) => void,
+  disabled = false
 ) {
   return (
     <Input
       value={value}
+      disabled={disabled}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
       className={editableInputClassName}
@@ -527,11 +794,12 @@ function renderEditableText(
 function renderEditableNumber(
   value: number,
   onChange: (value: number) => void,
-  options: { mode?: "decimal" | "integer"; shouldHideZero?: boolean } = {}
+  options: { disabled?: boolean; mode?: "decimal" | "integer"; shouldHideZero?: boolean } = {}
 ) {
   return (
     <EditableNumberInput
       value={value}
+      disabled={options.disabled}
       mode={options.mode ?? "decimal"}
       onChange={onChange}
       shouldHideZero={options.shouldHideZero}
@@ -541,11 +809,13 @@ function renderEditableNumber(
 
 function EditableNumberInput({
   value,
+  disabled = false,
   mode,
   onChange,
   shouldHideZero = false,
 }: {
   value: number;
+  disabled?: boolean;
   mode: "decimal" | "integer";
   onChange: (value: number) => void;
   shouldHideZero?: boolean;
@@ -581,6 +851,7 @@ function EditableNumberInput({
       type="text"
       inputMode="decimal"
       value={draftValue}
+      disabled={disabled}
       onFocus={() => setIsEditing(true)}
       onBlur={handleBlur}
       onChange={(event) => {
