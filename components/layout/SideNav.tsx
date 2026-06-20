@@ -9,6 +9,7 @@ import {
   FileText,
   Menu,
   Table2,
+  TrendingUp,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -38,6 +39,7 @@ const SideNav = ({ isOpen, onToggle }: SideNavProps) => {
     { name: "Add New Project", path: "/AddNewProject", icon: FilePlus2 },
     { name: "Weld Joints Scope", path: "/AddJointsDetail", icon: Table2 },
     { name: "Progress Register", path: "/ProgressRegister", icon: ClipboardList },
+    { name: "Progress Dashboard", path: "/ProgressDashboard", icon: TrendingUp },
   ];
 
   return (
